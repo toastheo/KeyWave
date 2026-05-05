@@ -1,16 +1,44 @@
 #include "app/Application.hpp"
 
+#include "midi/MidiFileLoader.hpp"
 #include "render/RenderTypes.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
+#include <filesystem>
 #include <iostream>
 #include <memory>
+
+namespace {
+
+std::filesystem::path testMidiPath() {
+#ifdef KEYWAVE_SOURCE_DIR
+  return std::filesystem::path(KEYWAVE_SOURCE_DIR) / "assets" / "test-midi" / "test.mid";
+#else
+  return std::filesystem::path("assets") / "test-midi" / "test.mid";
+#endif
+}
+
+void loadStartupMidiIfPresent() {
+  const auto midiPath = testMidiPath();
+  if (!std::filesystem::exists(midiPath)) {
+    std::cout << "No test MIDI file found at " << midiPath.string()
+              << ". Place a .mid file there to test MIDI loading.\n";
+    return;
+  }
+
+  MidiFileLoader loader;
+  (void)loader.loadFromFile(midiPath);
+}
+
+} // namespace
 
 Application::~Application() {
   shutdown();
 }
 
 bool Application::initialize() {
+  loadStartupMidiIfPresent();
+
   const WindowConfig windowConfig{
     .title = "KeyWave",
     .width = 1280,

@@ -30,6 +30,39 @@ target_include_directories(glad
         external/glad/include
 )
 
+add_library(midifile STATIC
+    external/midifile/src/Binasc.cpp
+    external/midifile/src/MidiEvent.cpp
+    external/midifile/src/MidiEventList.cpp
+    external/midifile/src/MidiFile.cpp
+    external/midifile/src/MidiMessage.cpp
+)
+
+target_include_directories(midifile
+    PUBLIC
+        external/midifile/include
+)
+
+add_library(keywave_midi STATIC
+    src/midi/MidiTypes.hpp
+    src/midi/MidiTrack.hpp
+    src/midi/MidiTrack.cpp
+    src/midi/MidiTimeline.hpp
+    src/midi/MidiTimeline.cpp
+    src/midi/MidiFileLoader.hpp
+    src/midi/MidiFileLoader.cpp
+)
+
+target_include_directories(keywave_midi
+    PUBLIC
+        src
+)
+
+target_link_libraries(keywave_midi
+    PRIVATE
+        midifile
+)
+
 add_executable(KeyWave
     src/main.cpp
     src/app/Application.hpp
@@ -47,9 +80,28 @@ target_include_directories(KeyWave
         src
 )
 
+target_compile_definitions(KeyWave
+    PRIVATE
+        KEYWAVE_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 target_link_libraries(KeyWave
     PRIVATE
+        keywave_midi
         glad
         glfw
         OpenGL::GL
 )
+
+enable_testing()
+
+add_executable(KeyWaveMidiTests
+    tests/MidiFileLoaderTests.cpp
+)
+
+target_link_libraries(KeyWaveMidiTests
+    PRIVATE
+        keywave_midi
+)
+
+add_test(NAME KeyWaveMidiTests COMMAND KeyWaveMidiTests)
