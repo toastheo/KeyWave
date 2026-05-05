@@ -19,6 +19,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.11.0
+)
+FetchContent_MakeAvailable(Catch2)
+
 find_package(OpenGL REQUIRED)
 
 add_library(glad STATIC
@@ -95,13 +102,27 @@ target_link_libraries(KeyWave
 
 enable_testing()
 
+add_library(keywave_test_support STATIC
+    tests/midi/MidiFixtures.hpp
+    tests/midi/MidiFixtures.cpp
+)
+
+target_include_directories(keywave_test_support
+    PUBLIC
+        tests
+)
+
 add_executable(KeyWaveMidiTests
-    tests/MidiFileLoaderTests.cpp
+    tests/midi/MidiFileLoaderTests.cpp
 )
 
 target_link_libraries(KeyWaveMidiTests
     PRIVATE
+        Catch2::Catch2WithMain
         keywave_midi
+        keywave_test_support
 )
 
-add_test(NAME KeyWaveMidiTests COMMAND KeyWaveMidiTests)
+list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+include(Catch)
+catch_discover_tests(KeyWaveMidiTests DISCOVERY_MODE PRE_TEST)
