@@ -23,7 +23,7 @@ bool OpenGLRendererBackend::initialize() {
     return false;
   }
 
-  if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(m_procAddressLoader)) == 0) {
+  if (gladLoadGLLoader(m_procAddressLoader) == 0) {
     std::cerr << "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.\n";
     return false;
   }
