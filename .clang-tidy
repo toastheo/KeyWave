@@ -1,0 +1,29 @@
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  cert-*,
+  cppcoreguidelines-narrowing-conversions,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-slicing,
+  misc-*,
+  modernize-*,
+  performance-*,
+  readability-container-size-empty,
+  readability-delete-null-pointer,
+  readability-misleading-indentation,
+  readability-redundant-*,
+  readability-static-accessed-through-instance,
+  readability-string-compare,
+  -modernize-use-trailing-return-type,
+  -modernize-use-auto,
+  -modernize-pass-by-value,
+  -readability-convert-member-functions-to-static,
+  -readability-make-member-function-const,
+  -readability-non-const-parameter,
+  -misc-non-private-member-variables-in-classes
+
+WarningsAsErrors: ''
+
+HeaderFilterRegex: '.*'
+FormatStyle: file

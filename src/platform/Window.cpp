@@ -79,7 +79,7 @@ void Window::pollEvents() {
   glfwPollEvents();
 }
 
-void Window::swapBuffers() {
+void Window::swapBuffers() const {
   if (m_handle != nullptr) {
     glfwSwapBuffers(static_cast<GLFWwindow*>(m_handle));
   }
@@ -89,6 +89,6 @@ void* Window::nativeHandle() const {
   return m_handle;
 }
 
-NativeProcAddressLoader Window::nativeProcAddressLoader() const {
+NativeProcAddressLoader Window::nativeProcAddressLoader() {
   return loadOpenGLProcAddress;
 }

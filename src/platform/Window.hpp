@@ -21,11 +21,12 @@ public:
   bool initialize(const WindowConfig& config);
   void shutdown();
 
-  bool shouldClose() const;
-  void pollEvents();
-  void swapBuffers();
-  void* nativeHandle() const;
-  NativeProcAddressLoader nativeProcAddressLoader() const;
+  [[nodiscard]] bool shouldClose() const;
+
+  static void pollEvents();
+  void swapBuffers() const;
+  [[nodiscard]] void* nativeHandle() const;
+  [[nodiscard]] static NativeProcAddressLoader nativeProcAddressLoader();
 
 private:
   void* m_handle = nullptr;

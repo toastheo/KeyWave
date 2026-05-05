@@ -23,8 +23,8 @@ bool Application::initialize() {
   }
 
   m_renderer = std::make_unique<OpenGLRendererBackend>(
-    m_window.nativeProcAddressLoader(),
-    Color{0.025f, 0.03f, 0.04f, 1.0f}
+    Window::nativeProcAddressLoader(),
+    Color{.r=0.025f, .g=0.03f, .b=0.04f, .a=1.0f}
   );
 
   if (!m_renderer->initialize()) {
@@ -38,13 +38,13 @@ bool Application::initialize() {
   return true;
 }
 
-void Application::run() {
+void Application::run() const {
   if (!m_initialized) {
     return;
   }
 
   while (!m_window.shouldClose()) {
-    m_window.pollEvents();
+    Window::pollEvents();
     m_renderer->beginFrame();
     m_renderer->endFrame();
     m_window.swapBuffers();

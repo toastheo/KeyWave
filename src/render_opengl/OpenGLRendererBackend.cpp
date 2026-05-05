@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-OpenGLRendererBackend::OpenGLRendererBackend(NativeProcAddressLoader procAddressLoader, Color clearColor)
+OpenGLRendererBackend::OpenGLRendererBackend(const NativeProcAddressLoader procAddressLoader, const Color clearColor)
   : m_procAddressLoader(procAddressLoader),
     m_clearColor(clearColor) {
 }

@@ -14,7 +14,7 @@ public:
   Application& operator=(const Application&) = delete;
 
   bool initialize();
-  void run();
+  void run() const;
   void shutdown();
 
 private:
