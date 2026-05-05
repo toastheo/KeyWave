@@ -20,7 +20,7 @@ void printGlfwError(const char* fallbackMessage) {
 void* loadOpenGLProcAddress(const char* name) {
   return reinterpret_cast<void*>(glfwGetProcAddress(name));
 }
-}
+} // namespace
 
 Window::~Window() {
   shutdown();
