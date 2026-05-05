@@ -12,22 +12,22 @@ using NativeProcAddressLoader = void* (*)(const char* name);
 
 class Window {
 public:
-    Window() = default;
-    ~Window();
+  Window() = default;
+  ~Window();
 
-    Window(const Window&) = delete;
-    Window& operator=(const Window&) = delete;
+  Window(const Window&) = delete;
+  Window& operator=(const Window&) = delete;
 
-    bool initialize(const WindowConfig& config);
-    void shutdown();
+  bool initialize(const WindowConfig& config);
+  void shutdown();
 
-    bool shouldClose() const;
-    void pollEvents();
-    void swapBuffers();
-    void* nativeHandle() const;
-    NativeProcAddressLoader nativeProcAddressLoader() const;
+  bool shouldClose() const;
+  void pollEvents();
+  void swapBuffers();
+  void* nativeHandle() const;
+  NativeProcAddressLoader nativeProcAddressLoader() const;
 
 private:
-    void* handle_ = nullptr;
-    bool ownsGlfw_ = false;
+  void* m_handle = nullptr;
+  bool m_ownsGlfw = false;
 };

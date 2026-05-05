@@ -7,18 +7,18 @@
 
 class Application {
 public:
-    Application() = default;
-    ~Application();
+  Application() = default;
+  ~Application();
 
-    Application(const Application&) = delete;
-    Application& operator=(const Application&) = delete;
+  Application(const Application&) = delete;
+  Application& operator=(const Application&) = delete;
 
-    bool initialize();
-    void run();
-    void shutdown();
+  bool initialize();
+  void run();
+  void shutdown();
 
 private:
-    Window window_;
-    std::unique_ptr<RendererBackend> renderer_;
-    bool initialized_ = false;
+  Window m_window;
+  std::unique_ptr<RendererBackend> m_renderer;
+  bool m_initialized = false;
 };

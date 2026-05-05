@@ -5,42 +5,42 @@
 #include <iostream>
 
 OpenGLRendererBackend::OpenGLRendererBackend(NativeProcAddressLoader procAddressLoader, Color clearColor)
-    : procAddressLoader_(procAddressLoader),
-      clearColor_(clearColor) {
+  : m_procAddressLoader(procAddressLoader),
+    m_clearColor(clearColor) {
 }
 
 OpenGLRendererBackend::~OpenGLRendererBackend() {
-    shutdown();
+  shutdown();
 }
 
 bool OpenGLRendererBackend::initialize() {
-    if (initialized_) {
-        return true;
-    }
-
-    if (procAddressLoader_ == nullptr) {
-        std::cerr << "OpenGL renderer initialization failed: missing OpenGL procedure loader.\n";
-        return false;
-    }
-
-    if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(procAddressLoader_)) == 0) {
-        std::cerr << "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.\n";
-        return false;
-    }
-
-    glViewport(0, 0, 1280, 720);
-
-    initialized_ = true;
+  if (m_initialized) {
     return true;
+  }
+
+  if (m_procAddressLoader == nullptr) {
+    std::cerr << "OpenGL renderer initialization failed: missing OpenGL procedure loader.\n";
+    return false;
+  }
+
+  if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(m_procAddressLoader)) == 0) {
+    std::cerr << "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.\n";
+    return false;
+  }
+
+  glViewport(0, 0, 1280, 720);
+
+  m_initialized = true;
+  return true;
 }
 
 void OpenGLRendererBackend::shutdown() {
-    initialized_ = false;
+  m_initialized = false;
 }
 
 void OpenGLRendererBackend::beginFrame() {
-    glClearColor(clearColor_.r, clearColor_.g, clearColor_.b, clearColor_.a);
-    glClear(GL_COLOR_BUFFER_BIT);
+  glClearColor(m_clearColor.r, m_clearColor.g, m_clearColor.b, m_clearColor.a);
+  glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void OpenGLRendererBackend::endFrame() {
