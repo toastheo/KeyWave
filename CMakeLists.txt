@@ -56,6 +56,8 @@ add_library(keywave_midi STATIC
     src/midi/MidiTrack.cpp
     src/midi/MidiTimeline.hpp
     src/midi/MidiTimeline.cpp
+    src/midi/MidiTimelineQuery.hpp
+    src/midi/MidiTimelineQuery.cpp
     src/midi/MidiFileLoader.hpp
     src/midi/MidiFileLoader.cpp
 )
@@ -114,6 +116,7 @@ target_include_directories(keywave_test_support
 
 add_executable(KeyWaveMidiTests
     tests/midi/MidiFileLoaderTests.cpp
+    tests/midi/MidiTimelineQueryTests.cpp
 )
 
 target_link_libraries(KeyWaveMidiTests

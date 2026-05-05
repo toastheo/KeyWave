@@ -32,6 +32,36 @@ bool MidiTimeline::empty() const {
   return m_notes.empty();
 }
 
+int MidiTimeline::minPitch() const {
+  if (m_notes.empty()) {
+    return 0;
+  }
+
+  const auto minNote = std::ranges::min_element(
+    m_notes,
+    [](const Note& left, const Note& right) {
+      return left.pitch < right.pitch;
+    }
+  );
+
+  return minNote->pitch;
+}
+
+int MidiTimeline::maxPitch() const {
+  if (m_notes.empty()) {
+    return 0;
+  }
+
+  const auto maxNote = std::ranges::max_element(
+    m_notes,
+    [](const Note& left, const Note& right) {
+      return left.pitch < right.pitch;
+    }
+  );
+
+  return maxNote->pitch;
+}
+
 void MidiTimeline::setTrackCount(int trackCount) {
   if (trackCount < 0) {
     trackCount = 0;

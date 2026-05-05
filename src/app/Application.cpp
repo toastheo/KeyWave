@@ -1,9 +1,11 @@
 #include "app/Application.hpp"
 
 #include "midi/MidiFileLoader.hpp"
+#include "midi/MidiTimelineQuery.hpp"
 #include "render/RenderTypes.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -25,9 +27,35 @@ void loadStartupMidiIfPresent() {
               << ". Place a .mid file there to test MIDI loading.\n";
     return;
   }
+  
+  const auto timeline = MidiFileLoader::loadFromFile(midiPath);
+  if (!timeline.has_value()) {
+    return;
+  }
 
-  MidiFileLoader loader;
-  (void)loader.loadFromFile(midiPath);
+  const MidiTimelineQuery query(*timeline);
+  const auto notes = query.findNotes(TimelineViewport{
+    .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 10.0},
+    .pitchRange = PitchRange{.minPitch = 21, .maxPitch = 108},
+  });
+
+  std::cout << "MIDI startup query\n";
+  std::cout << "  queried notes: " << notes.size() << '\n';
+
+  const auto previewCount = std::min<std::size_t>(notes.size(), 5);
+  for (std::size_t index = 0; index < previewCount; ++index) {
+    const auto& queriedNote = notes[index];
+    const auto& note = queriedNote.note;
+    std::cout << "  queriedNote[" << index << "]:"
+              << " pitch=" << note.pitch
+              << " start=" << note.startSeconds
+              << " duration=" << note.durationSeconds
+              << " channel=" << note.channel
+              << " track=" << note.track
+              << " startsBeforeRange=" << (queriedNote.startsBeforeRange ? "true" : "false")
+              << " endsAfterRange=" << (queriedNote.endsAfterRange ? "true" : "false")
+              << '\n';
+  }
 }
 
 } // namespace

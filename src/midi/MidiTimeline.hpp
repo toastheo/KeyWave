@@ -12,6 +12,8 @@ public:
   [[nodiscard]] const std::vector<MidiTrack>& tracks() const;
   [[nodiscard]] double lengthSeconds() const;
   [[nodiscard]] bool empty() const;
+  [[nodiscard]] int minPitch() const;
+  [[nodiscard]] int maxPitch() const;
 
   void setTrackCount(int trackCount);
   [[nodiscard]] int trackCount() const;
