@@ -1,26 +1,30 @@
 #pragma once
 
+#include <vector>
+
 #include "midi/MidiTimeline.hpp"
 #include "midi/MidiTypes.hpp"
 
-#include <vector>
-
-struct TimeRange {
+struct TimeRange
+{
   double startSeconds = 0.0;
   double endSeconds = 0.0;
 };
 
-struct PitchRange {
+struct PitchRange
+{
   int minPitch = 0;
   int maxPitch = 0;
 };
 
-struct TimelineViewport {
+struct TimelineViewport
+{
   TimeRange timeRange;
   PitchRange pitchRange;
 };
 
-struct QueriedNote {
+struct QueriedNote
+{
   Note note;
   bool startsBeforeRange = false;
   bool endsAfterRange = false;
@@ -30,7 +34,8 @@ struct QueriedNote {
  * Renderer-independent query helper for selecting notes from a MidiTimeline
  * by time and pitch ranges.
  */
-class MidiTimelineQuery {
+class MidiTimelineQuery
+{
 public:
   explicit MidiTimelineQuery(const MidiTimeline& timeline);
 

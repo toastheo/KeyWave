@@ -1,10 +1,11 @@
 #pragma once
 
 #include "platform/Window.hpp"
-#include "render/RendererBackend.hpp"
 #include "render/RenderTypes.hpp"
+#include "render/RendererBackend.hpp"
 
-class OpenGLRendererBackend final : public RendererBackend {
+class OpenGLRendererBackend final : public RendererBackend
+{
 public:
   explicit OpenGLRendererBackend(NativeProcAddressLoader procAddressLoader, Color clearColor);
   ~OpenGLRendererBackend() override;

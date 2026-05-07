@@ -1,6 +1,7 @@
 #pragma once
 
-struct Note {
+struct Note
+{
   int pitch = 0;
   int velocity = 0;
   int channel = 0;

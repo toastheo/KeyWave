@@ -1,10 +1,11 @@
 #pragma once
 
-#include "midi/MidiTypes.hpp"
-
 #include <vector>
 
-class MidiTrack {
+#include "midi/MidiTypes.hpp"
+
+class MidiTrack
+{
 public:
   explicit MidiTrack(int index = 0);
 

@@ -1,11 +1,12 @@
 #pragma once
 
+#include <vector>
+
 #include "midi/MidiTrack.hpp"
 #include "midi/MidiTypes.hpp"
 
-#include <vector>
-
-class MidiTimeline {
+class MidiTimeline
+{
 public:
   void addNote(const Note& note);
   [[nodiscard]] const std::vector<Note>& notes() const;

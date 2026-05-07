@@ -6,7 +6,8 @@
 
 namespace {
 
-bool isValidTimeRange(const TimeRange& range) {
+bool isValidTimeRange(const TimeRange& range)
+{
   if (!std::isfinite(range.startSeconds) || !std::isfinite(range.endSeconds)) {
     std::cerr << "MIDI timeline query skipped: time range must contain finite values.\n";
     return false;
@@ -14,64 +15,62 @@ bool isValidTimeRange(const TimeRange& range) {
 
   if (range.startSeconds >= range.endSeconds) {
     std::cerr << "MIDI timeline query skipped: time range start must be before end"
-              << " (start=" << range.startSeconds
-              << ", end=" << range.endSeconds
-              << ").\n";
+              << " (start=" << range.startSeconds << ", end=" << range.endSeconds << ").\n";
     return false;
   }
 
   return true;
 }
 
-bool isValidPitchRange(const PitchRange& range) {
+bool isValidPitchRange(const PitchRange& range)
+{
   if (range.minPitch > range.maxPitch) {
     std::cerr << "MIDI timeline query skipped: pitch range min must be less than or equal to max"
-              << " (min=" << range.minPitch
-              << ", max=" << range.maxPitch
-              << ").\n";
+              << " (min=" << range.minPitch << ", max=" << range.maxPitch << ").\n";
     return false;
   }
 
   return true;
 }
 
-bool overlapsTimeRange(const Note& note, const TimeRange& range) {
+bool overlapsTimeRange(const Note& note, const TimeRange& range)
+{
   return note.startSeconds < range.endSeconds &&
          note.startSeconds + note.durationSeconds > range.startSeconds;
 }
 
-bool isInPitchRange(const Note& note, const PitchRange& range) {
+bool isInPitchRange(const Note& note, const PitchRange& range)
+{
   return note.pitch >= range.minPitch && note.pitch <= range.maxPitch;
 }
 
-void sortQueriedNotes(std::vector<QueriedNote>& notes) {
-  std::ranges::sort(
-    notes,
-    [](const QueriedNote& left, const QueriedNote& right) {
-      if (left.note.startSeconds != right.note.startSeconds) {
-        return left.note.startSeconds < right.note.startSeconds;
-      }
-
-      if (left.note.pitch != right.note.pitch) {
-        return left.note.pitch < right.note.pitch;
-      }
-
-      if (left.note.channel != right.note.channel) {
-        return left.note.channel < right.note.channel;
-      }
-
-      return left.note.track < right.note.track;
+void sortQueriedNotes(std::vector<QueriedNote>& notes)
+{
+  std::ranges::sort(notes, [](const QueriedNote& left, const QueriedNote& right) {
+    if (left.note.startSeconds != right.note.startSeconds) {
+      return left.note.startSeconds < right.note.startSeconds;
     }
-  );
+
+    if (left.note.pitch != right.note.pitch) {
+      return left.note.pitch < right.note.pitch;
+    }
+
+    if (left.note.channel != right.note.channel) {
+      return left.note.channel < right.note.channel;
+    }
+
+    return left.note.track < right.note.track;
+  });
 }
 
 } // namespace
 
 MidiTimelineQuery::MidiTimelineQuery(const MidiTimeline& timeline)
-  : m_timeline(timeline) {
-}
+    : m_timeline(timeline)
+{}
 
-std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& viewport) const {
+std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& viewport) const
+{
   if (!isValidTimeRange(viewport.timeRange) || !isValidPitchRange(viewport.pitchRange)) {
     return {};
   }
@@ -79,14 +78,17 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
   std::vector<QueriedNote> result;
 
   for (const auto& note : m_timeline.notes()) {
-    if (!overlapsTimeRange(note, viewport.timeRange) || !isInPitchRange(note, viewport.pitchRange)) {
+    if (!overlapsTimeRange(note, viewport.timeRange) ||
+        !isInPitchRange(note, viewport.pitchRange)) {
       continue;
     }
 
     result.push_back(QueriedNote{
-      .note = note,
-      .startsBeforeRange = note.startSeconds < viewport.timeRange.startSeconds,
-      .endsAfterRange = note.startSeconds + note.durationSeconds > viewport.timeRange.endSeconds,
+        .note = note,
+        .startsBeforeRange =
+            note.startSeconds<viewport.timeRange.startSeconds,
+                              .endsAfterRange = note.startSeconds + note.durationSeconds> viewport
+                .timeRange.endSeconds,
     });
   }
 
@@ -94,7 +96,8 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
   return result;
 }
 
-std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange& range) const {
+std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange& range) const
+{
   if (!isValidTimeRange(range)) {
     return {};
   }
@@ -107,9 +110,11 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange
     }
 
     result.push_back(QueriedNote{
-      .note = note,
-      .startsBeforeRange = note.startSeconds < range.startSeconds,
-      .endsAfterRange = note.startSeconds + note.durationSeconds > range.endSeconds,
+        .note = note,
+        .startsBeforeRange =
+            note.startSeconds<range.startSeconds,
+                              .endsAfterRange = note.startSeconds + note.durationSeconds> range
+                .endSeconds,
     });
   }
 
@@ -117,7 +122,8 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange
   return result;
 }
 
-std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRange& range) const {
+std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRange& range) const
+{
   if (!isValidPitchRange(range)) {
     return {};
   }
@@ -130,9 +136,9 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRan
     }
 
     result.push_back(QueriedNote{
-      .note = note,
-      .startsBeforeRange = false,
-      .endsAfterRange = false,
+        .note = note,
+        .startsBeforeRange = false,
+        .endsAfterRange = false,
     });
   }
 
@@ -140,6 +146,7 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRan
   return result;
 }
 
-const MidiTimeline& MidiTimelineQuery::timeline() const {
+const MidiTimeline& MidiTimelineQuery::timeline() const
+{
   return m_timeline;
 }

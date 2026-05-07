@@ -1,6 +1,7 @@
 #pragma once
 
-class RendererBackend {
+class RendererBackend
+{
 public:
   virtual ~RendererBackend() = default;
 

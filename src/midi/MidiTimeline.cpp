@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <utility>
 
-void MidiTimeline::addNote(const Note& note) {
+void MidiTimeline::addNote(const Note& note)
+{
   m_notes.push_back(note);
   m_lengthSeconds = std::max(m_lengthSeconds, note.startSeconds + note.durationSeconds);
 
@@ -16,53 +17,54 @@ void MidiTimeline::addNote(const Note& note) {
   }
 }
 
-const std::vector<Note>& MidiTimeline::notes() const {
+const std::vector<Note>& MidiTimeline::notes() const
+{
   return m_notes;
 }
 
-const std::vector<MidiTrack>& MidiTimeline::tracks() const {
+const std::vector<MidiTrack>& MidiTimeline::tracks() const
+{
   return m_tracks;
 }
 
-double MidiTimeline::lengthSeconds() const {
+double MidiTimeline::lengthSeconds() const
+{
   return m_lengthSeconds;
 }
 
-bool MidiTimeline::empty() const {
+bool MidiTimeline::empty() const
+{
   return m_notes.empty();
 }
 
-int MidiTimeline::minPitch() const {
+int MidiTimeline::minPitch() const
+{
   if (m_notes.empty()) {
     return 0;
   }
 
-  const auto minNote = std::ranges::min_element(
-    m_notes,
-    [](const Note& left, const Note& right) {
-      return left.pitch < right.pitch;
-    }
-  );
+  const auto minNote = std::ranges::min_element(m_notes, [](const Note& left, const Note& right) {
+    return left.pitch < right.pitch;
+  });
 
   return minNote->pitch;
 }
 
-int MidiTimeline::maxPitch() const {
+int MidiTimeline::maxPitch() const
+{
   if (m_notes.empty()) {
     return 0;
   }
 
-  const auto maxNote = std::ranges::max_element(
-    m_notes,
-    [](const Note& left, const Note& right) {
-      return left.pitch < right.pitch;
-    }
-  );
+  const auto maxNote = std::ranges::max_element(m_notes, [](const Note& left, const Note& right) {
+    return left.pitch < right.pitch;
+  });
 
   return maxNote->pitch;
 }
 
-void MidiTimeline::setTrackCount(int trackCount) {
+void MidiTimeline::setTrackCount(int trackCount)
+{
   if (trackCount < 0) {
     trackCount = 0;
   }
@@ -75,14 +77,17 @@ void MidiTimeline::setTrackCount(int trackCount) {
   }
 }
 
-int MidiTimeline::trackCount() const {
+int MidiTimeline::trackCount() const
+{
   return static_cast<int>(m_tracks.size());
 }
 
-void MidiTimeline::setTicksPerQuarterNote(int ticksPerQuarterNote) {
+void MidiTimeline::setTicksPerQuarterNote(int ticksPerQuarterNote)
+{
   m_ticksPerQuarterNote = ticksPerQuarterNote;
 }
 
-int MidiTimeline::ticksPerQuarterNote() const {
+int MidiTimeline::ticksPerQuarterNote() const
+{
   return m_ticksPerQuarterNote;
 }

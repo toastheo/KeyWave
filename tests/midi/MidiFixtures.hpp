@@ -5,9 +5,10 @@
 
 namespace midi_fixtures {
 
-class TemporaryMidiFile {
+class TemporaryMidiFile
+{
 public:
-  explicit TemporaryMidiFile(const std::vector<std::uint8_t> &bytes);
+  explicit TemporaryMidiFile(const std::vector<std::uint8_t>& bytes);
   ~TemporaryMidiFile();
 
   TemporaryMidiFile(const TemporaryMidiFile&) = delete;

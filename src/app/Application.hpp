@@ -1,11 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include "platform/Window.hpp"
 #include "render/RendererBackend.hpp"
 
-#include <memory>
-
-class Application {
+class Application
+{
 public:
   Application() = default;
   ~Application();

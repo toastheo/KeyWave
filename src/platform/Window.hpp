@@ -2,15 +2,17 @@
 
 #include <string>
 
-struct WindowConfig {
-    std::string title;
-    int width = 1280;
-    int height = 720;
+struct WindowConfig
+{
+  std::string title;
+  int width = 1280;
+  int height = 720;
 };
 
 using NativeProcAddressLoader = void* (*)(const char* name);
 
-class Window {
+class Window
+{
 public:
   Window() = default;
   ~Window();
