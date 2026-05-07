@@ -101,6 +101,8 @@ add_executable(KeyWave
     src/render/RenderTypes.hpp
     src/render_opengl/OpenGLRendererBackend.hpp
     src/render_opengl/OpenGLRendererBackend.cpp
+    src/render_opengl/OpenGLShader.hpp
+    src/render_opengl/OpenGLShader.cpp
 )
 
 target_include_directories(KeyWave

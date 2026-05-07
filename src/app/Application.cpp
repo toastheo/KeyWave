@@ -25,18 +25,18 @@ std::filesystem::path testMidiPath()
 #endif
 }
 
-void loadStartupMidiIfPresent()
+std::vector<RenderCommand> loadStartupMidiIfPresent()
 {
   const auto midiPath = testMidiPath();
   if (!std::filesystem::exists(midiPath)) {
     std::cout << "No test MIDI file found at " << midiPath.string()
               << ". Place a .mid file there to test MIDI loading.\n";
-    return;
+    return {};
   }
 
   const auto timeline = MidiFileLoader::loadFromFile(midiPath);
   if (!timeline.has_value()) {
-    return;
+    return {};
   }
 
   const MidiTimelineQuery query(*timeline);
@@ -72,6 +72,8 @@ void loadStartupMidiIfPresent()
               << " height=" << rect.height << " color=(" << color.r << ", " << color.g << ", "
               << color.b << ", " << color.a << ")\n";
   }
+
+  return renderCommands;
 }
 
 } // namespace
@@ -83,7 +85,7 @@ Application::~Application()
 
 bool Application::initialize()
 {
-  loadStartupMidiIfPresent();
+  m_startupRenderCommands = loadStartupMidiIfPresent();
 
   const WindowConfig windowConfig{
     .title = "KeyWave",
@@ -120,6 +122,7 @@ void Application::run() const
   while (!m_window.shouldClose()) {
     Window::pollEvents();
     m_renderer->beginFrame();
+    m_renderer->submit(m_startupRenderCommands);
     m_renderer->endFrame();
     m_window.swapBuffers();
   }
@@ -133,5 +136,6 @@ void Application::shutdown()
   }
 
   m_window.shutdown();
+  m_startupRenderCommands.clear();
   m_initialized = false;
 }
