@@ -16,6 +16,7 @@ public:
   bool initialize() override;
   void shutdown() override;
   void beginFrame() override;
+  void submit(const std::vector<RenderCommand>& commands) override;
   void endFrame() override;
 
 private:

@@ -4,10 +4,13 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <variant>
 
 #include "midi/MidiFileLoader.hpp"
 #include "midi/MidiTimelineQuery.hpp"
 #include "pianoroll/PianoRollLayout.hpp"
+#include "pianoroll/PianoRollRenderAdapter.hpp"
+#include "render/RenderCommand.hpp"
 #include "render/RenderTypes.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
@@ -47,23 +50,27 @@ void loadStartupMidiIfPresent()
   });
 
   const auto layoutResult = PianoRollLayout::build(notes, viewport);
+  const auto renderCommands = PianoRollRenderAdapter::buildCommands(layoutResult);
 
   std::cout << "MIDI startup piano-roll layout\n";
   std::cout << "  queried notes: " << notes.size() << '\n';
   std::cout << "  layout notes: " << layoutResult.notes.size() << '\n';
+  std::cout << "  render commands: " << renderCommands.size() << '\n';
   std::cout << "  pitch lane count: " << layoutResult.pitchLaneCount << '\n';
   std::cout << "  contentWidth: " << layoutResult.contentWidth << '\n';
   std::cout << "  contentHeight: " << layoutResult.contentHeight << '\n';
 
-  const auto previewCount = std::min<std::size_t>(layoutResult.notes.size(), 5);
+  const auto previewCount = std::min<std::size_t>(renderCommands.size(), 5);
   for (std::size_t index = 0; index < previewCount; ++index) {
-    const auto& noteLayout = layoutResult.notes[index];
-    std::cout << "  layoutNote[" << index << "]:"
-              << " pitch=" << noteLayout.note.pitch << " x=" << noteLayout.x
-              << " y=" << noteLayout.y << " width=" << noteLayout.width
-              << " height=" << noteLayout.height
-              << " clippedLeft=" << (noteLayout.clippedLeft ? "true" : "false")
-              << " clippedRight=" << (noteLayout.clippedRight ? "true" : "false") << '\n';
+    if (!std::holds_alternative<DrawRectCommand>(renderCommands[index])) {
+      continue;
+    }
+
+    const auto& [rect, color] = std::get<DrawRectCommand>(renderCommands[index]);
+    std::cout << "  drawRect[" << index << "]:"
+              << " x=" << rect.x << " y=" << rect.y << " width=" << rect.width
+              << " height=" << rect.height << " color=(" << color.r << ", " << color.g << ", "
+              << color.b << ", " << color.a << ")\n";
   }
 }
 

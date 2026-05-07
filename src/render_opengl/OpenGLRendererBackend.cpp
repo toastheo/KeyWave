@@ -43,5 +43,9 @@ void OpenGLRendererBackend::beginFrame() {
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
+void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands) {
+  (void)commands;
+}
+
 void OpenGLRendererBackend::endFrame() {
 }

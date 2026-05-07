@@ -76,6 +76,8 @@ add_library(keywave_pianoroll STATIC
     src/pianoroll/PianoRollTypes.hpp
     src/pianoroll/PianoRollLayout.hpp
     src/pianoroll/PianoRollLayout.cpp
+    src/pianoroll/PianoRollRenderAdapter.hpp
+    src/pianoroll/PianoRollRenderAdapter.cpp
 )
 
 target_include_directories(keywave_pianoroll
@@ -95,6 +97,7 @@ add_executable(KeyWave
     src/platform/Window.hpp
     src/platform/Window.cpp
     src/render/RendererBackend.hpp
+    src/render/RenderCommand.hpp
     src/render/RenderTypes.hpp
     src/render_opengl/OpenGLRendererBackend.hpp
     src/render_opengl/OpenGLRendererBackend.cpp
@@ -135,6 +138,7 @@ add_executable(KeyWaveMidiTests
     tests/midi/MidiFileLoaderTests.cpp
     tests/midi/MidiTimelineQueryTests.cpp
     tests/pianoroll/PianoRollLayoutTests.cpp
+    tests/pianoroll/PianoRollRenderAdapterTests.cpp
 )
 
 target_link_libraries(KeyWaveMidiTests
