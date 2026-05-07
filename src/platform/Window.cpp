@@ -50,7 +50,7 @@ bool Window::initialize(const WindowConfig& config)
 #endif
 
   GLFWwindow* window =
-      glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
+    glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
   if (window == nullptr) {
     printGlfwError("Failed to create the KeyWave window.");
     shutdown();

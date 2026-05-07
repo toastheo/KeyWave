@@ -11,12 +11,12 @@ QueriedNote makeQueriedNote(const int pitch,
                             const double durationSeconds)
 {
   return QueriedNote{
-      .note =
-          Note{
-              .pitch = pitch,
-              .startSeconds = startSeconds,
-              .durationSeconds = durationSeconds,
-          },
+    .note =
+      Note{
+        .pitch = pitch,
+        .startSeconds = startSeconds,
+        .durationSeconds = durationSeconds,
+      },
   };
 }
 
@@ -24,17 +24,17 @@ TEST_CASE("PianoRollLayout maps queried notes into normalized viewport coordinat
           "[pianoroll][layout]")
 {
   const std::vector queriedNotes{
-      makeQueriedNote(60, -1.0, 3.0),
-      makeQueriedNote(62, 3.0, 3.0),
+    makeQueriedNote(60, -1.0, 3.0),
+    makeQueriedNote(62, 3.0, 3.0),
   };
 
   const auto result =
-      PianoRollLayout::build(queriedNotes,
-                             PianoRollLayoutViewport{
-                                 .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 4.0},
-                                 .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
-                             },
-                             PianoRollLayoutConfig{.noteHeight = 1.0, .noteVerticalGap = 0.25});
+    PianoRollLayout::build(queriedNotes,
+                           PianoRollLayoutViewport{
+                             .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 4.0},
+                             .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
+                           },
+                           PianoRollLayoutConfig{.noteHeight = 1.0, .noteVerticalGap = 0.25});
 
   REQUIRE(result.notes.size() == 2);
   CHECK(result.pitchLaneCount == 3);
@@ -66,17 +66,17 @@ TEST_CASE("PianoRollLayout maps queried notes into normalized viewport coordinat
 TEST_CASE("PianoRollLayout skips notes outside the clipped visible duration", "[pianoroll][layout]")
 {
   const std::vector queriedNotes{
-      makeQueriedNote(60, -2.0, 1.0),
-      makeQueriedNote(61, 1.0, 1.0),
-      makeQueriedNote(62, 3.0, 1.0),
+    makeQueriedNote(60, -2.0, 1.0),
+    makeQueriedNote(61, 1.0, 1.0),
+    makeQueriedNote(62, 3.0, 1.0),
   };
 
   const auto result =
-      PianoRollLayout::build(queriedNotes,
-                             PianoRollLayoutViewport{
-                                 .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 3.0},
-                                 .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
-                             });
+    PianoRollLayout::build(queriedNotes,
+                           PianoRollLayoutViewport{
+                             .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 3.0},
+                             .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
+                           });
 
   REQUIRE(result.notes.size() == 1);
   CHECK(result.notes[0].note.pitch == 61);
@@ -86,16 +86,16 @@ TEST_CASE("PianoRollLayout clamps invalid vertical gaps without removing notes",
           "[pianoroll][layout]")
 {
   const std::vector queriedNotes{
-      makeQueriedNote(60, 0.0, 1.0),
+    makeQueriedNote(60, 0.0, 1.0),
   };
 
   const auto result =
-      PianoRollLayout::build(queriedNotes,
-                             PianoRollLayoutViewport{
-                                 .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 2.0},
-                                 .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
-                             },
-                             PianoRollLayoutConfig{.noteHeight = 1.0, .noteVerticalGap = 5.0});
+    PianoRollLayout::build(queriedNotes,
+                           PianoRollLayoutViewport{
+                             .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 2.0},
+                             .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
+                           },
+                           PianoRollLayoutConfig{.noteHeight = 1.0, .noteVerticalGap = 5.0});
 
   REQUIRE(result.notes.size() == 1);
   CHECK(result.notes[0].height > 0.0);
@@ -105,26 +105,26 @@ TEST_CASE("PianoRollLayout clamps invalid vertical gaps without removing notes",
 TEST_CASE("PianoRollLayout returns empty results for invalid viewports", "[pianoroll][layout]")
 {
   const std::vector queriedNotes{
-      makeQueriedNote(60, 0.0, 1.0),
+    makeQueriedNote(60, 0.0, 1.0),
   };
 
   constexpr PianoRollLayout layout;
 
   CHECK(layout
-            .build(queriedNotes,
-                   PianoRollLayoutViewport{
-                       .timeRange = TimeRange{.startSeconds = 1.0, .endSeconds = 1.0},
-                       .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
-                   })
-            .empty());
+          .build(queriedNotes,
+                 PianoRollLayoutViewport{
+                   .timeRange = TimeRange{.startSeconds = 1.0, .endSeconds = 1.0},
+                   .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
+                 })
+          .empty());
 
   CHECK(layout
-            .build(queriedNotes,
-                   PianoRollLayoutViewport{
-                       .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 1.0},
-                       .pitchRange = PitchRange{.minPitch = 61, .maxPitch = 60},
-                   })
-            .empty());
+          .build(queriedNotes,
+                 PianoRollLayoutViewport{
+                   .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 1.0},
+                   .pitchRange = PitchRange{.minPitch = 61, .maxPitch = 60},
+                 })
+          .empty());
 }
 
 } // namespace

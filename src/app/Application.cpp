@@ -38,12 +38,12 @@ void loadStartupMidiIfPresent()
 
   const MidiTimelineQuery query(*timeline);
   constexpr auto viewport = PianoRollLayoutViewport{
-      .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 10.0},
-      .pitchRange = PitchRange{.minPitch = 21, .maxPitch = 108},
+    .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 10.0},
+    .pitchRange = PitchRange{.minPitch = 21, .maxPitch = 108},
   };
   const auto notes = query.findNotes(TimelineViewport{
-      .timeRange = viewport.timeRange,
-      .pitchRange = viewport.pitchRange,
+    .timeRange = viewport.timeRange,
+    .pitchRange = viewport.pitchRange,
   });
 
   const auto layoutResult = PianoRollLayout::build(notes, viewport);
@@ -79,9 +79,9 @@ bool Application::initialize()
   loadStartupMidiIfPresent();
 
   const WindowConfig windowConfig{
-      .title = "KeyWave",
-      .width = 1280,
-      .height = 720,
+    .title = "KeyWave",
+    .width = 1280,
+    .height = 720,
   };
 
   if (!m_window.initialize(windowConfig)) {
@@ -89,8 +89,9 @@ bool Application::initialize()
     return false;
   }
 
-  m_renderer = std::make_unique<OpenGLRendererBackend>(
-      Window::nativeProcAddressLoader(), Color{.r = 0.025f, .g = 0.03f, .b = 0.04f, .a = 1.0f});
+  m_renderer =
+    std::make_unique<OpenGLRendererBackend>(Window::nativeProcAddressLoader(),
+                                            Color{.r = 0.025f, .g = 0.03f, .b = 0.04f, .a = 1.0f});
 
   if (!m_renderer->initialize()) {
     std::cerr << "Application initialization failed: renderer could not be initialized.\n";

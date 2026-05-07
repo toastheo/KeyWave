@@ -84,11 +84,12 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
     }
 
     result.push_back(QueriedNote{
-        .note = note,
-        .startsBeforeRange =
-            note.startSeconds<viewport.timeRange.startSeconds,
-                              .endsAfterRange = note.startSeconds + note.durationSeconds> viewport
-                .timeRange.endSeconds,
+      .note = note,
+      .startsBeforeRange =
+        note
+          .startSeconds<viewport.timeRange.startSeconds,
+                        .endsAfterRange = note.startSeconds + note.durationSeconds> viewport
+          .timeRange.endSeconds,
     });
   }
 
@@ -110,11 +111,11 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange
     }
 
     result.push_back(QueriedNote{
-        .note = note,
-        .startsBeforeRange =
-            note.startSeconds<range.startSeconds,
-                              .endsAfterRange = note.startSeconds + note.durationSeconds> range
-                .endSeconds,
+      .note = note,
+      .startsBeforeRange =
+        note
+          .startSeconds<range.startSeconds,
+                        .endsAfterRange = note.startSeconds + note.durationSeconds> range.endSeconds,
     });
   }
 
@@ -136,9 +137,9 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRan
     }
 
     result.push_back(QueriedNote{
-        .note = note,
-        .startsBeforeRange = false,
-        .endsAfterRange = false,
+      .note = note,
+      .startsBeforeRange = false,
+      .endsAfterRange = false,
     });
   }
 

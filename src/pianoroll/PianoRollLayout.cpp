@@ -39,7 +39,7 @@ bool isValidPitchRange(const PitchRange& range)
 int pitchLaneCountForRange(const PitchRange& range)
 {
   const auto laneCount =
-      static_cast<long long>(range.maxPitch) - static_cast<long long>(range.minPitch) + 1;
+    static_cast<long long>(range.maxPitch) - static_cast<long long>(range.minPitch) + 1;
   if (laneCount <= 0 || laneCount > std::numeric_limits<int>::max()) {
     return 0;
   }
@@ -81,8 +81,8 @@ PianoRollLayoutResult PianoRollLayout::build(const std::vector<QueriedNote>& que
                                              const PianoRollLayoutConfig& config)
 {
   PianoRollLayoutResult result{
-      .timeRange = viewport.timeRange,
-      .pitchRange = viewport.pitchRange,
+    .timeRange = viewport.timeRange,
+    .pitchRange = viewport.pitchRange,
   };
 
   if (!isValidTimeRange(viewport.timeRange) || !isValidPitchRange(viewport.pitchRange)) {
@@ -123,15 +123,16 @@ PianoRollLayoutResult PianoRollLayout::build(const std::vector<QueriedNote>& que
     }
 
     result.notes.push_back(PianoRollNoteLayout{
-        .note = note,
-        .x = (visibleStart - viewport.timeRange.startSeconds) / viewportDuration,
-        .y = static_cast<double>(pitchLane),
-        .width = visibleDuration / viewportDuration,
-        .height = height,
-        .visibleStartSeconds = visibleStart,
-        .visibleEndSeconds = visibleEnd,
-        .clippedLeft = note.startSeconds<viewport.timeRange.startSeconds, .clippedRight = noteEnd>
-                           viewport.timeRange.endSeconds,
+      .note = note,
+      .x = (visibleStart - viewport.timeRange.startSeconds) / viewportDuration,
+      .y = static_cast<double>(pitchLane),
+      .width = visibleDuration / viewportDuration,
+      .height = height,
+      .visibleStartSeconds = visibleStart,
+      .visibleEndSeconds = visibleEnd,
+      .clippedLeft =
+        note.startSeconds<viewport.timeRange.startSeconds, .clippedRight = noteEnd> viewport
+          .timeRange.endSeconds,
     });
   }
 
