@@ -72,6 +72,22 @@ target_link_libraries(keywave_midi
         midifile
 )
 
+add_library(keywave_pianoroll STATIC
+    src/pianoroll/PianoRollTypes.hpp
+    src/pianoroll/PianoRollLayout.hpp
+    src/pianoroll/PianoRollLayout.cpp
+)
+
+target_include_directories(keywave_pianoroll
+    PUBLIC
+        src
+)
+
+target_link_libraries(keywave_pianoroll
+    PUBLIC
+        keywave_midi
+)
+
 add_executable(KeyWave
     src/main.cpp
     src/app/Application.hpp
@@ -97,6 +113,7 @@ target_compile_definitions(KeyWave
 target_link_libraries(KeyWave
     PRIVATE
         keywave_midi
+        keywave_pianoroll
         glad
         glfw
         OpenGL::GL
@@ -117,12 +134,14 @@ target_include_directories(keywave_test_support
 add_executable(KeyWaveMidiTests
     tests/midi/MidiFileLoaderTests.cpp
     tests/midi/MidiTimelineQueryTests.cpp
+    tests/pianoroll/PianoRollLayoutTests.cpp
 )
 
 target_link_libraries(KeyWaveMidiTests
     PRIVATE
         Catch2::Catch2WithMain
         keywave_midi
+        keywave_pianoroll
         keywave_test_support
 )
 

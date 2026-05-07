@@ -7,6 +7,7 @@
 
 #include "midi/MidiFileLoader.hpp"
 #include "midi/MidiTimelineQuery.hpp"
+#include "pianoroll/PianoRollLayout.hpp"
 #include "render/RenderTypes.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
@@ -36,24 +37,33 @@ void loadStartupMidiIfPresent()
   }
 
   const MidiTimelineQuery query(*timeline);
-  const auto notes = query.findNotes(TimelineViewport{
+  constexpr auto viewport = PianoRollLayoutViewport{
       .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 10.0},
       .pitchRange = PitchRange{.minPitch = 21, .maxPitch = 108},
+  };
+  const auto notes = query.findNotes(TimelineViewport{
+      .timeRange = viewport.timeRange,
+      .pitchRange = viewport.pitchRange,
   });
 
-  std::cout << "MIDI startup query\n";
-  std::cout << "  queried notes: " << notes.size() << '\n';
+  const auto layoutResult = PianoRollLayout::build(notes, viewport);
 
-  const auto previewCount = std::min<std::size_t>(notes.size(), 5);
+  std::cout << "MIDI startup piano-roll layout\n";
+  std::cout << "  queried notes: " << notes.size() << '\n';
+  std::cout << "  layout notes: " << layoutResult.notes.size() << '\n';
+  std::cout << "  pitch lane count: " << layoutResult.pitchLaneCount << '\n';
+  std::cout << "  contentWidth: " << layoutResult.contentWidth << '\n';
+  std::cout << "  contentHeight: " << layoutResult.contentHeight << '\n';
+
+  const auto previewCount = std::min<std::size_t>(layoutResult.notes.size(), 5);
   for (std::size_t index = 0; index < previewCount; ++index) {
-    const auto& queriedNote = notes[index];
-    const auto& note = queriedNote.note;
-    std::cout << "  queriedNote[" << index << "]:"
-              << " pitch=" << note.pitch << " start=" << note.startSeconds
-              << " duration=" << note.durationSeconds << " channel=" << note.channel
-              << " track=" << note.track
-              << " startsBeforeRange=" << (queriedNote.startsBeforeRange ? "true" : "false")
-              << " endsAfterRange=" << (queriedNote.endsAfterRange ? "true" : "false") << '\n';
+    const auto& noteLayout = layoutResult.notes[index];
+    std::cout << "  layoutNote[" << index << "]:"
+              << " pitch=" << noteLayout.note.pitch << " x=" << noteLayout.x
+              << " y=" << noteLayout.y << " width=" << noteLayout.width
+              << " height=" << noteLayout.height
+              << " clippedLeft=" << (noteLayout.clippedLeft ? "true" : "false")
+              << " clippedRight=" << (noteLayout.clippedRight ? "true" : "false") << '\n';
   }
 }
 
