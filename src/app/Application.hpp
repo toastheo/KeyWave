@@ -6,6 +6,7 @@
 #include "platform/Window.hpp"
 #include "render/RenderCommand.hpp"
 #include "render/RendererBackend.hpp"
+#include "render/RendererView.hpp"
 
 class Application
 {
@@ -24,5 +25,6 @@ private:
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
   std::vector<RenderCommand> m_startupRenderCommands;
+  RendererView m_startupRendererView;
   bool m_initialized = false;
 };

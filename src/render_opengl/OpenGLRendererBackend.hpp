@@ -5,6 +5,7 @@
 #include "platform/Window.hpp"
 #include "render/RenderTypes.hpp"
 #include "render/RendererBackend.hpp"
+#include "render/RendererView.hpp"
 #include "render_opengl/OpenGLShader.hpp"
 
 class OpenGLRendererBackend final : public RendererBackend
@@ -18,6 +19,7 @@ public:
 
   bool initialize() override;
   void shutdown() override;
+  void setView(const RendererView& view) override;
   void beginFrame() override;
   void submit(const std::vector<RenderCommand>& commands) override;
   void endFrame() override;
@@ -35,7 +37,7 @@ private:
 
   NativeProcAddressLoader m_procAddressLoader = nullptr;
   Color m_clearColor;
-  Rect m_worldViewRect{.x = 0.0, .y = 0.0, .width = 10.0, .height = 88.0};
+  RendererView m_view;
   OpenGLShader m_rectShader;
   unsigned int m_rectVertexArray = 0;
   unsigned int m_rectVertexBuffer = 0;

@@ -99,6 +99,8 @@ add_executable(KeyWave
     src/render/RendererBackend.hpp
     src/render/RenderCommand.hpp
     src/render/RenderTypes.hpp
+    src/render/RendererView.hpp
+    src/render/RendererView.cpp
     src/render_opengl/OpenGLRendererBackend.hpp
     src/render_opengl/OpenGLRendererBackend.cpp
     src/render_opengl/OpenGLShader.hpp
@@ -141,6 +143,8 @@ add_executable(KeyWaveMidiTests
     tests/midi/MidiTimelineQueryTests.cpp
     tests/pianoroll/PianoRollLayoutTests.cpp
     tests/pianoroll/PianoRollRenderAdapterTests.cpp
+    tests/render/RendererViewTests.cpp
+    src/render/RendererView.cpp
 )
 
 target_link_libraries(KeyWaveMidiTests

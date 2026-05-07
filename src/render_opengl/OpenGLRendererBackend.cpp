@@ -42,16 +42,6 @@ bool isValidRect(const Rect& rect)
   return rect.width > 0.0 && rect.height > 0.0;
 }
 
-float mapToClipX(const double x, const Rect& worldViewRect)
-{
-  return static_cast<float>(((x - worldViewRect.x) / worldViewRect.width * 2.0) - 1.0);
-}
-
-float mapToClipY(const double y, const Rect& worldViewRect)
-{
-  return static_cast<float>(((y - worldViewRect.y) / worldViewRect.height * 2.0) - 1.0);
-}
-
 } // namespace
 
 OpenGLRendererBackend::OpenGLRendererBackend(const NativeProcAddressLoader procAddressLoader,
@@ -152,6 +142,19 @@ void OpenGLRendererBackend::shutdown()
   m_initialized = false;
 }
 
+void OpenGLRendererBackend::setView(const RendererView& view)
+{
+  if (!isValid(view.visibleWorldRect)) {
+    std::cerr << "OpenGL renderer ignored invalid visible world rectangle"
+              << " (x=" << view.visibleWorldRect.x << ", y=" << view.visibleWorldRect.y
+              << ", width=" << view.visibleWorldRect.width
+              << ", height=" << view.visibleWorldRect.height << ").\n";
+    return;
+  }
+
+  m_view = view;
+}
+
 void OpenGLRendererBackend::beginFrame()
 {
   if (!m_initialized) {
@@ -181,19 +184,40 @@ void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands)
       continue;
     }
 
-    const auto left = mapToClipX(rect.x, m_worldViewRect);
-    const auto right = mapToClipX(rect.x + rect.width, m_worldViewRect);
-    const auto bottom = mapToClipY(rect.y, m_worldViewRect);
-    const auto top = mapToClipY(rect.y + rect.height, m_worldViewRect);
+    const auto bottomLeftClip =
+      worldToClip(Vec2{.x = rect.x, .y = rect.y}, m_view.visibleWorldRect);
+    const auto bottomRightClip =
+      worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y}, m_view.visibleWorldRect);
+    const auto topLeftClip =
+      worldToClip(Vec2{.x = rect.x, .y = rect.y + rect.height}, m_view.visibleWorldRect);
+    const auto topRightClip = worldToClip(Vec2{.x = rect.x + rect.width,
+                                               .y = rect.y + rect.height},
+                                          m_view.visibleWorldRect);
 
-    const auto bottomLeft =
-      RectVertex{.x = left, .y = bottom, .r = color.r, .g = color.g, .b = color.b, .a = color.a};
-    const auto bottomRight =
-      RectVertex{.x = right, .y = bottom, .r = color.r, .g = color.g, .b = color.b, .a = color.a};
-    const auto topLeft =
-      RectVertex{.x = left, .y = top, .r = color.r, .g = color.g, .b = color.b, .a = color.a};
-    const auto topRight =
-      RectVertex{.x = right, .y = top, .r = color.r, .g = color.g, .b = color.b, .a = color.a};
+    const auto bottomLeft = RectVertex{.x = static_cast<float>(bottomLeftClip.x),
+                                       .y = static_cast<float>(bottomLeftClip.y),
+                                       .r = color.r,
+                                       .g = color.g,
+                                       .b = color.b,
+                                       .a = color.a};
+    const auto bottomRight = RectVertex{.x = static_cast<float>(bottomRightClip.x),
+                                        .y = static_cast<float>(bottomRightClip.y),
+                                        .r = color.r,
+                                        .g = color.g,
+                                        .b = color.b,
+                                        .a = color.a};
+    const auto topLeft = RectVertex{.x = static_cast<float>(topLeftClip.x),
+                                    .y = static_cast<float>(topLeftClip.y),
+                                    .r = color.r,
+                                    .g = color.g,
+                                    .b = color.b,
+                                    .a = color.a};
+    const auto topRight = RectVertex{.x = static_cast<float>(topRightClip.x),
+                                     .y = static_cast<float>(topRightClip.y),
+                                     .r = color.r,
+                                     .g = color.g,
+                                     .b = color.b,
+                                     .a = color.a};
 
     m_rectVertices.push_back(bottomLeft);
     m_rectVertices.push_back(bottomRight);

@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <utility>
 #include <variant>
 
 #include "midi/MidiFileLoader.hpp"
@@ -11,10 +12,17 @@
 #include "pianoroll/PianoRollLayout.hpp"
 #include "pianoroll/PianoRollRenderAdapter.hpp"
 #include "render/RenderCommand.hpp"
+#include "render/RendererView.hpp"
 #include "render/RenderTypes.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
 namespace {
+
+struct StartupRenderScene
+{
+  std::vector<RenderCommand> commands;
+  RendererView view;
+};
 
 std::filesystem::path testMidiPath()
 {
@@ -25,7 +33,29 @@ std::filesystem::path testMidiPath()
 #endif
 }
 
-std::vector<RenderCommand> loadStartupMidiIfPresent()
+RendererView rendererViewForLayout(const PianoRollLayoutResult& layoutResult)
+{
+  const RendererView view{
+    .visibleWorldRect =
+      WorldRect{
+        .x = 0.0,
+        .y = 0.0,
+        .width = layoutResult.contentWidth,
+        .height = layoutResult.contentHeight,
+      },
+  };
+
+  if (!isValid(view.visibleWorldRect)) {
+    std::cerr << "Using default renderer view because the piano-roll layout size is invalid"
+              << " (contentWidth=" << layoutResult.contentWidth
+              << ", contentHeight=" << layoutResult.contentHeight << ").\n";
+    return RendererView{};
+  }
+
+  return view;
+}
+
+StartupRenderScene loadStartupMidiIfPresent()
 {
   const auto midiPath = testMidiPath();
   if (!std::filesystem::exists(midiPath)) {
@@ -51,6 +81,7 @@ std::vector<RenderCommand> loadStartupMidiIfPresent()
 
   const auto layoutResult = PianoRollLayout::build(notes, viewport);
   const auto renderCommands = PianoRollRenderAdapter::buildCommands(layoutResult);
+  const auto rendererView = rendererViewForLayout(layoutResult);
 
   std::cout << "MIDI startup piano-roll layout\n";
   std::cout << "  queried notes: " << notes.size() << '\n';
@@ -73,7 +104,10 @@ std::vector<RenderCommand> loadStartupMidiIfPresent()
               << color.b << ", " << color.a << ")\n";
   }
 
-  return renderCommands;
+  return StartupRenderScene{
+    .commands = renderCommands,
+    .view = rendererView,
+  };
 }
 
 } // namespace
@@ -85,7 +119,9 @@ Application::~Application()
 
 bool Application::initialize()
 {
-  m_startupRenderCommands = loadStartupMidiIfPresent();
+  auto startupScene = loadStartupMidiIfPresent();
+  m_startupRenderCommands = std::move(startupScene.commands);
+  m_startupRendererView = startupScene.view;
 
   const WindowConfig windowConfig{
     .title = "KeyWave",
@@ -108,6 +144,8 @@ bool Application::initialize()
     m_window.shutdown();
     return false;
   }
+
+  m_renderer->setView(m_startupRendererView);
 
   m_initialized = true;
   return true;
