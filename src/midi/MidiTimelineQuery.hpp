@@ -11,12 +11,6 @@ struct TimeRange
   double endSeconds = 0.0;
 };
 
-struct PitchRange
-{
-  int minPitch = 0;
-  int maxPitch = 0;
-};
-
 struct TimelineViewport
 {
   TimeRange timeRange;

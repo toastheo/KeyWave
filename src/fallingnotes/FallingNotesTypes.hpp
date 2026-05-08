@@ -13,12 +13,6 @@ struct FallingNotesViewport
   double visiblePastSeconds = 0.0;
 };
 
-struct FallingNotesLayoutConfig
-{
-  double laneWidth = 1.0;
-  double noteHorizontalGap = 0.08;
-};
-
 struct FallingNoteLayout
 {
   Note note;

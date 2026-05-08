@@ -72,6 +72,26 @@ target_link_libraries(keywave_midi
         midifile
 )
 
+add_library(keywave_keyboard STATIC
+    src/keyboard/KeyboardTypes.hpp
+    src/keyboard/KeyboardGeometry.hpp
+    src/keyboard/KeyboardGeometry.cpp
+    src/keyboard/KeyboardLayout.hpp
+    src/keyboard/KeyboardLayout.cpp
+    src/keyboard/KeyboardRenderAdapter.hpp
+    src/keyboard/KeyboardRenderAdapter.cpp
+)
+
+target_include_directories(keywave_keyboard
+    PUBLIC
+        src
+)
+
+target_link_libraries(keywave_keyboard
+    PUBLIC
+        keywave_midi
+)
+
 add_library(keywave_fallingnotes STATIC
     src/fallingnotes/FallingNotesTypes.hpp
     src/fallingnotes/FallingNotesLayout.hpp
@@ -89,6 +109,7 @@ target_include_directories(keywave_fallingnotes
 
 target_link_libraries(keywave_fallingnotes
     PUBLIC
+        keywave_keyboard
         keywave_midi
 )
 
@@ -155,6 +176,9 @@ add_executable(KeyWaveMidiTests
     tests/app/AppConfigTests.cpp
     tests/midi/MidiFileLoaderTests.cpp
     tests/midi/MidiTimelineQueryTests.cpp
+    tests/keyboard/KeyboardGeometryTests.cpp
+    tests/keyboard/KeyboardLayoutTests.cpp
+    tests/keyboard/KeyboardRenderAdapterTests.cpp
     tests/fallingnotes/FallingNotesLayoutTests.cpp
     tests/fallingnotes/FallingNotesRenderAdapterTests.cpp
     tests/fallingnotes/FallingNotesSceneBuilderTests.cpp

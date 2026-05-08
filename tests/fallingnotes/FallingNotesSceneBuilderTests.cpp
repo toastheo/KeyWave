@@ -9,11 +9,15 @@
 
 namespace {
 
-const DrawRectCommand& onlyRect(const RenderScene& scene)
+std::vector<DrawRectCommand> rectsForScene(const RenderScene& scene)
 {
-  REQUIRE(scene.commands.size() == 1);
-  REQUIRE(std::holds_alternative<DrawRectCommand>(scene.commands.front()));
-  return std::get<DrawRectCommand>(scene.commands.front());
+  std::vector<DrawRectCommand> rects;
+  for (const auto& command : scene.commands) {
+    if (std::holds_alternative<DrawRectCommand>(command)) {
+      rects.push_back(std::get<DrawRectCommand>(command));
+    }
+  }
+  return rects;
 }
 
 TEST_CASE("FallingNotesSceneBuilder rebuilds note positions for the current playback time",
@@ -26,12 +30,18 @@ TEST_CASE("FallingNotesSceneBuilder rebuilds note positions for the current play
   const auto laterScene = FallingNotesSceneBuilder::build(timeline, 1.5);
 
   CHECK(firstScene.view.visibleWorldRect.x == Catch::Approx(0.0));
-  CHECK(firstScene.view.visibleWorldRect.y == Catch::Approx(0.0));
-  CHECK(firstScene.view.visibleWorldRect.width == Catch::Approx(88.0));
-  CHECK(firstScene.view.visibleWorldRect.height == Catch::Approx(10.0));
+  CHECK(firstScene.view.visibleWorldRect.y == Catch::Approx(-1.0));
+  CHECK(firstScene.view.visibleWorldRect.width == Catch::Approx(52.0));
+  CHECK(firstScene.view.visibleWorldRect.height == Catch::Approx(11.0));
 
-  CHECK(onlyRect(firstScene).rect.y == Catch::Approx(2.0));
-  CHECK(onlyRect(laterScene).rect.y == Catch::Approx(0.5));
+  const auto firstRects = rectsForScene(firstScene);
+  const auto laterRects = rectsForScene(laterScene);
+  REQUIRE_FALSE(firstRects.empty());
+  REQUIRE_FALSE(laterRects.empty());
+  CHECK(firstRects.front().rect.y == Catch::Approx(2.0));
+  CHECK(laterRects.front().rect.y == Catch::Approx(0.5));
+  CHECK(firstRects.back().rect.y == Catch::Approx(0.0));
+  CHECK(firstRects.back().rect.width == Catch::Approx(52.0));
 }
 
 TEST_CASE("FallingNotesSceneBuilder returns a default scene when layout input is invalid",
@@ -43,10 +53,9 @@ TEST_CASE("FallingNotesSceneBuilder returns a default scene when layout input is
   const auto scene =
     FallingNotesSceneBuilder::build(timeline, std::numeric_limits<double>::quiet_NaN());
 
-  CHECK(scene.commands.empty());
+  CHECK_FALSE(scene.commands.empty());
   CHECK(scene.view.visibleWorldRect.width == Catch::Approx(kDefaultVisibleWorldRect.width));
   CHECK(scene.view.visibleWorldRect.height == Catch::Approx(kDefaultVisibleWorldRect.height));
 }
 
 } // namespace
-

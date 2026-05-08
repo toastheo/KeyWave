@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "fallingnotes/FallingNotesLayout.hpp"
+#include "keyboard/KeyboardGeometry.hpp"
 
 namespace {
 
@@ -20,7 +21,7 @@ QueriedNote makeQueriedNote(const int pitch,
   };
 }
 
-TEST_CASE("FallingNotesLayout maps pitch horizontally and time vertically from the hit line",
+TEST_CASE("FallingNotesLayout maps keyboard pitch rectangles and time from the hit line",
           "[fallingnotes][layout]")
 {
   const std::vector queriedNotes{
@@ -36,10 +37,9 @@ TEST_CASE("FallingNotesLayout maps pitch horizontally and time vertically from t
                                 .lookAheadSeconds = 10.0,
                                 .visiblePastSeconds = 2.0,
                               },
-                              FallingNotesLayoutConfig{
-                                .laneWidth = 2.0,
-                                .noteHorizontalGap = 0.25,
-                              });
+                              KeyboardGeometry(KeyboardLayoutConfig{
+                                .pitchRange = PitchRange{.minPitch = 21, .maxPitch = 23},
+                              }));
 
   REQUIRE(result.notes.size() == 2);
   CHECK(result.pitchRange.minPitch == 21);
@@ -47,15 +47,15 @@ TEST_CASE("FallingNotesLayout maps pitch horizontally and time vertically from t
   CHECK(result.currentTimeSeconds == Catch::Approx(1.0));
   CHECK(result.lookAheadSeconds == Catch::Approx(10.0));
   CHECK(result.visiblePastSeconds == Catch::Approx(2.0));
-  CHECK(result.pitchLaneCount == 3);
-  CHECK(result.contentWidth == Catch::Approx(6.0));
+  CHECK(result.pitchLaneCount == 2);
+  CHECK(result.contentWidth == Catch::Approx(2.0));
   CHECK(result.contentHeight == Catch::Approx(10.0));
   CHECK_FALSE(result.empty());
 
   CHECK(result.notes[0].note.pitch == 21);
-  CHECK(result.notes[0].x == Catch::Approx(0.0));
+  CHECK(result.notes[0].x == Catch::Approx(0.0075));
   CHECK(result.notes[0].y == Catch::Approx(-1.0));
-  CHECK(result.notes[0].width == Catch::Approx(1.75));
+  CHECK(result.notes[0].width == Catch::Approx(0.985));
   CHECK(result.notes[0].height == Catch::Approx(1.0));
   CHECK(result.notes[0].visibleStartOffsetSeconds == Catch::Approx(-1.0));
   CHECK(result.notes[0].visibleEndOffsetSeconds == Catch::Approx(0.0));
@@ -63,9 +63,9 @@ TEST_CASE("FallingNotesLayout maps pitch horizontally and time vertically from t
   CHECK_FALSE(result.notes[0].clippedTop);
 
   CHECK(result.notes[1].note.pitch == 23);
-  CHECK(result.notes[1].x == Catch::Approx(4.0));
+  CHECK(result.notes[1].x == Catch::Approx(1.0075));
   CHECK(result.notes[1].y == Catch::Approx(1.0));
-  CHECK(result.notes[1].width == Catch::Approx(1.75));
+  CHECK(result.notes[1].width == Catch::Approx(0.985));
   CHECK(result.notes[1].height == Catch::Approx(3.0));
   CHECK(result.notes[1].visibleStartOffsetSeconds == Catch::Approx(1.0));
   CHECK(result.notes[1].visibleEndOffsetSeconds == Catch::Approx(4.0));
@@ -88,7 +88,10 @@ TEST_CASE("FallingNotesLayout clips notes against visible past and lookahead",
                                 .currentTimeSeconds = 0.0,
                                 .lookAheadSeconds = 10.0,
                                 .visiblePastSeconds = 2.0,
-                              });
+                              },
+                              KeyboardGeometry(KeyboardLayoutConfig{
+                                .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 63},
+                              }));
 
   REQUIRE(result.notes.size() == 2);
 
@@ -112,45 +115,57 @@ TEST_CASE("FallingNotesLayout skips pitches outside the viewport range", "[falli
   const std::vector queriedNotes{
     makeQueriedNote(59, 1.0, 1.0),
     makeQueriedNote(60, 1.0, 1.0),
-    makeQueriedNote(62, 1.0, 1.0),
+    makeQueriedNote(63, 1.0, 1.0),
   };
 
   const auto result =
     FallingNotesLayout::build(queriedNotes,
                               FallingNotesViewport{
-                                .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 61},
+                                .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
                                 .currentTimeSeconds = 0.0,
                                 .lookAheadSeconds = 4.0,
                                 .visiblePastSeconds = 0.0,
-                              });
+                              },
+                              KeyboardGeometry(KeyboardLayoutConfig{
+                                .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
+                              }));
 
   REQUIRE(result.notes.size() == 1);
   CHECK(result.notes[0].note.pitch == 60);
 }
 
-TEST_CASE("FallingNotesLayout clamps horizontal gaps so notes keep positive width",
+TEST_CASE("FallingNotesLayout can use keyboard geometry for piano-aligned note widths",
           "[fallingnotes][layout]")
 {
   const std::vector queriedNotes{
     makeQueriedNote(60, 1.0, 1.0),
+    makeQueriedNote(61, 1.5, 1.0),
   };
+  const KeyboardGeometry geometry(KeyboardLayoutConfig{
+    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
+    .whiteKeyWidth = 2.0,
+    .blackKeyWidth = 1.0,
+    .whiteKeyGap = 0.2,
+  });
 
   const auto result =
     FallingNotesLayout::build(queriedNotes,
                               FallingNotesViewport{
-                                .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
+                                .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
                                 .currentTimeSeconds = 0.0,
                                 .lookAheadSeconds = 4.0,
                                 .visiblePastSeconds = 0.0,
                               },
-                              FallingNotesLayoutConfig{
-                                .laneWidth = 1.0,
-                                .noteHorizontalGap = 10.0,
-                              });
+                              geometry);
 
-  REQUIRE(result.notes.size() == 1);
-  CHECK(result.notes[0].width > 0.0);
-  CHECK(result.notes[0].width <= 1.0);
+  REQUIRE(result.notes.size() == 2);
+  CHECK(result.contentWidth == Catch::Approx(geometry.width()));
+  CHECK(result.notes[0].note.pitch == 60);
+  CHECK(result.notes[0].x == Catch::Approx(0.1));
+  CHECK(result.notes[0].width == Catch::Approx(1.8));
+  CHECK(result.notes[1].note.pitch == 61);
+  CHECK(result.notes[1].x == Catch::Approx(1.5));
+  CHECK(result.notes[1].width == Catch::Approx(1.0));
 }
 
 TEST_CASE("FallingNotesLayout returns empty results for invalid viewports",
@@ -167,7 +182,8 @@ TEST_CASE("FallingNotesLayout returns empty results for invalid viewports",
                    .currentTimeSeconds = 0.0,
                    .lookAheadSeconds = 4.0,
                    .visiblePastSeconds = 0.0,
-                 })
+                 },
+                 KeyboardGeometry{})
           .empty());
 
   CHECK(FallingNotesLayout{}
@@ -177,7 +193,8 @@ TEST_CASE("FallingNotesLayout returns empty results for invalid viewports",
                    .currentTimeSeconds = 0.0,
                    .lookAheadSeconds = 0.0,
                    .visiblePastSeconds = 0.0,
-                 })
+                 },
+                 KeyboardGeometry{})
           .empty());
 }
 
