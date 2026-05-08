@@ -176,6 +176,7 @@ void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands)
 
   for (const auto& command : commands) {
     if (!std::holds_alternative<DrawRectCommand>(command)) {
+      std::cerr << "NOT IMPLEMENTED YET!\n";
       continue;
     }
 
