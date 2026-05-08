@@ -27,10 +27,6 @@ bool intersectsHitLine(const FallingNoteLayout& noteLayout)
 
 Color colorForNote(const FallingNoteLayout& noteLayout, const FallingNotesRenderStyle& style)
 {
-  if (noteLayout.clippedBottom || noteLayout.clippedTop) {
-    return style.clippedNoteColor;
-  }
-
   if (intersectsHitLine(noteLayout)) {
     return style.activeNoteColor;
   }
