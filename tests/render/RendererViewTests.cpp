@@ -1,7 +1,10 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include "render/RenderCommand.hpp"
 #include "render/RendererView.hpp"
+
+namespace {
 
 TEST_CASE("RendererView provides a safe default visible world rectangle", "[render][view]")
 {
@@ -45,3 +48,27 @@ TEST_CASE("worldToClip maps a bottom-left world rectangle into OpenGL clip space
   CHECK(topRight.x == Catch::Approx(1.0));
   CHECK(topRight.y == Catch::Approx(1.0));
 }
+
+TEST_CASE("lineToPixelAlignedRect keeps vertical lines at least one framebuffer pixel wide",
+          "[render][view]")
+{
+  constexpr RendererView view{
+    .visibleWorldRect = WorldRect{.x = 0.0, .y = -1.0, .width = 52.0, .height = 11.0},
+  };
+  constexpr FramebufferSize framebufferSize{.width = 1040, .height = 550};
+  constexpr DrawLineCommand line{
+    .from = Vec2{.x = 1.01, .y = -1.0},
+    .to = Vec2{.x = 1.01, .y = 0.0},
+    .color = Color{},
+    .thickness = 1.0,
+  };
+
+  const auto rect = lineToPixelAlignedRect(line, view, framebufferSize);
+
+  CHECK(rect.x == Catch::Approx(1.0));
+  CHECK(rect.y == Catch::Approx(-1.0));
+  CHECK(rect.width / view.visibleWorldRect.width * framebufferSize.width == Catch::Approx(1.0));
+  CHECK(rect.height == Catch::Approx(1.0));
+}
+
+} // namespace

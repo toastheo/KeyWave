@@ -34,7 +34,7 @@ TEST_CASE("KeyboardRenderAdapter emits white keys, separators, black keys, then 
     .blackKeyColor = Color{.r = 0.1f, .g = 0.1f, .b = 0.1f, .a = 1.0f},
     .whiteKeySeparatorColor = Color{.r = 0.2f, .g = 0.2f, .b = 0.2f, .a = 1.0f},
     .hitLineColor = Color{.r = 0.3f, .g = 0.4f, .b = 0.5f, .a = 1.0f},
-    .separatorWidth = 0.02,
+    .separatorThicknessPixels = 1.0,
     .hitLineHeight = 0.04,
   };
 
@@ -44,8 +44,17 @@ TEST_CASE("KeyboardRenderAdapter emits white keys, separators, black keys, then 
   checkColor(rectAt(commands, 0).color, style.whiteKeyColor);
   checkColor(rectAt(commands, 1).color, style.whiteKeyColor);
   checkColor(rectAt(commands, 2).color, style.whiteKeyColor);
-  checkColor(rectAt(commands, 3).color, style.whiteKeySeparatorColor);
-  checkColor(rectAt(commands, 4).color, style.whiteKeySeparatorColor);
+  REQUIRE(std::holds_alternative<DrawLineCommand>(commands[3]));
+  REQUIRE(std::holds_alternative<DrawLineCommand>(commands[4]));
+  const auto& firstSeparator = std::get<DrawLineCommand>(commands[3]);
+  const auto& secondSeparator = std::get<DrawLineCommand>(commands[4]);
+  checkColor(firstSeparator.color, style.whiteKeySeparatorColor);
+  checkColor(secondSeparator.color, style.whiteKeySeparatorColor);
+  CHECK(firstSeparator.from.x == Catch::Approx(1.0));
+  CHECK(firstSeparator.to.x == Catch::Approx(1.0));
+  CHECK(firstSeparator.from.y == Catch::Approx(-layout.height));
+  CHECK(firstSeparator.to.y == Catch::Approx(0.0));
+  CHECK(firstSeparator.thickness == Catch::Approx(style.separatorThicknessPixels));
   checkColor(rectAt(commands, 5).color, style.blackKeyColor);
   checkColor(rectAt(commands, 6).color, style.blackKeyColor);
   checkColor(rectAt(commands, 7).color, style.hitLineColor);

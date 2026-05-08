@@ -41,18 +41,17 @@ std::vector<RenderCommand> KeyboardRenderAdapter::buildCommands(const KeyboardLa
   }
 
   if (style.includeSeparators && layout.whiteKeys.size() > 1) {
-    const auto separatorWidth = positiveOrZero(style.separatorWidth);
-    if (separatorWidth > 0.0) {
+    const auto separatorThicknessPixels = positiveOrZero(style.separatorThicknessPixels);
+    if (separatorThicknessPixels > 0.0) {
       for (auto index = std::size_t{0}; index + 1 < layout.whiteKeys.size(); ++index) {
         const auto& key = layout.whiteKeys[index];
-        appendRect(commands,
-                   Rect{
-                     .x = key.rect.x + key.rect.width - (separatorWidth * 0.5),
-                     .y = -layout.height,
-                     .width = separatorWidth,
-                     .height = layout.height,
-                   },
-                   style.whiteKeySeparatorColor);
+        const auto separatorX = key.rect.x + key.rect.width;
+        commands.emplace_back(DrawLineCommand{
+          .from = Vec2{.x = separatorX, .y = -layout.height},
+          .to = Vec2{.x = separatorX, .y = 0.0},
+          .color = style.whiteKeySeparatorColor,
+          .thickness = separatorThicknessPixels,
+        });
       }
     }
   }

@@ -2,6 +2,8 @@
 
 #include "render/RenderTypes.hpp"
 
+struct DrawLineCommand;
+
 struct WorldRect
 {
   double x = 0.0;
@@ -25,3 +27,6 @@ struct RendererView
 [[nodiscard]] bool isValid(const WorldRect& rect);
 [[nodiscard]] bool isValid(const FramebufferSize& size);
 [[nodiscard]] Vec2 worldToClip(const Vec2& world, const WorldRect& view);
+[[nodiscard]] Rect lineToPixelAlignedRect(const DrawLineCommand& line,
+                                          const RendererView& view,
+                                          const FramebufferSize& framebufferSize);

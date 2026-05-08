@@ -12,7 +12,7 @@ struct KeyboardRenderStyle
   Color whiteKeySeparatorColor{.r = 0.25f, .g = 0.25f, .b = 0.27f, .a = 1.0f};
   Color hitLineColor{.r = 0.2f, .g = 0.8f, .b = 1.0f, .a = 1.0f};
 
-  double separatorWidth = 0.015;
+  double separatorThicknessPixels = 1.0;
   double hitLineHeight = 0.035;
 
   bool includeSeparators = true;

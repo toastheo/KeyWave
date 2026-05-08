@@ -36,6 +36,8 @@ private:
     float a = 1.0f;
   };
 
+  void appendRectVertices(const Rect& rect, const Color& color);
+
   NativeProcAddressLoader m_procAddressLoader = nullptr;
   Color m_clearColor;
   FramebufferSize m_framebufferSize;

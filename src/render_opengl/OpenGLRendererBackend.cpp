@@ -162,6 +162,54 @@ void OpenGLRendererBackend::setView(const RendererView& view)
   m_view = view;
 }
 
+void OpenGLRendererBackend::appendRectVertices(const Rect& rect, const Color& color)
+{
+  if (!isValidRect(rect)) {
+    return;
+  }
+
+  const auto bottomLeftClip = worldToClip(Vec2{.x = rect.x, .y = rect.y}, m_view.visibleWorldRect);
+  const auto bottomRightClip =
+    worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y}, m_view.visibleWorldRect);
+  const auto topLeftClip =
+    worldToClip(Vec2{.x = rect.x, .y = rect.y + rect.height}, m_view.visibleWorldRect);
+  const auto topRightClip =
+    worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y + rect.height}, m_view.visibleWorldRect);
+
+  const auto bottomLeft = RectVertex{.x = static_cast<float>(bottomLeftClip.x),
+                                     .y = static_cast<float>(bottomLeftClip.y),
+                                     .r = color.r,
+                                     .g = color.g,
+                                     .b = color.b,
+                                     .a = color.a};
+  const auto bottomRight = RectVertex{.x = static_cast<float>(bottomRightClip.x),
+                                      .y = static_cast<float>(bottomRightClip.y),
+                                      .r = color.r,
+                                      .g = color.g,
+                                      .b = color.b,
+                                      .a = color.a};
+  const auto topLeft = RectVertex{.x = static_cast<float>(topLeftClip.x),
+                                  .y = static_cast<float>(topLeftClip.y),
+                                  .r = color.r,
+                                  .g = color.g,
+                                  .b = color.b,
+                                  .a = color.a};
+  const auto topRight = RectVertex{.x = static_cast<float>(topRightClip.x),
+                                   .y = static_cast<float>(topRightClip.y),
+                                   .r = color.r,
+                                   .g = color.g,
+                                   .b = color.b,
+                                   .a = color.a};
+
+  m_rectVertices.push_back(bottomLeft);
+  m_rectVertices.push_back(bottomRight);
+  m_rectVertices.push_back(topRight);
+
+  m_rectVertices.push_back(bottomLeft);
+  m_rectVertices.push_back(topRight);
+  m_rectVertices.push_back(topLeft);
+}
+
 void OpenGLRendererBackend::beginFrame()
 {
   if (!m_initialized) {
@@ -182,57 +230,16 @@ void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands)
   m_rectVertices.reserve(m_rectVertices.size() + commands.size() * 6U);
 
   for (const auto& command : commands) {
-    if (!std::holds_alternative<DrawRectCommand>(command)) {
-      std::cerr << "NOT IMPLEMENTED YET!\n";
+    if (std::holds_alternative<DrawRectCommand>(command)) {
+      const auto& [rect, color] = std::get<DrawRectCommand>(command);
+      appendRectVertices(rect, color);
       continue;
     }
 
-    const auto& [rect, color] = std::get<DrawRectCommand>(command);
-    if (!isValidRect(rect)) {
-      continue;
+    if (std::holds_alternative<DrawLineCommand>(command)) {
+      const auto& line = std::get<DrawLineCommand>(command);
+      appendRectVertices(lineToPixelAlignedRect(line, m_view, m_framebufferSize), line.color);
     }
-
-    const auto bottomLeftClip =
-      worldToClip(Vec2{.x = rect.x, .y = rect.y}, m_view.visibleWorldRect);
-    const auto bottomRightClip =
-      worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y}, m_view.visibleWorldRect);
-    const auto topLeftClip =
-      worldToClip(Vec2{.x = rect.x, .y = rect.y + rect.height}, m_view.visibleWorldRect);
-    const auto topRightClip = worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y + rect.height},
-                                          m_view.visibleWorldRect);
-
-    const auto bottomLeft = RectVertex{.x = static_cast<float>(bottomLeftClip.x),
-                                       .y = static_cast<float>(bottomLeftClip.y),
-                                       .r = color.r,
-                                       .g = color.g,
-                                       .b = color.b,
-                                       .a = color.a};
-    const auto bottomRight = RectVertex{.x = static_cast<float>(bottomRightClip.x),
-                                        .y = static_cast<float>(bottomRightClip.y),
-                                        .r = color.r,
-                                        .g = color.g,
-                                        .b = color.b,
-                                        .a = color.a};
-    const auto topLeft = RectVertex{.x = static_cast<float>(topLeftClip.x),
-                                    .y = static_cast<float>(topLeftClip.y),
-                                    .r = color.r,
-                                    .g = color.g,
-                                    .b = color.b,
-                                    .a = color.a};
-    const auto topRight = RectVertex{.x = static_cast<float>(topRightClip.x),
-                                     .y = static_cast<float>(topRightClip.y),
-                                     .r = color.r,
-                                     .g = color.g,
-                                     .b = color.b,
-                                     .a = color.a};
-
-    m_rectVertices.push_back(bottomLeft);
-    m_rectVertices.push_back(bottomRight);
-    m_rectVertices.push_back(topRight);
-
-    m_rectVertices.push_back(bottomLeft);
-    m_rectVertices.push_back(topRight);
-    m_rectVertices.push_back(topLeft);
   }
 }
 
