@@ -24,13 +24,20 @@ struct StartupRenderScene
   RendererView view;
 };
 
-std::filesystem::path testMidiPath()
+void printResolvedPathIfRelative(const std::filesystem::path& path)
 {
-#ifdef KEYWAVE_SOURCE_DIR
-  return std::filesystem::path(KEYWAVE_SOURCE_DIR) / "assets" / "test-midi" / "test.mid";
-#else
-  return std::filesystem::path("assets") / "test-midi" / "test.mid";
-#endif
+  if (!path.is_relative()) {
+    return;
+  }
+
+  std::error_code errorCode;
+  const auto absolutePath = std::filesystem::absolute(path, errorCode);
+  if (errorCode) {
+    std::cout << "  resolved absolute path unavailable: " << errorCode.message() << '\n';
+    return;
+  }
+
+  std::cout << "  resolved absolute path: " << absolutePath.string() << '\n';
 }
 
 RendererView rendererViewForLayout(const FallingNotesLayoutResult& layoutResult)
@@ -55,17 +62,39 @@ RendererView rendererViewForLayout(const FallingNotesLayoutResult& layoutResult)
   return view;
 }
 
-StartupRenderScene loadStartupMidiIfPresent()
+StartupRenderScene loadStartupMidiIfPresent(const AppConfig& config)
 {
-  const auto midiPath = testMidiPath();
-  if (!std::filesystem::exists(midiPath)) {
-    std::cout << "No test MIDI file found at " << midiPath.string()
-              << ". Place a .mid file there to test MIDI loading.\n";
+  if (!config.midiFilePath.has_value()) {
+    std::cout << "No MIDI file provided. Starting with an empty window.\n";
+    return {};
+  }
+
+  const auto& midiPath = *config.midiFilePath;
+  std::cout << "Loading MIDI file: " << midiPath.string() << '\n';
+  printResolvedPathIfRelative(midiPath);
+
+  std::error_code errorCode;
+  if (!std::filesystem::exists(midiPath, errorCode)) {
+    std::cerr << "Warning: MIDI file does not exist: " << midiPath.string();
+    if (errorCode) {
+      std::cerr << " (" << errorCode.message() << ')';
+    }
+    std::cerr << ". Opening an empty window.\n";
+    return {};
+  }
+
+  if (!std::filesystem::is_regular_file(midiPath, errorCode)) {
+    std::cerr << "Warning: MIDI path is not a regular file: " << midiPath.string();
+    if (errorCode) {
+      std::cerr << " (" << errorCode.message() << ')';
+    }
+    std::cerr << ". Opening an empty window.\n";
     return {};
   }
 
   const auto timeline = MidiFileLoader::loadFromFile(midiPath);
   if (!timeline.has_value()) {
+    std::cerr << "Warning: MIDI loading failed. Opening an empty window.\n";
     return {};
   }
 
@@ -121,6 +150,11 @@ StartupRenderScene loadStartupMidiIfPresent()
 
 } // namespace
 
+Application::Application(AppConfig config)
+  : m_config(std::move(config))
+{
+}
+
 Application::~Application()
 {
   shutdown();
@@ -128,7 +162,7 @@ Application::~Application()
 
 bool Application::initialize()
 {
-  auto startupScene = loadStartupMidiIfPresent();
+  auto startupScene = loadStartupMidiIfPresent(m_config);
   m_startupRenderCommands = std::move(startupScene.commands);
   m_startupRendererView = startupScene.view;
 

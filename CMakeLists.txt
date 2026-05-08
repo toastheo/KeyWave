@@ -92,6 +92,8 @@ target_link_libraries(keywave_fallingnotes
 
 add_executable(KeyWave
     src/main.cpp
+    src/app/AppConfig.hpp
+    src/app/AppConfig.cpp
     src/app/Application.hpp
     src/app/Application.cpp
     src/platform/Window.hpp
@@ -110,11 +112,6 @@ add_executable(KeyWave
 target_include_directories(KeyWave
     PRIVATE
         src
-)
-
-target_compile_definitions(KeyWave
-    PRIVATE
-        KEYWAVE_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 )
 
 target_link_libraries(KeyWave
@@ -139,11 +136,14 @@ target_include_directories(keywave_test_support
 )
 
 add_executable(KeyWaveMidiTests
+    tests/app/AppConfigTests.cpp
     tests/midi/MidiFileLoaderTests.cpp
     tests/midi/MidiTimelineQueryTests.cpp
     tests/fallingnotes/FallingNotesLayoutTests.cpp
     tests/fallingnotes/FallingNotesRenderAdapterTests.cpp
     tests/render/RendererViewTests.cpp
+    src/app/AppConfig.hpp
+    src/app/AppConfig.cpp
     src/render/RendererView.cpp
 )
 

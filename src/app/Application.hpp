@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "app/AppConfig.hpp"
 #include "platform/Window.hpp"
 #include "render/RenderCommand.hpp"
 #include "render/RendererBackend.hpp"
@@ -11,7 +12,7 @@
 class Application
 {
 public:
-  Application() = default;
+  explicit Application(AppConfig config = {});
   ~Application();
 
   Application(const Application&) = delete;
@@ -22,6 +23,7 @@ public:
   void shutdown();
 
 private:
+  AppConfig m_config;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
   std::vector<RenderCommand> m_startupRenderCommands;
