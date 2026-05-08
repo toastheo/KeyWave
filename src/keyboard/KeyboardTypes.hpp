@@ -24,10 +24,10 @@ struct KeyboardLayoutConfig
   PitchRange pitchRange{.minPitch = 21, .maxPitch = 108};
 
   double whiteKeyWidth = 1.0;
-  double whiteKeyHeight = 1.0;
+  double whiteKeyHeight = 2.5;
 
   double blackKeyWidth = 0.6;
-  double blackKeyHeight = 0.62;
+  double blackKeyHeight = 1.55;
 
   double whiteKeyGap = 0.015;
 };
