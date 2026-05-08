@@ -96,10 +96,13 @@ add_executable(KeyWave
     src/app/AppConfig.cpp
     src/app/Application.hpp
     src/app/Application.cpp
+    src/app/StartupSceneBuilder.hpp
+    src/app/StartupSceneBuilder.cpp
     src/platform/Window.hpp
     src/platform/Window.cpp
     src/render/RendererBackend.hpp
     src/render/RenderCommand.hpp
+    src/render/RenderScene.hpp
     src/render/RenderTypes.hpp
     src/render/RendererView.hpp
     src/render/RendererView.cpp

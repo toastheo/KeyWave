@@ -1,13 +1,11 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 
 #include "app/AppConfig.hpp"
 #include "platform/Window.hpp"
-#include "render/RenderCommand.hpp"
+#include "render/RenderScene.hpp"
 #include "render/RendererBackend.hpp"
-#include "render/RendererView.hpp"
 
 class Application
 {
@@ -26,7 +24,6 @@ private:
   AppConfig m_config;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
-  std::vector<RenderCommand> m_startupRenderCommands;
-  RendererView m_startupRendererView;
+  RenderScene m_startupScene;
   bool m_initialized = false;
 };
