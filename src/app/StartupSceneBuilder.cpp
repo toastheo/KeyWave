@@ -2,11 +2,9 @@
 
 #include <filesystem>
 #include <iostream>
+#include <utility>
 
-#include "fallingnotes/FallingNotesLayout.hpp"
-#include "fallingnotes/FallingNotesRenderAdapter.hpp"
 #include "midi/MidiFileLoader.hpp"
-#include "midi/MidiTimelineQuery.hpp"
 
 namespace {
 
@@ -26,29 +24,7 @@ void printResolvedPathIfRelative(const std::filesystem::path& path)
   std::cout << "  resolved absolute path: " << absolutePath.string() << '\n';
 }
 
-RendererView rendererViewForLayout(const FallingNotesLayoutResult& layoutResult)
-{
-  const RendererView view{
-    .visibleWorldRect =
-      WorldRect{
-        .x = 0.0,
-        .y = 0.0,
-        .width = layoutResult.contentWidth,
-        .height = layoutResult.contentHeight,
-      },
-  };
-
-  if (!isValid(view.visibleWorldRect)) {
-    std::cerr << "Using default renderer view because the falling-notes layout size is invalid"
-              << " (contentWidth=" << layoutResult.contentWidth
-              << ", contentHeight=" << layoutResult.contentHeight << ").\n";
-    return RendererView{};
-  }
-
-  return view;
-}
-
-RenderScene loadStartupMidiIfPresent(const AppConfig& config)
+StartupData loadStartupMidiIfPresent(const AppConfig& config)
 {
   if (!config.midiFilePath.has_value()) {
     std::cout << "No MIDI file provided. Starting with an empty window.\n";
@@ -78,41 +54,23 @@ RenderScene loadStartupMidiIfPresent(const AppConfig& config)
     return {};
   }
 
-  const auto timeline = MidiFileLoader::loadFromFile(midiPath);
+  auto timeline = MidiFileLoader::loadFromFile(midiPath);
   if (!timeline.has_value()) {
     std::cerr << "Warning: MIDI loading failed. Opening an empty window.\n";
     return {};
   }
 
-  const MidiTimelineQuery query(*timeline);
-  constexpr auto viewport = FallingNotesViewport{
-    .pitchRange = PitchRange{.minPitch = 21, .maxPitch = 108},
-    .currentTimeSeconds = 0.0,
-    .lookAheadSeconds = 10.0,
-    .visiblePastSeconds = 0.0,
-  };
-  const auto notes = query.findNotes(TimelineViewport{
-    .timeRange =
-      TimeRange{
-        .startSeconds = viewport.currentTimeSeconds - viewport.visiblePastSeconds,
-        .endSeconds = viewport.currentTimeSeconds + viewport.lookAheadSeconds,
-      },
-    .pitchRange = viewport.pitchRange,
-  });
+  std::cout << "Loaded MIDI file with " << timeline->notes().size()
+            << " note(s), length=" << timeline->lengthSeconds() << "s.\n";
 
-  const auto layoutResult = FallingNotesLayout::build(notes, viewport);
-  const auto renderCommands = FallingNotesRenderAdapter::buildCommands(layoutResult);
-  const auto rendererView = rendererViewForLayout(layoutResult);
-
-  return RenderScene{
-    .commands = renderCommands,
-    .view = rendererView,
+  return StartupData{
+    .timeline = std::move(timeline),
   };
 }
 
 } // namespace
 
-RenderScene StartupSceneBuilder::build(const AppConfig& config)
+StartupData StartupSceneBuilder::load(const AppConfig& config)
 {
   return loadStartupMidiIfPresent(config);
 }

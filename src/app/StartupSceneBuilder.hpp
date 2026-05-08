@@ -1,10 +1,17 @@
 #pragma once
 
+#include <optional>
+
 #include "app/AppConfig.hpp"
-#include "render/RenderScene.hpp"
+#include "midi/MidiTimeline.hpp"
+
+struct StartupData
+{
+  std::optional<MidiTimeline> timeline;
+};
 
 class StartupSceneBuilder
 {
 public:
-  [[nodiscard]] static RenderScene build(const AppConfig& config);
+  [[nodiscard]] static StartupData load(const AppConfig& config);
 };

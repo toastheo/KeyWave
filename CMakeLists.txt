@@ -78,6 +78,8 @@ add_library(keywave_fallingnotes STATIC
     src/fallingnotes/FallingNotesLayout.cpp
     src/fallingnotes/FallingNotesRenderAdapter.hpp
     src/fallingnotes/FallingNotesRenderAdapter.cpp
+    src/fallingnotes/FallingNotesSceneBuilder.hpp
+    src/fallingnotes/FallingNotesSceneBuilder.cpp
 )
 
 target_include_directories(keywave_fallingnotes
@@ -88,6 +90,16 @@ target_include_directories(keywave_fallingnotes
 target_link_libraries(keywave_fallingnotes
     PUBLIC
         keywave_midi
+)
+
+add_library(keywave_playback STATIC
+    src/playback/PlaybackTransport.hpp
+    src/playback/PlaybackTransport.cpp
+)
+
+target_include_directories(keywave_playback
+    PUBLIC
+        src
 )
 
 add_executable(KeyWave
@@ -121,6 +133,7 @@ target_link_libraries(KeyWave
     PRIVATE
         keywave_fallingnotes
         keywave_midi
+        keywave_playback
         glad
         glfw
         OpenGL::GL
@@ -144,6 +157,8 @@ add_executable(KeyWaveMidiTests
     tests/midi/MidiTimelineQueryTests.cpp
     tests/fallingnotes/FallingNotesLayoutTests.cpp
     tests/fallingnotes/FallingNotesRenderAdapterTests.cpp
+    tests/fallingnotes/FallingNotesSceneBuilderTests.cpp
+    tests/playback/PlaybackTransportTests.cpp
     tests/render/RendererViewTests.cpp
     src/app/AppConfig.hpp
     src/app/AppConfig.cpp
@@ -155,6 +170,7 @@ target_link_libraries(KeyWaveMidiTests
         Catch2::Catch2WithMain
         keywave_fallingnotes
         keywave_midi
+        keywave_playback
         keywave_test_support
 )
 

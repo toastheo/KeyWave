@@ -1,10 +1,13 @@
 #include "app/Application.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <utility>
 
 #include "app/StartupSceneBuilder.hpp"
+#include "render/RenderScene.hpp"
+#include "fallingnotes/FallingNotesSceneBuilder.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
 Application::Application(AppConfig config)
@@ -19,7 +22,8 @@ Application::~Application()
 
 bool Application::initialize()
 {
-  m_startupScene = StartupSceneBuilder::build(m_config);
+  auto startupData = StartupSceneBuilder::load(m_config);
+  m_timeline = std::move(startupData.timeline);
 
   const WindowConfig windowConfig{
     .title = "KeyWave",
@@ -43,22 +47,40 @@ bool Application::initialize()
     return false;
   }
 
-  m_renderer->setView(m_startupScene.view);
+  if (m_timeline.has_value()) {
+    m_playbackTransport.play();
+    std::cout << "Playback started.\n";
+  }
 
   m_initialized = true;
   return true;
 }
 
-void Application::run() const
+void Application::run()
 {
   if (!m_initialized) {
     return;
   }
 
+  auto previousFrameTime = std::chrono::steady_clock::now();
+
   while (!m_window.shouldClose()) {
+    const auto currentFrameTime = std::chrono::steady_clock::now();
+    const std::chrono::duration<double> elapsed = currentFrameTime - previousFrameTime;
+    previousFrameTime = currentFrameTime;
+
     Window::pollEvents();
+    m_playbackTransport.update(elapsed.count());
+
+    RenderScene scene;
+    if (m_timeline.has_value()) {
+      scene =
+        FallingNotesSceneBuilder::build(*m_timeline, m_playbackTransport.currentTimeSeconds());
+    }
+
+    m_renderer->setView(scene.view);
     m_renderer->beginFrame();
-    m_renderer->submit(m_startupScene.commands);
+    m_renderer->submit(scene.commands);
     m_renderer->endFrame();
     m_window.swapBuffers();
   }
@@ -72,6 +94,7 @@ void Application::shutdown()
   }
 
   m_window.shutdown();
-  m_startupScene = {};
+  m_timeline.reset();
+  m_playbackTransport.stop();
   m_initialized = false;
 }
