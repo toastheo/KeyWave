@@ -30,8 +30,8 @@ void appendRect(std::vector<RenderCommand>& commands, const Rect& rect, const Co
 
 } // namespace
 
-std::vector<RenderCommand> KeyboardRenderAdapter::buildCommands(
-  const KeyboardLayoutResult& layout, const KeyboardRenderStyle& style)
+std::vector<RenderCommand> KeyboardRenderAdapter::buildCommands(const KeyboardLayoutResult& layout,
+                                                                const KeyboardRenderStyle& style)
 {
   std::vector<RenderCommand> commands;
   commands.reserve(layout.whiteKeys.size() + layout.blackKeys.size() + layout.whiteKeys.size() + 1);
