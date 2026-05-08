@@ -2,37 +2,8 @@
 
 #include <MidiFile.h>
 
-#include <algorithm>
 #include <filesystem>
 #include <iostream>
-
-namespace {
-
-constexpr int kPreviewNoteCount = 5;
-
-void printSummary(const std::filesystem::path& path, const MidiTimeline& timeline) {
-  std::cout << "MIDI file loaded\n";
-  std::cout << "  path: " << path.string() << '\n';
-  std::cout << "  tracks: " << timeline.trackCount() << '\n';
-  std::cout << "  ticks per quarter note: " << timeline.ticksPerQuarterNote() << '\n';
-  std::cout << "  parsed notes: " << timeline.notes().size() << '\n';
-  std::cout << "  length seconds: " << timeline.lengthSeconds() << '\n';
-
-  const auto previewCount = std::min(static_cast<int>(timeline.notes().size()), kPreviewNoteCount);
-  for (int index = 0; index < previewCount; ++index) {
-    const auto&[pitch, velocity, channel, track, startSeconds, durationSeconds] = timeline.notes()[static_cast<std::size_t>(index)];
-    std::cout << "  note[" << index << "]:"
-              << " pitch=" << pitch
-              << " velocity=" << velocity
-              << " channel=" << channel
-              << " track=" << track
-              << " start=" << startSeconds
-              << " duration=" << durationSeconds
-              << '\n';
-  }
-}
-
-} // namespace
 
 std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::path& path) {
   if (path.empty()) {
@@ -98,6 +69,5 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
     }
   }
 
-  printSummary(path, timeline);
   return timeline;
 }
