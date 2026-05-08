@@ -6,14 +6,13 @@
 #include <utility>
 
 #include "app/StartupSceneBuilder.hpp"
-#include "render/RenderScene.hpp"
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
+#include "render/RenderScene.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
 Application::Application(AppConfig config)
-  : m_config(std::move(config))
-{
-}
+    : m_config(std::move(config))
+{}
 
 Application::~Application()
 {
@@ -46,6 +45,7 @@ bool Application::initialize()
     m_window.shutdown();
     return false;
   }
+  m_renderer->setFramebufferSize(m_window.framebufferSize());
 
   if (m_timeline.has_value()) {
     m_playbackTransport.play();
@@ -70,6 +70,7 @@ void Application::run()
     previousFrameTime = currentFrameTime;
 
     Window::pollEvents();
+    m_renderer->setFramebufferSize(m_window.framebufferSize());
     m_playbackTransport.update(elapsed.count());
 
     RenderScene scene;

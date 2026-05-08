@@ -95,6 +95,17 @@ void Window::swapBuffers() const
   }
 }
 
+FramebufferSize Window::framebufferSize() const
+{
+  if (m_handle == nullptr) {
+    return {};
+  }
+
+  FramebufferSize size;
+  glfwGetFramebufferSize(static_cast<GLFWwindow*>(m_handle), &size.width, &size.height);
+  return size;
+}
+
 void* Window::nativeHandle() const
 {
   return m_handle;

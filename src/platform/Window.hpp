@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "render/RenderTypes.hpp"
+
 struct WindowConfig
 {
   std::string title;
@@ -27,6 +29,7 @@ public:
 
   static void pollEvents();
   void swapBuffers() const;
+  [[nodiscard]] FramebufferSize framebufferSize() const;
   [[nodiscard]] void* nativeHandle() const;
   [[nodiscard]] static NativeProcAddressLoader nativeProcAddressLoader();
 

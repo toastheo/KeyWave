@@ -21,3 +21,9 @@ struct Color
   float b = 0.0f;
   float a = 1.0f;
 };
+
+struct FramebufferSize
+{
+  int width = 0;
+  int height = 0;
+};

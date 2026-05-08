@@ -8,6 +8,11 @@ bool isValid(const WorldRect& rect)
          std::isfinite(rect.height) && rect.width > 0.0 && rect.height > 0.0;
 }
 
+bool isValid(const FramebufferSize& size)
+{
+  return size.width > 0 && size.height > 0;
+}
+
 Vec2 worldToClip(const Vec2& world, const WorldRect& view)
 {
   return Vec2{

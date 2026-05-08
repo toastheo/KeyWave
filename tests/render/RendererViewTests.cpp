@@ -21,6 +21,14 @@ TEST_CASE("WorldRect validation rejects non-positive dimensions", "[render][view
   CHECK_FALSE(isValid(WorldRect{.x = 0.0, .y = 0.0, .width = 6.0, .height = -1.0}));
 }
 
+TEST_CASE("FramebufferSize validation rejects non-positive dimensions", "[render][view]")
+{
+  CHECK(isValid(FramebufferSize{.width = 1280, .height = 720}));
+  CHECK_FALSE(isValid(FramebufferSize{.width = 0, .height = 720}));
+  CHECK_FALSE(isValid(FramebufferSize{.width = 1280, .height = 0}));
+  CHECK_FALSE(isValid(FramebufferSize{.width = -1, .height = 720}));
+}
+
 TEST_CASE("worldToClip maps a bottom-left world rectangle into OpenGL clip space", "[render][view]")
 {
   constexpr WorldRect view{.x = 10.0, .y = 20.0, .width = 5.0, .height = 10.0};

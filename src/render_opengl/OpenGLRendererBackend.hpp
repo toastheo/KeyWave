@@ -19,6 +19,7 @@ public:
 
   bool initialize() override;
   void shutdown() override;
+  void setFramebufferSize(const FramebufferSize& size) override;
   void setView(const RendererView& view) override;
   void beginFrame() override;
   void submit(const std::vector<RenderCommand>& commands) override;
@@ -37,6 +38,7 @@ private:
 
   NativeProcAddressLoader m_procAddressLoader = nullptr;
   Color m_clearColor;
+  FramebufferSize m_framebufferSize;
   RendererView m_view;
   OpenGLShader m_rectShader;
   unsigned int m_rectVertexArray = 0;

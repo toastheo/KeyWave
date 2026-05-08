@@ -1,8 +1,7 @@
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
-#include <glad/glad.h>
-
 #include <cstddef>
+#include <glad/glad.h>
 #include <iostream>
 #include <string_view>
 #include <variant>
@@ -46,10 +45,9 @@ bool isValidRect(const Rect& rect)
 
 OpenGLRendererBackend::OpenGLRendererBackend(const NativeProcAddressLoader procAddressLoader,
                                              const Color clearColor)
-  : m_procAddressLoader(procAddressLoader),
-    m_clearColor(clearColor)
-{
-}
+    : m_procAddressLoader(procAddressLoader)
+    , m_clearColor(clearColor)
+{}
 
 OpenGLRendererBackend::~OpenGLRendererBackend()
 {
@@ -71,8 +69,6 @@ bool OpenGLRendererBackend::initialize()
     std::cerr << "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.\n";
     return false;
   }
-
-  glViewport(0, 0, 1280, 720);
 
   if (!m_rectShader.create(OpenGLShaderSources{
         .vertex = kRectVertexShaderSource,
@@ -102,25 +98,20 @@ bool OpenGLRendererBackend::initialize()
   const auto* colorAttributeOffset = reinterpret_cast<const void*>(kColorAttributeOffset);
 
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0,
-                        2,
-                        GL_FLOAT,
-                        GL_FALSE,
-                        static_cast<int>(sizeof(RectVertex)),
-                        nullptr);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, static_cast<int>(sizeof(RectVertex)), nullptr);
 
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1,
-                        4,
-                        GL_FLOAT,
-                        GL_FALSE,
-                        static_cast<int>(sizeof(RectVertex)),
-                        colorAttributeOffset);
+  glVertexAttribPointer(
+    1, 4, GL_FLOAT, GL_FALSE, static_cast<int>(sizeof(RectVertex)), colorAttributeOffset);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
   m_initialized = true;
+  if (isValid(m_framebufferSize)) {
+    glViewport(0, 0, m_framebufferSize.width, m_framebufferSize.height);
+  }
+
   return true;
 }
 
@@ -140,6 +131,22 @@ void OpenGLRendererBackend::shutdown()
 
   m_rectShader.destroy();
   m_initialized = false;
+}
+
+void OpenGLRendererBackend::setFramebufferSize(const FramebufferSize& size)
+{
+  if (!isValid(size)) {
+    return;
+  }
+
+  if (m_framebufferSize.width == size.width && m_framebufferSize.height == size.height) {
+    return;
+  }
+
+  m_framebufferSize = size;
+  if (m_initialized) {
+    glViewport(0, 0, size.width, size.height);
+  }
 }
 
 void OpenGLRendererBackend::setView(const RendererView& view)
@@ -191,8 +198,7 @@ void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands)
       worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y}, m_view.visibleWorldRect);
     const auto topLeftClip =
       worldToClip(Vec2{.x = rect.x, .y = rect.y + rect.height}, m_view.visibleWorldRect);
-    const auto topRightClip = worldToClip(Vec2{.x = rect.x + rect.width,
-                                               .y = rect.y + rect.height},
+    const auto topRightClip = worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y + rect.height},
                                           m_view.visibleWorldRect);
 
     const auto bottomLeft = RectVertex{.x = static_cast<float>(bottomLeftClip.x),
