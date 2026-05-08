@@ -7,13 +7,13 @@
 #include <utility>
 #include <variant>
 
+#include "fallingnotes/FallingNotesLayout.hpp"
+#include "fallingnotes/FallingNotesRenderAdapter.hpp"
 #include "midi/MidiFileLoader.hpp"
 #include "midi/MidiTimelineQuery.hpp"
-#include "pianoroll/PianoRollLayout.hpp"
-#include "pianoroll/PianoRollRenderAdapter.hpp"
 #include "render/RenderCommand.hpp"
-#include "render/RendererView.hpp"
 #include "render/RenderTypes.hpp"
+#include "render/RendererView.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
 namespace {
@@ -33,7 +33,7 @@ std::filesystem::path testMidiPath()
 #endif
 }
 
-RendererView rendererViewForLayout(const PianoRollLayoutResult& layoutResult)
+RendererView rendererViewForLayout(const FallingNotesLayoutResult& layoutResult)
 {
   const RendererView view{
     .visibleWorldRect =
@@ -46,7 +46,7 @@ RendererView rendererViewForLayout(const PianoRollLayoutResult& layoutResult)
   };
 
   if (!isValid(view.visibleWorldRect)) {
-    std::cerr << "Using default renderer view because the piano-roll layout size is invalid"
+    std::cerr << "Using default renderer view because the falling-notes layout size is invalid"
               << " (contentWidth=" << layoutResult.contentWidth
               << ", contentHeight=" << layoutResult.contentHeight << ").\n";
     return RendererView{};
@@ -70,26 +70,35 @@ StartupRenderScene loadStartupMidiIfPresent()
   }
 
   const MidiTimelineQuery query(*timeline);
-  constexpr auto viewport = PianoRollLayoutViewport{
-    .timeRange = TimeRange{.startSeconds = 0.0, .endSeconds = 10.0},
+  constexpr auto viewport = FallingNotesViewport{
     .pitchRange = PitchRange{.minPitch = 21, .maxPitch = 108},
+    .currentTimeSeconds = 0.0,
+    .lookAheadSeconds = 10.0,
+    .visiblePastSeconds = 0.0,
   };
   const auto notes = query.findNotes(TimelineViewport{
-    .timeRange = viewport.timeRange,
+    .timeRange =
+      TimeRange{
+        .startSeconds = viewport.currentTimeSeconds - viewport.visiblePastSeconds,
+        .endSeconds = viewport.currentTimeSeconds + viewport.lookAheadSeconds,
+      },
     .pitchRange = viewport.pitchRange,
   });
 
-  const auto layoutResult = PianoRollLayout::build(notes, viewport);
-  const auto renderCommands = PianoRollRenderAdapter::buildCommands(layoutResult);
+  const auto layoutResult = FallingNotesLayout::build(notes, viewport);
+  const auto renderCommands = FallingNotesRenderAdapter::buildCommands(layoutResult);
   const auto rendererView = rendererViewForLayout(layoutResult);
 
-  std::cout << "MIDI startup piano-roll layout\n";
+  std::cout << "MIDI startup falling-notes layout\n";
   std::cout << "  queried notes: " << notes.size() << '\n';
   std::cout << "  layout notes: " << layoutResult.notes.size() << '\n';
   std::cout << "  render commands: " << renderCommands.size() << '\n';
   std::cout << "  pitch lane count: " << layoutResult.pitchLaneCount << '\n';
   std::cout << "  contentWidth: " << layoutResult.contentWidth << '\n';
   std::cout << "  contentHeight: " << layoutResult.contentHeight << '\n';
+  std::cout << "  currentTimeSeconds: " << layoutResult.currentTimeSeconds << '\n';
+  std::cout << "  lookAheadSeconds: " << layoutResult.lookAheadSeconds << '\n';
+  std::cout << "  visiblePastSeconds: " << layoutResult.visiblePastSeconds << '\n';
 
   const auto previewCount = std::min<std::size_t>(renderCommands.size(), 5);
   for (std::size_t index = 0; index < previewCount; ++index) {
