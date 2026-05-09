@@ -63,6 +63,41 @@ TEST_CASE("MidiTimelineQuery sorts returned notes deterministically", "[midi][qu
   CHECK(notes[4].note.pitch == 62);
 }
 
+TEST_CASE("MidiTimelineQuery finds notes active at playback time", "[midi][query]") {
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 67, .velocity = 80, .channel = 1, .track = 2, .startSeconds = 1.0, .durationSeconds = 2.0});
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .channel = 0, .track = 1, .startSeconds = 2.0, .durationSeconds = 1.0});
+  timeline.addNote(Note{.pitch = 60, .velocity = 70, .channel = 0, .track = 0, .startSeconds = 2.0, .durationSeconds = 1.0});
+  timeline.addNote(Note{.pitch = 64, .velocity = 50, .channel = 0, .track = 0, .startSeconds = 3.0, .durationSeconds = 1.0});
+  timeline.addNote(Note{.pitch = 65, .velocity = 50, .channel = 0, .track = 0, .startSeconds = 2.0, .durationSeconds = 0.0});
+  timeline.addNote(Note{.pitch = 66, .velocity = 50, .channel = 0, .track = 0, .startSeconds = 2.0, .durationSeconds = -1.0});
+
+  const MidiTimelineQuery query(timeline);
+
+  const auto activeNotes = query.findActiveNotesAt(2.0);
+
+  REQUIRE(activeNotes.size() == 3);
+  CHECK(activeNotes[0].pitch == 60);
+  CHECK(activeNotes[0].channel == 0);
+  CHECK(activeNotes[0].track == 0);
+  CHECK(activeNotes[1].pitch == 60);
+  CHECK(activeNotes[1].channel == 0);
+  CHECK(activeNotes[1].track == 1);
+  CHECK(activeNotes[2].pitch == 67);
+}
+
+TEST_CASE("MidiTimelineQuery active note end is exclusive", "[midi][query]") {
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 1.0, .durationSeconds = 1.0});
+
+  const MidiTimelineQuery query(timeline);
+
+  CHECK(query.findActiveNotesAt(0.999).empty());
+  CHECK_FALSE(query.findActiveNotesAt(1.0).empty());
+  CHECK(query.findActiveNotesAt(2.0).empty());
+  CHECK(query.findActiveNotesAt(-0.1).empty());
+}
+
 TEST_CASE("MidiTimelineQuery time-only and pitch-only helpers use inclusive filters", "[midi][query]") {
   const auto timeline = makeTimeline();
   const MidiTimelineQuery query(timeline);

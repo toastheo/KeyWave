@@ -4,6 +4,7 @@
 #include <variant>
 
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
+#include "keyboard/KeyboardRenderAdapter.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "render/RenderCommand.hpp"
 
@@ -18,6 +19,17 @@ std::vector<DrawRectCommand> rectsForScene(const RenderScene& scene)
     }
   }
   return rects;
+}
+
+bool sameColor(const Color& left, const Color& right)
+{
+  return left.r == Catch::Approx(right.r) && left.g == Catch::Approx(right.g) &&
+         left.b == Catch::Approx(right.b) && left.a == Catch::Approx(right.a);
+}
+
+bool isKeyboardRect(const DrawRectCommand& command)
+{
+  return command.rect.y < 0.0;
 }
 
 TEST_CASE("FallingNotesSceneBuilder rebuilds note positions for the current playback time",
@@ -56,6 +68,34 @@ TEST_CASE("FallingNotesSceneBuilder returns a default scene when layout input is
   CHECK_FALSE(scene.commands.empty());
   CHECK(scene.view.visibleWorldRect.width == Catch::Approx(kDefaultVisibleWorldRect.width));
   CHECK(scene.view.visibleWorldRect.height == Catch::Approx(kDefaultVisibleWorldRect.height));
+}
+
+TEST_CASE("FallingNotesSceneBuilder highlights keyboard keys for currently active MIDI notes",
+          "[fallingnotes][scene]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 1.0, .durationSeconds = 2.0});
+  timeline.addNote(Note{.pitch = 61, .velocity = 90, .startSeconds = 1.5, .durationSeconds = 2.0});
+  timeline.addNote(Note{.pitch = 64, .velocity = 90, .startSeconds = 4.0, .durationSeconds = 1.0});
+
+  const auto scene = FallingNotesSceneBuilder::build(timeline, 2.0);
+  const auto rects = rectsForScene(scene);
+
+  int activeWhiteKeyCount = 0;
+  int activeBlackKeyCount = 0;
+  for (const auto& rect : rects) {
+    constexpr KeyboardRenderStyle keyboardStyle;
+
+    if (isKeyboardRect(rect) && sameColor(rect.color, keyboardStyle.activeWhiteKeyColor)) {
+      ++activeWhiteKeyCount;
+    }
+    if (isKeyboardRect(rect) && sameColor(rect.color, keyboardStyle.activeBlackKeyColor)) {
+      ++activeBlackKeyCount;
+    }
+  }
+
+  CHECK(activeWhiteKeyCount == 1);
+  CHECK(activeBlackKeyCount == 1);
 }
 
 } // namespace

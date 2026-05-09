@@ -10,6 +10,7 @@
 #include "keyboard/KeyboardGeometry.hpp"
 #include "keyboard/KeyboardLayout.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
+#include "keyboard/KeyboardState.hpp"
 #include "midi/MidiTimelineQuery.hpp"
 
 namespace {
@@ -70,6 +71,7 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
   };
 
   std::vector<QueriedNote> notes;
+  std::vector<Note> activeNotes;
   if (std::isfinite(currentTimeSeconds)) {
     const MidiTimelineQuery query(timeline);
     notes = query.findNotes(TimelineViewport{
@@ -80,10 +82,12 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
         },
       .pitchRange = kPianoPitchRange,
     });
+    activeNotes = query.findActiveNotesAt(currentTimeSeconds);
   }
 
   const auto fallingNotesLayout = FallingNotesLayout::build(notes, viewport, keyboardGeometry);
-  const auto keyboardLayout = KeyboardLayout::build(keyboardGeometry);
+  const auto keyboardState = KeyboardStateBuilder::build(activeNotes);
+  const auto keyboardLayout = KeyboardLayout::build(keyboardGeometry, keyboardState);
 
   std::vector<RenderCommand> commands;
   appendCommands(commands, FallingNotesRenderAdapter::buildCommands(fallingNotesLayout));

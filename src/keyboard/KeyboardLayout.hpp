@@ -1,6 +1,7 @@
 #pragma once
 
 #include "keyboard/KeyboardGeometry.hpp"
+#include "keyboard/KeyboardState.hpp"
 
 /**
  * Builds keyboard draw layout grouped for painter ordering:
@@ -9,5 +10,6 @@
 class KeyboardLayout
 {
 public:
-  [[nodiscard]] static KeyboardLayoutResult build(const KeyboardGeometry& geometry);
+  [[nodiscard]] static KeyboardLayoutResult build(const KeyboardGeometry& geometry,
+                                                  const KeyboardState& state = {});
 };

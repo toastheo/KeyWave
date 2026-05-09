@@ -17,6 +17,8 @@ struct PianoKeyLayout
   int pitch = 0;
   PianoKeyKind kind = PianoKeyKind::White;
   Rect rect;
+  bool active = false;
+  int velocity = 0;
 };
 
 struct KeyboardLayoutConfig

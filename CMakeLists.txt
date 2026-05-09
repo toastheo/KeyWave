@@ -74,6 +74,8 @@ target_link_libraries(keywave_midi
 
 add_library(keywave_keyboard STATIC
     src/keyboard/KeyboardTypes.hpp
+    src/keyboard/KeyboardState.hpp
+    src/keyboard/KeyboardState.cpp
     src/keyboard/KeyboardGeometry.hpp
     src/keyboard/KeyboardGeometry.cpp
     src/keyboard/KeyboardLayout.hpp
@@ -176,6 +178,7 @@ add_executable(KeyWaveMidiTests
     tests/app/AppConfigTests.cpp
     tests/midi/MidiFileLoaderTests.cpp
     tests/midi/MidiTimelineQueryTests.cpp
+    tests/keyboard/KeyboardStateTests.cpp
     tests/keyboard/KeyboardGeometryTests.cpp
     tests/keyboard/KeyboardLayoutTests.cpp
     tests/keyboard/KeyboardRenderAdapterTests.cpp

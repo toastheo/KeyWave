@@ -64,4 +64,47 @@ TEST_CASE("KeyboardRenderAdapter emits white keys, separators, black keys, then 
   CHECK(rectAt(commands, 7).rect.height == Catch::Approx(style.hitLineHeight));
 }
 
+TEST_CASE("KeyboardRenderAdapter uses active colors for active keys", "[keyboard][render]")
+{
+  KeyboardLayoutResult const layout{
+    .whiteKeys =
+      {
+        PianoKeyLayout{
+          .pitch = 60,
+          .kind = PianoKeyKind::White,
+          .rect = Rect{.x = 0.0, .y = -2.5, .width = 1.0, .height = 2.5},
+          .active = true,
+          .velocity = 90,
+        },
+      },
+    .blackKeys =
+      {
+        PianoKeyLayout{
+          .pitch = 61,
+          .kind = PianoKeyKind::Black,
+          .rect = Rect{.x = 0.7, .y = -1.55, .width = 0.6, .height = 1.55},
+          .active = true,
+          .velocity = 80,
+        },
+      },
+    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 61},
+    .width = 1.0,
+    .height = 2.5,
+  };
+  constexpr KeyboardRenderStyle style{
+    .whiteKeyColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 1.0f},
+    .blackKeyColor = Color{.r = 0.1f, .g = 0.1f, .b = 0.1f, .a = 1.0f},
+    .activeWhiteKeyColor = Color{.r = 0.2f, .g = 0.9f, .b = 1.0f, .a = 1.0f},
+    .activeBlackKeyColor = Color{.r = 0.0f, .g = 0.5f, .b = 1.0f, .a = 1.0f},
+    .includeSeparators = false,
+    .includeHitLine = false,
+  };
+
+  const auto commands = KeyboardRenderAdapter::buildCommands(layout, style);
+
+  REQUIRE(commands.size() == 2);
+  checkColor(rectAt(commands, 0).color, style.activeWhiteKeyColor);
+  checkColor(rectAt(commands, 1).color, style.activeBlackKeyColor);
+}
+
 } // namespace

@@ -65,6 +65,33 @@ void sortQueriedNotes(std::vector<QueriedNote>& notes)
   });
 }
 
+void sortNotesByPitchChannelTrack(std::vector<Note>& notes)
+{
+  std::ranges::sort(notes, [](const Note& left, const Note& right) {
+    if (left.pitch != right.pitch) {
+      return left.pitch < right.pitch;
+    }
+
+    if (left.channel != right.channel) {
+      return left.channel < right.channel;
+    }
+
+    if (left.track != right.track) {
+      return left.track < right.track;
+    }
+
+    return left.startSeconds < right.startSeconds;
+  });
+}
+
+bool isActiveAt(const Note& note, const double timeSeconds)
+{
+  const auto endSeconds = note.startSeconds + note.durationSeconds;
+  return std::isfinite(note.startSeconds) && std::isfinite(note.durationSeconds) &&
+         std::isfinite(endSeconds) && note.durationSeconds > 0.0 &&
+         note.startSeconds <= timeSeconds && endSeconds > timeSeconds;
+}
+
 } // namespace
 
 MidiTimelineQuery::MidiTimelineQuery(const MidiTimeline& timeline)
@@ -87,11 +114,8 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
 
     result.push_back(QueriedNote{
       .note = note,
-      .startsBeforeRange =
-        note
-          .startSeconds<viewport.timeRange.startSeconds,
-                        .endsAfterRange = note.startSeconds + note.durationSeconds> viewport
-          .timeRange.endSeconds,
+      .startsBeforeRange = note.startSeconds < viewport.timeRange.startSeconds,
+      .endsAfterRange = note.startSeconds + note.durationSeconds > viewport.timeRange.endSeconds,
     });
   }
 
@@ -114,10 +138,8 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange
 
     result.push_back(QueriedNote{
       .note = note,
-      .startsBeforeRange =
-        note
-          .startSeconds<range.startSeconds,
-                        .endsAfterRange = note.startSeconds + note.durationSeconds> range.endSeconds,
+      .startsBeforeRange = note.startSeconds < range.startSeconds,
+      .endsAfterRange = note.startSeconds + note.durationSeconds > range.endSeconds,
     });
   }
 
@@ -146,6 +168,23 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRan
   }
 
   sortQueriedNotes(result);
+  return result;
+}
+
+std::vector<Note> MidiTimelineQuery::findActiveNotesAt(const double timeSeconds) const
+{
+  if (!std::isfinite(timeSeconds) || timeSeconds < 0.0) {
+    return {};
+  }
+
+  std::vector<Note> result;
+  for (const auto& note : m_timeline.notes()) {
+    if (isActiveAt(note, timeSeconds)) {
+      result.push_back(note);
+    }
+  }
+
+  sortNotesByPitchChannelTrack(result);
   return result;
 }
 

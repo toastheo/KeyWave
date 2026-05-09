@@ -28,6 +28,16 @@ void appendRect(std::vector<RenderCommand>& commands, const Rect& rect, const Co
   });
 }
 
+Color colorForWhiteKey(const PianoKeyLayout& key, const KeyboardRenderStyle& style)
+{
+  return key.active ? style.activeWhiteKeyColor : style.whiteKeyColor;
+}
+
+Color colorForBlackKey(const PianoKeyLayout& key, const KeyboardRenderStyle& style)
+{
+  return key.active ? style.activeBlackKeyColor : style.blackKeyColor;
+}
+
 } // namespace
 
 std::vector<RenderCommand> KeyboardRenderAdapter::buildCommands(const KeyboardLayoutResult& layout,
@@ -37,7 +47,7 @@ std::vector<RenderCommand> KeyboardRenderAdapter::buildCommands(const KeyboardLa
   commands.reserve(layout.whiteKeys.size() + layout.blackKeys.size() + layout.whiteKeys.size() + 1);
 
   for (const auto& key : layout.whiteKeys) {
-    appendRect(commands, key.rect, style.whiteKeyColor);
+    appendRect(commands, key.rect, colorForWhiteKey(key, style));
   }
 
   if (style.includeSeparators && layout.whiteKeys.size() > 1) {
@@ -57,7 +67,7 @@ std::vector<RenderCommand> KeyboardRenderAdapter::buildCommands(const KeyboardLa
   }
 
   for (const auto& key : layout.blackKeys) {
-    appendRect(commands, key.rect, style.blackKeyColor);
+    appendRect(commands, key.rect, colorForBlackKey(key, style));
   }
 
   if (style.includeHitLine) {

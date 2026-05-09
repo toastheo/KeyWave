@@ -14,7 +14,8 @@ bool KeyboardLayoutResult::empty() const
   return whiteKeys.empty() && blackKeys.empty();
 }
 
-KeyboardLayoutResult KeyboardLayout::build(const KeyboardGeometry& geometry)
+KeyboardLayoutResult KeyboardLayout::build(const KeyboardGeometry& geometry,
+                                           const KeyboardState& state)
 {
   KeyboardLayoutResult result{
     .pitchRange = geometry.config().pitchRange,
@@ -33,6 +34,8 @@ KeyboardLayoutResult KeyboardLayout::build(const KeyboardGeometry& geometry)
         .pitch = pitch,
         .kind = PianoKeyKind::White,
         .rect = rect,
+        .active = state.isActive(pitch),
+        .velocity = state.velocityForPitch(pitch),
       });
       continue;
     }
@@ -41,6 +44,8 @@ KeyboardLayoutResult KeyboardLayout::build(const KeyboardGeometry& geometry)
       .pitch = pitch,
       .kind = PianoKeyKind::Black,
       .rect = rect,
+      .active = state.isActive(pitch),
+      .velocity = state.velocityForPitch(pitch),
     });
   }
 
