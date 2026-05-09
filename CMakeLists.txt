@@ -129,8 +129,8 @@ add_executable(KeyWave
     src/app/AppConfig.cpp
     src/app/Application.hpp
     src/app/Application.cpp
-    src/app/StartupSceneBuilder.hpp
-    src/app/StartupSceneBuilder.cpp
+        src/app/StartupDataLoader.hpp
+        src/app/StartupDataLoader.cpp
     src/platform/Window.hpp
     src/platform/Window.cpp
     src/render/RendererBackend.hpp

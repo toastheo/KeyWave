@@ -10,7 +10,7 @@ struct StartupData
   std::optional<MidiTimeline> timeline;
 };
 
-class StartupSceneBuilder
+class StartupDataLoader
 {
 public:
   [[nodiscard]] static StartupData load(const AppConfig& config);

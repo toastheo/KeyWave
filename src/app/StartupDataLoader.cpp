@@ -1,9 +1,8 @@
-#include "app/StartupSceneBuilder.hpp"
-
 #include <filesystem>
 #include <iostream>
 #include <utility>
 
+#include "app/StartupDataLoader.hpp"
 #include "midi/MidiFileLoader.hpp"
 
 namespace {
@@ -70,7 +69,7 @@ StartupData loadStartupMidiIfPresent(const AppConfig& config)
 
 } // namespace
 
-StartupData StartupSceneBuilder::load(const AppConfig& config)
+StartupData StartupDataLoader::load(const AppConfig& config)
 {
   return loadStartupMidiIfPresent(config);
 }

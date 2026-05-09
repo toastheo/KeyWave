@@ -5,7 +5,7 @@
 #include <memory>
 #include <utility>
 
-#include "app/StartupSceneBuilder.hpp"
+#include "app/StartupDataLoader.hpp"
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
 #include "render/RenderScene.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
@@ -21,7 +21,7 @@ Application::~Application()
 
 bool Application::initialize()
 {
-  auto startupData = StartupSceneBuilder::load(m_config);
+  auto startupData = StartupDataLoader::load(m_config);
   m_timeline = std::move(startupData.timeline);
 
   const WindowConfig windowConfig{
