@@ -33,6 +33,8 @@ bool isValidPitchRange(const PitchRange& range)
   return true;
 }
 
+// Treat ranges as open at the boundaries: notes ending exactly at range.startSeconds
+// or starting exactly at range.endSeconds are outside the viewport.
 bool overlapsTimeRange(const Note& note, const TimeRange& range)
 {
   return note.startSeconds < range.endSeconds &&

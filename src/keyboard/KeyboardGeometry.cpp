@@ -98,6 +98,8 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
 
   m_width = static_cast<double>(m_whiteKeyCount) * m_config.whiteKeyWidth;
 
+  // Black keys are positioned from the surrounding white keys, so a black key at a clipped
+  // pitch-range edge is omitted unless both neighboring white-key anchors exist.
   for (auto pitch = m_config.pitchRange.minPitch; pitch <= m_config.pitchRange.maxPitch; ++pitch) {
     if (!isBlackKey(pitch)) {
       continue;

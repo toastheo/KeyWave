@@ -35,6 +35,8 @@ int positivePixelThickness(const double thickness)
   return std::max(1, static_cast<int>(std::round(thickness)));
 }
 
+// Convert a center line in world coordinates into pixel-aligned rectangle edge.
+// This keeps 1px separators crisp even when the world-to-framebuffer scale is fractional.
 double pixelAlignedWorldStart(const double worldPosition,
                               const PixelAxisProjection& axis,
                               const int thicknessPixels)

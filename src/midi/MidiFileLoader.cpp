@@ -27,6 +27,8 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
     return std::nullopt;
   }
 
+  // Prepare smf::MidiFile for reliable note extraction: normalize timing, order same-tick
+  // note-offs before note-ons, compute seconds, then link each note-on to its FIFO note-off.
   midiFile.absoluteTicks();
   midiFile.sortTracksNoteOffsBeforeOns();
   midiFile.doTimeAnalysis();
