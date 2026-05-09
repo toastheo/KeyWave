@@ -16,23 +16,23 @@ TEST_CASE("KeyboardGeometry builds an 88-key piano range without assuming C star
   CHECK_FALSE(geometry.containsPitch(109));
   CHECK(geometry.whiteKeyCount() == 52);
   CHECK(geometry.width() == Catch::Approx(52.0));
-  CHECK(geometry.height() == Catch::Approx(1.0));
+  CHECK(geometry.height() == Catch::Approx(2.5));
 
   const auto a0 = geometry.keyRectForPitch(21);
   CHECK(a0.x == Catch::Approx(0.0));
-  CHECK(a0.y == Catch::Approx(-1.0));
+  CHECK(a0.y == Catch::Approx(-2.5));
   CHECK(a0.width == Catch::Approx(1.0));
-  CHECK(a0.height == Catch::Approx(1.0));
+  CHECK(a0.height == Catch::Approx(2.5));
 
   const auto aSharp0 = geometry.keyRectForPitch(22);
   CHECK(aSharp0.x == Catch::Approx(0.7));
-  CHECK(aSharp0.y == Catch::Approx(-0.62));
+  CHECK(aSharp0.y == Catch::Approx(-1.55));
   CHECK(aSharp0.width == Catch::Approx(0.6));
-  CHECK(aSharp0.height == Catch::Approx(0.62));
+  CHECK(aSharp0.height == Catch::Approx(1.55));
 
   const auto c8 = geometry.keyRectForPitch(108);
   CHECK(c8.x == Catch::Approx(51.0));
-  CHECK(c8.y == Catch::Approx(-1.0));
+  CHECK(c8.y == Catch::Approx(-2.5));
 }
 
 TEST_CASE("KeyboardGeometry aligns note rectangles with the corresponding key",

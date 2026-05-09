@@ -30,9 +30,9 @@ TEST_CASE("FallingNotesSceneBuilder rebuilds note positions for the current play
   const auto laterScene = FallingNotesSceneBuilder::build(timeline, 1.5);
 
   CHECK(firstScene.view.visibleWorldRect.x == Catch::Approx(0.0));
-  CHECK(firstScene.view.visibleWorldRect.y == Catch::Approx(-1.0));
+  CHECK(firstScene.view.visibleWorldRect.y == Catch::Approx(-2.5));
   CHECK(firstScene.view.visibleWorldRect.width == Catch::Approx(52.0));
-  CHECK(firstScene.view.visibleWorldRect.height == Catch::Approx(11.0));
+  CHECK(firstScene.view.visibleWorldRect.height == Catch::Approx(12.5));
 
   const auto firstRects = rectsForScene(firstScene);
   const auto laterRects = rectsForScene(laterScene);

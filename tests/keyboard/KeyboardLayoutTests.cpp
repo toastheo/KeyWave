@@ -19,18 +19,18 @@ TEST_CASE("KeyboardLayout separates white and black keys for painter ordering",
   CHECK(layout.pitchRange.minPitch == 60);
   CHECK(layout.pitchRange.maxPitch == 64);
   CHECK(layout.width == Catch::Approx(3.0));
-  CHECK(layout.height == Catch::Approx(1.0));
+  CHECK(layout.height == Catch::Approx(2.5));
   CHECK_FALSE(layout.empty());
 
   CHECK(layout.whiteKeys[0].pitch == 60);
   CHECK(layout.whiteKeys[0].kind == PianoKeyKind::White);
-  CHECK(layout.whiteKeys[0].rect.y == Catch::Approx(-1.0));
-  CHECK(layout.whiteKeys[0].rect.height == Catch::Approx(1.0));
+  CHECK(layout.whiteKeys[0].rect.y == Catch::Approx(-2.5));
+  CHECK(layout.whiteKeys[0].rect.height == Catch::Approx(2.5));
 
   CHECK(layout.blackKeys[0].pitch == 61);
   CHECK(layout.blackKeys[0].kind == PianoKeyKind::Black);
-  CHECK(layout.blackKeys[0].rect.y == Catch::Approx(-0.62));
-  CHECK(layout.blackKeys[0].rect.height == Catch::Approx(0.62));
+  CHECK(layout.blackKeys[0].rect.y == Catch::Approx(-1.55));
+  CHECK(layout.blackKeys[0].rect.height == Catch::Approx(1.55));
 }
 
 } // namespace
