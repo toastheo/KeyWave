@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 
+#include "app/PlaybackTransportControls.hpp"
 #include "app/StartupDataLoader.hpp"
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
 #include "render/RenderScene.hpp"
@@ -70,6 +71,10 @@ void Application::run()
     previousFrameTime = currentFrameTime;
 
     Window::pollEvents();
+    for (const auto key : m_window.consumePressedKeys()) {
+      applyPlaybackTransportControl(key, m_playbackTransport, std::cout);
+    }
+
     m_renderer->setFramebufferSize(m_window.framebufferSize());
     m_playbackTransport.update(elapsed.count());
 

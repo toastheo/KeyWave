@@ -131,8 +131,11 @@ add_executable(KeyWave
     src/app/AppConfig.cpp
     src/app/Application.hpp
     src/app/Application.cpp
-        src/app/StartupDataLoader.hpp
-        src/app/StartupDataLoader.cpp
+    src/app/PlaybackTransportControls.hpp
+    src/app/PlaybackTransportControls.cpp
+    src/app/StartupDataLoader.hpp
+    src/app/StartupDataLoader.cpp
+    src/input/Key.hpp
     src/platform/Window.hpp
     src/platform/Window.cpp
     src/render/RendererBackend.hpp
@@ -176,6 +179,7 @@ target_include_directories(keywave_test_support
 
 add_executable(KeyWaveMidiTests
     tests/app/AppConfigTests.cpp
+    tests/app/PlaybackTransportControlsTests.cpp
     tests/midi/MidiFileLoaderTests.cpp
     tests/midi/MidiTimelineQueryTests.cpp
     tests/keyboard/KeyboardStateTests.cpp
@@ -189,6 +193,9 @@ add_executable(KeyWaveMidiTests
     tests/render/RendererViewTests.cpp
     src/app/AppConfig.hpp
     src/app/AppConfig.cpp
+    src/app/PlaybackTransportControls.hpp
+    src/app/PlaybackTransportControls.cpp
+    src/input/Key.hpp
     src/render/RendererView.cpp
 )
 

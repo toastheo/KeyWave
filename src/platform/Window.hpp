@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
+#include "input/Key.hpp"
 #include "render/RenderTypes.hpp"
 
 struct WindowConfig
@@ -28,6 +30,7 @@ public:
   [[nodiscard]] bool shouldClose() const;
 
   static void pollEvents();
+  [[nodiscard]] std::vector<Key> consumePressedKeys();
   void swapBuffers() const;
   [[nodiscard]] FramebufferSize framebufferSize() const;
   [[nodiscard]] void* nativeHandle() const;
@@ -35,5 +38,6 @@ public:
 
 private:
   void* m_handle = nullptr;
+  std::vector<Key> m_pressedKeys;
   bool m_ownsGlfw = false;
 };

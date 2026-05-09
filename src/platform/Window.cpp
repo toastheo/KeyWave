@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <optional>
 
 namespace {
 void printGlfwError(const char* fallbackMessage)
@@ -21,6 +22,28 @@ void printGlfwError(const char* fallbackMessage)
 void* loadOpenGLProcAddress(const char* name)
 {
   return reinterpret_cast<void*>(glfwGetProcAddress(name));
+}
+
+std::optional<Key> keyFromGlfwKey(const int key)
+{
+  switch (key) {
+    case GLFW_KEY_SPACE:
+      return Key::Space;
+    case GLFW_KEY_R:
+      return Key::R;
+    case GLFW_KEY_S:
+      return Key::S;
+    case GLFW_KEY_LEFT:
+      return Key::Left;
+    case GLFW_KEY_RIGHT:
+      return Key::Right;
+    case GLFW_KEY_UP:
+      return Key::Up;
+    case GLFW_KEY_DOWN:
+      return Key::Down;
+    default:
+      return std::nullopt;
+  }
 }
 } // namespace
 
@@ -58,6 +81,23 @@ bool Window::initialize(const WindowConfig& config)
   }
 
   m_handle = window;
+  glfwSetWindowUserPointer(window, this);
+  glfwSetKeyCallback(
+    window, [](GLFWwindow* callbackWindow, const int key, int, const int action, int) {
+      if (action != GLFW_PRESS) {
+        return;
+      }
+
+      auto* owner = static_cast<Window*>(glfwGetWindowUserPointer(callbackWindow));
+      if (owner == nullptr) {
+        return;
+      }
+
+      if (const auto mappedKey = keyFromGlfwKey(key); mappedKey.has_value()) {
+        owner->m_pressedKeys.push_back(*mappedKey);
+      }
+    });
+
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);
 
@@ -86,6 +126,13 @@ bool Window::shouldClose() const
 void Window::pollEvents()
 {
   glfwPollEvents();
+}
+
+std::vector<Key> Window::consumePressedKeys()
+{
+  std::vector<Key> pressedKeys;
+  pressedKeys.swap(m_pressedKeys);
+  return pressedKeys;
 }
 
 void Window::swapBuffers() const
