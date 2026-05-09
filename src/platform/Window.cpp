@@ -82,21 +82,21 @@ bool Window::initialize(const WindowConfig& config)
 
   m_handle = window;
   glfwSetWindowUserPointer(window, this);
-  glfwSetKeyCallback(
-    window, [](GLFWwindow* callbackWindow, const int key, int, const int action, int) {
-      if (action != GLFW_PRESS) {
-        return;
-      }
+  glfwSetKeyCallback(window,
+                     [](GLFWwindow* callbackWindow, const int key, int, const int action, int) {
+                       if (action != GLFW_PRESS) {
+                         return;
+                       }
 
-      auto* owner = static_cast<Window*>(glfwGetWindowUserPointer(callbackWindow));
-      if (owner == nullptr) {
-        return;
-      }
+                       auto* owner = static_cast<Window*>(glfwGetWindowUserPointer(callbackWindow));
+                       if (owner == nullptr) {
+                         return;
+                       }
 
-      if (const auto mappedKey = keyFromGlfwKey(key); mappedKey.has_value()) {
-        owner->m_pressedKeys.push_back(*mappedKey);
-      }
-    });
+                       if (const auto mappedKey = keyFromGlfwKey(key); mappedKey.has_value()) {
+                         owner->m_pressedKeys.push_back(*mappedKey);
+                       }
+                     });
 
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);

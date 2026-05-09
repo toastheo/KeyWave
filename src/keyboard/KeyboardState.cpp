@@ -4,9 +4,8 @@
 
 bool KeyboardState::isActive(const int pitch) const
 {
-  return std::ranges::any_of(activeKeys, [pitch](const ActiveKey& key) {
-    return key.pitch == pitch;
-  });
+  return std::ranges::any_of(activeKeys,
+                             [pitch](const ActiveKey& key) { return key.pitch == pitch; });
 }
 
 int KeyboardState::velocityForPitch(const int pitch) const

@@ -50,7 +50,8 @@ FallingNotesLayoutResult FallingNotesLayout::build(const std::vector<QueriedNote
   }
 
   // The vertical axis is measured in seconds relative to currentTimeSeconds:
-  // y = 0 is the keyboard hit line, positive values are upcoming notes, negative values are past notes.
+  // y = 0 is the keyboard hit line, positive values are upcoming notes, negative values are past
+  // notes.
   const auto minY = -viewport.visiblePastSeconds;
   const auto maxY = viewport.lookAheadSeconds;
 

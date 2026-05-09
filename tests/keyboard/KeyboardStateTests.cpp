@@ -26,8 +26,18 @@ TEST_CASE("KeyboardState reports active pitches and maximum velocity", "[keyboar
 TEST_CASE("KeyboardStateBuilder preserves active note identity", "[keyboard][state]")
 {
   const std::vector activeNotes{
-    Note{.pitch = 60, .velocity = 72, .channel = 0, .track = 2, .startSeconds = 1.0, .durationSeconds = 2.0},
-    Note{.pitch = 64, .velocity = 90, .channel = 1, .track = 3, .startSeconds = 1.0, .durationSeconds = 2.0},
+    Note{.pitch = 60,
+         .velocity = 72,
+         .channel = 0,
+         .track = 2,
+         .startSeconds = 1.0,
+         .durationSeconds = 2.0},
+    Note{.pitch = 64,
+         .velocity = 90,
+         .channel = 1,
+         .track = 3,
+         .startSeconds = 1.0,
+         .durationSeconds = 2.0},
   };
 
   const auto state = KeyboardStateBuilder::build(activeNotes);
