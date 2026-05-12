@@ -179,6 +179,8 @@ add_executable(KeyWave
     src/ui/ImGuiLayer.cpp
     src/ui/TransportControls.hpp
     src/ui/TransportControls.cpp
+    src/ui/TransportControlsConfig.hpp
+    src/ui/TransportControlsConfig.cpp
     src/ui/TransportTime.hpp
     src/ui/TransportTime.cpp
 )
@@ -214,6 +216,7 @@ target_include_directories(keywave_test_support
 add_executable(KeyWaveMidiTests
     tests/app/AppConfigTests.cpp
     tests/app/PlaybackTransportControlsTests.cpp
+    tests/ui/TransportControlsConfigTests.cpp
     tests/ui/TransportTimeTests.cpp
     tests/midi/MidiFileLoaderTests.cpp
     tests/midi/MidiTimelineQueryTests.cpp
@@ -232,6 +235,8 @@ add_executable(KeyWaveMidiTests
     src/app/AppConfig.cpp
     src/app/PlaybackTransportControls.hpp
     src/app/PlaybackTransportControls.cpp
+    src/ui/TransportControlsConfig.hpp
+    src/ui/TransportControlsConfig.cpp
     src/ui/TransportTime.hpp
     src/ui/TransportTime.cpp
     src/input/Key.hpp
@@ -245,6 +250,11 @@ target_link_libraries(KeyWaveMidiTests
         keywave_midi
         keywave_playback
         keywave_test_support
+)
+
+target_include_directories(KeyWaveMidiTests
+    PRIVATE
+        external/imgui
 )
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)

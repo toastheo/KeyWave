@@ -3,6 +3,7 @@
 #include <imgui.h>
 
 #include "app/PlaybackTransportAction.hpp"
+#include "ui/TransportControlsConfig.hpp"
 #include "ui/TransportTime.hpp"
 
 void TransportControls::render(PlaybackTransport& transport, const double durationSeconds)
@@ -14,11 +15,7 @@ void TransportControls::render(PlaybackTransport& transport, const double durati
   ImGui::SetNextWindowPos(position, ImGuiCond_Always);
   ImGui::SetNextWindowBgAlpha(0.88f);
 
-  constexpr ImGuiWindowFlags kWindowFlags =
-    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
-    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
-
-  if (!ImGui::Begin("Transport Controls", nullptr, kWindowFlags)) {
+  if (!ImGui::Begin("Transport Controls", nullptr, transportControlsWindowFlags())) {
     ImGui::End();
     return;
   }
