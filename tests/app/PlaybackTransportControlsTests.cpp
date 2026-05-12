@@ -1,10 +1,9 @@
-#include "app/PlaybackTransportControls.hpp"
-
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-
 #include <sstream>
 
+#include "app/PlaybackTransportAction.hpp"
+#include "app/PlaybackTransportControls.hpp"
 #include "input/Key.hpp"
 #include "playback/PlaybackTransport.hpp"
 
@@ -52,6 +51,28 @@ TEST_CASE("Playback transport controls clamp playback rate", "[app][playback]")
     applyPlaybackTransportControl(Key::Down, transport, log);
   }
   CHECK(transport.playbackRate() == Catch::Approx(0.25));
+}
+
+TEST_CASE("Playback transport actions can be shared by keyboard and UI controls", "[app][playback]")
+{
+  PlaybackTransport transport;
+
+  applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause, transport);
+  CHECK(transport.state() == PlaybackState::Playing);
+
+  applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause, transport);
+  CHECK(transport.state() == PlaybackState::Paused);
+
+  transport.seek(12.0);
+  applyPlaybackTransportAction(PlaybackTransportAction::SeekBackwardFiveSeconds, transport);
+  CHECK(transport.currentTimeSeconds() == Catch::Approx(7.0));
+
+  applyPlaybackTransportAction(PlaybackTransportAction::SeekForwardFiveSeconds, transport);
+  CHECK(transport.currentTimeSeconds() == Catch::Approx(12.0));
+
+  applyPlaybackTransportAction(PlaybackTransportAction::Stop, transport);
+  CHECK(transport.state() == PlaybackState::Stopped);
+  CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
 }
 
 } // namespace

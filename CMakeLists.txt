@@ -50,6 +50,31 @@ target_include_directories(midifile
         external/midifile/include
 )
 
+add_library(imgui STATIC
+    external/imgui/imgui.cpp
+    external/imgui/imgui_draw.cpp
+    external/imgui/imgui_tables.cpp
+    external/imgui/imgui_widgets.cpp
+    external/imgui/backends/imgui_impl_glfw.cpp
+    external/imgui/backends/imgui_impl_opengl3.cpp
+)
+
+target_include_directories(imgui
+    PUBLIC
+        external/imgui
+        external/imgui/backends
+)
+
+target_compile_definitions(imgui
+    PRIVATE
+        GLFW_INCLUDE_NONE
+)
+
+target_link_libraries(imgui
+    PRIVATE
+        glfw
+)
+
 add_library(keywave_midi STATIC
     src/midi/MidiTypes.hpp
     src/midi/MidiTrack.hpp
@@ -131,6 +156,8 @@ add_executable(KeyWave
     src/app/AppConfig.cpp
     src/app/Application.hpp
     src/app/Application.cpp
+    src/app/PlaybackTransportAction.hpp
+    src/app/PlaybackTransportAction.cpp
     src/app/PlaybackTransportControls.hpp
     src/app/PlaybackTransportControls.cpp
     src/app/StartupDataLoader.hpp
@@ -148,6 +175,10 @@ add_executable(KeyWave
     src/render_opengl/OpenGLRendererBackend.cpp
     src/render_opengl/OpenGLShader.hpp
     src/render_opengl/OpenGLShader.cpp
+    src/ui/ImGuiLayer.hpp
+    src/ui/ImGuiLayer.cpp
+    src/ui/TransportControls.hpp
+    src/ui/TransportControls.cpp
 )
 
 target_include_directories(KeyWave
@@ -162,6 +193,7 @@ target_link_libraries(KeyWave
         keywave_playback
         glad
         glfw
+        imgui
         OpenGL::GL
 )
 
@@ -191,6 +223,8 @@ add_executable(KeyWaveMidiTests
     tests/fallingnotes/FallingNotesSceneBuilderTests.cpp
     tests/playback/PlaybackTransportTests.cpp
     tests/render/RendererViewTests.cpp
+    src/app/PlaybackTransportAction.hpp
+    src/app/PlaybackTransportAction.cpp
     src/app/AppConfig.hpp
     src/app/AppConfig.cpp
     src/app/PlaybackTransportControls.hpp

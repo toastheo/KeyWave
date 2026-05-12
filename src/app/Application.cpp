@@ -48,6 +48,14 @@ bool Application::initialize()
   }
   m_renderer->setFramebufferSize(m_window.framebufferSize());
 
+  if (!m_imguiLayer.initialize(m_window.nativeHandle())) {
+    std::cerr << "Application initialization failed: UI layer could not be initialized.\n";
+    m_renderer->shutdown();
+    m_renderer.reset();
+    m_window.shutdown();
+    return false;
+  }
+
   if (m_timeline.has_value()) {
     m_playbackTransport.play();
     std::cout << "Playback started.\n";
@@ -71,8 +79,11 @@ void Application::run()
     previousFrameTime = currentFrameTime;
 
     Window::pollEvents();
-    for (const auto key : m_window.consumePressedKeys()) {
-      applyPlaybackTransportControl(key, m_playbackTransport, std::cout);
+    const auto pressedKeys = m_window.consumePressedKeys();
+    if (!m_imguiLayer.wantsKeyboardCapture()) {
+      for (const auto key : pressedKeys) {
+        applyPlaybackTransportControl(key, m_playbackTransport, std::cout);
+      }
     }
 
     m_renderer->setFramebufferSize(m_window.framebufferSize());
@@ -88,12 +99,17 @@ void Application::run()
     m_renderer->beginFrame();
     m_renderer->submit(scene.commands);
     m_renderer->endFrame();
+    m_imguiLayer.beginFrame();
+    TransportControls::render(m_playbackTransport);
+    m_imguiLayer.endFrame();
     m_window.swapBuffers();
   }
 }
 
 void Application::shutdown()
 {
+  m_imguiLayer.shutdown();
+
   if (m_renderer) {
     m_renderer->shutdown();
     m_renderer.reset();

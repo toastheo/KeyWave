@@ -8,6 +8,8 @@
 #include "platform/Window.hpp"
 #include "playback/PlaybackTransport.hpp"
 #include "render/RendererBackend.hpp"
+#include "ui/ImGuiLayer.hpp"
+#include "ui/TransportControls.hpp"
 
 class Application
 {
@@ -26,6 +28,8 @@ private:
   AppConfig m_config;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
+  ImGuiLayer m_imguiLayer;
+  TransportControls m_transportControls;
   std::optional<MidiTimeline> m_timeline;
   PlaybackTransport m_playbackTransport;
   bool m_initialized = false;
