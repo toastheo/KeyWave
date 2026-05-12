@@ -2,8 +2,10 @@
 
 #include "app/PlaybackTransportAction.hpp"
 
+#include <optional>
+
 namespace {
-PlaybackTransportAction actionFromKey(const Key key)
+std::optional<PlaybackTransportAction> actionFromKey(const Key key)
 {
   switch (key) {
     case Key::Space:
@@ -28,7 +30,7 @@ PlaybackTransportAction actionFromKey(const Key key)
       return PlaybackTransportAction::DecreasePlaybackRate;
   }
 
-  return PlaybackTransportAction::Stop;
+  return std::nullopt;
 }
 } // namespace
 
@@ -37,6 +39,10 @@ void applyPlaybackTransportControl(const Key key,
                                    std::ostream& output)
 {
   const auto action = actionFromKey(key);
-  applyPlaybackTransportAction(action, transport);
-  writePlaybackTransportActionLog(action, transport, output);
+  if (!action.has_value()) {
+    return;
+  }
+
+  applyPlaybackTransportAction(*action, transport);
+  writePlaybackTransportActionLog(*action, transport, output);
 }

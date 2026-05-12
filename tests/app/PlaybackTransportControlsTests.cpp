@@ -53,6 +53,23 @@ TEST_CASE("Playback transport controls clamp playback rate", "[app][playback]")
   CHECK(transport.playbackRate() == Catch::Approx(0.25));
 }
 
+TEST_CASE("Playback transport controls ignore unmapped keys", "[app][playback]")
+{
+  PlaybackTransport transport;
+  std::ostringstream log;
+
+  transport.play();
+  transport.seek(13.0);
+  transport.setPlaybackRate(1.5);
+
+  applyPlaybackTransportControl(static_cast<Key>(255), transport, log);
+
+  CHECK(transport.state() == PlaybackState::Playing);
+  CHECK(transport.currentTimeSeconds() == Catch::Approx(13.0));
+  CHECK(transport.playbackRate() == Catch::Approx(1.5));
+  CHECK(log.str().empty());
+}
+
 TEST_CASE("Playback transport actions can be shared by keyboard and UI controls", "[app][playback]")
 {
   PlaybackTransport transport;
