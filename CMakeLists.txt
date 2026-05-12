@@ -179,6 +179,8 @@ add_executable(KeyWave
     src/ui/ImGuiLayer.cpp
     src/ui/TransportControls.hpp
     src/ui/TransportControls.cpp
+    src/ui/TransportTime.hpp
+    src/ui/TransportTime.cpp
 )
 
 target_include_directories(KeyWave
@@ -212,6 +214,7 @@ target_include_directories(keywave_test_support
 add_executable(KeyWaveMidiTests
     tests/app/AppConfigTests.cpp
     tests/app/PlaybackTransportControlsTests.cpp
+    tests/ui/TransportTimeTests.cpp
     tests/midi/MidiFileLoaderTests.cpp
     tests/midi/MidiTimelineQueryTests.cpp
     tests/keyboard/KeyboardStateTests.cpp
@@ -229,6 +232,8 @@ add_executable(KeyWaveMidiTests
     src/app/AppConfig.cpp
     src/app/PlaybackTransportControls.hpp
     src/app/PlaybackTransportControls.cpp
+    src/ui/TransportTime.hpp
+    src/ui/TransportTime.cpp
     src/input/Key.hpp
     src/render/RendererView.cpp
 )

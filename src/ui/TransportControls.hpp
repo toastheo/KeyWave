@@ -5,5 +5,5 @@
 class TransportControls
 {
 public:
-  static void render(PlaybackTransport& transport);
+  static void render(PlaybackTransport& transport, double durationSeconds);
 };

@@ -88,6 +88,10 @@ void Application::run()
 
     m_renderer->setFramebufferSize(m_window.framebufferSize());
     m_playbackTransport.update(elapsed.count());
+    const double durationSeconds = m_timeline.has_value() ? m_timeline->lengthSeconds() : 0.0;
+
+    m_imguiLayer.beginFrame();
+    TransportControls::render(m_playbackTransport, durationSeconds);
 
     RenderScene scene;
     if (m_timeline.has_value()) {
@@ -99,8 +103,6 @@ void Application::run()
     m_renderer->beginFrame();
     m_renderer->submit(scene.commands);
     m_renderer->endFrame();
-    m_imguiLayer.beginFrame();
-    TransportControls::render(m_playbackTransport);
     m_imguiLayer.endFrame();
     m_window.swapBuffers();
   }
