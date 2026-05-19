@@ -10,5 +10,9 @@ include(cmake/Dependencies.cmake)
 
 add_subdirectory(src)
 
-enable_testing()
-add_subdirectory(tests)
+include(CTest)
+
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
+

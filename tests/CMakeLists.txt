@@ -1,3 +1,12 @@
+include(FetchContent)
+
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.11.0
+)
+FetchContent_MakeAvailable(Catch2)
+
 add_library(keywave_test_support STATIC
     midi/MidiFixtures.hpp
     midi/MidiFixtures.cpp
