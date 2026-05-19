@@ -150,31 +150,61 @@ target_include_directories(keywave_playback
         src
 )
 
-add_executable(KeyWave
-    src/main.cpp
-    src/app/AppConfig.hpp
-    src/app/AppConfig.cpp
-    src/app/Application.hpp
-    src/app/Application.cpp
-    src/app/PlaybackTransportAction.hpp
-    src/app/PlaybackTransportAction.cpp
-    src/app/PlaybackTransportControls.hpp
-    src/app/PlaybackTransportControls.cpp
-    src/app/StartupDataLoader.hpp
-    src/app/StartupDataLoader.cpp
-    src/input/Key.hpp
-    src/platform/Window.hpp
-    src/platform/Window.cpp
+add_library(keywave_render STATIC
     src/render/RendererBackend.hpp
     src/render/RenderCommand.hpp
     src/render/RenderScene.hpp
     src/render/RenderTypes.hpp
     src/render/RendererView.hpp
     src/render/RendererView.cpp
-    src/render_opengl/OpenGLRendererBackend.hpp
-    src/render_opengl/OpenGLRendererBackend.cpp
-    src/render_opengl/OpenGLShader.hpp
-    src/render_opengl/OpenGLShader.cpp
+)
+
+target_include_directories(keywave_render
+    PUBLIC
+        src
+)
+
+add_library(keywave_platform STATIC
+    src/input/Key.hpp
+    src/platform/Window.hpp
+    src/platform/Window.cpp
+)
+
+target_include_directories(keywave_platform
+    PUBLIC
+        src
+)
+
+target_link_libraries(keywave_platform
+    PUBLIC
+        keywave_render
+    PRIVATE
+        glfw
+)
+
+add_library(keywave_app_core STATIC
+    src/app/AppConfig.hpp
+    src/app/AppConfig.cpp
+    src/app/PlaybackTransportAction.hpp
+    src/app/PlaybackTransportAction.cpp
+    src/app/PlaybackTransportControls.hpp
+    src/app/PlaybackTransportControls.cpp
+    src/app/StartupDataLoader.hpp
+    src/app/StartupDataLoader.cpp
+)
+
+target_include_directories(keywave_app_core
+    PUBLIC
+        src
+)
+
+target_link_libraries(keywave_app_core
+    PUBLIC
+        keywave_midi
+        keywave_playback
+)
+
+add_library(keywave_ui STATIC
     src/ui/ImGuiLayer.hpp
     src/ui/ImGuiLayer.cpp
     src/ui/TransportControls.hpp
@@ -185,20 +215,71 @@ add_executable(KeyWave
     src/ui/TransportTime.cpp
 )
 
-target_include_directories(KeyWave
-    PRIVATE
+target_include_directories(keywave_ui
+    PUBLIC
         src
+)
+
+target_link_libraries(keywave_ui
+    PUBLIC
+        keywave_app_core
+        keywave_playback
+        imgui
+    PRIVATE
+        glfw
+        OpenGL::GL
+)
+
+add_library(keywave_render_opengl STATIC
+    src/render_opengl/OpenGLRendererBackend.hpp
+    src/render_opengl/OpenGLRendererBackend.cpp
+    src/render_opengl/OpenGLShader.hpp
+    src/render_opengl/OpenGLShader.cpp
+)
+
+target_include_directories(keywave_render_opengl
+    PUBLIC
+        src
+)
+
+target_link_libraries(keywave_render_opengl
+    PUBLIC
+        keywave_platform
+        keywave_render
+    PRIVATE
+        glad
+        OpenGL::GL
+)
+
+add_library(keywave_app STATIC
+    src/app/Application.hpp
+    src/app/Application.cpp
+)
+
+target_include_directories(keywave_app
+    PUBLIC
+        src
+)
+
+target_link_libraries(keywave_app
+    PUBLIC
+        keywave_app_core
+        keywave_fallingnotes
+        keywave_midi
+        keywave_platform
+        keywave_playback
+        keywave_render
+        keywave_render_opengl
+        keywave_ui
+)
+
+add_executable(KeyWave
+    src/main.cpp
 )
 
 target_link_libraries(KeyWave
     PRIVATE
-        keywave_fallingnotes
-        keywave_midi
-        keywave_playback
-        glad
-        glfw
-        imgui
-        OpenGL::GL
+        keywave_app
 )
 
 enable_testing()
@@ -229,32 +310,18 @@ add_executable(KeyWaveMidiTests
     tests/fallingnotes/FallingNotesSceneBuilderTests.cpp
     tests/playback/PlaybackTransportTests.cpp
     tests/render/RendererViewTests.cpp
-    src/app/PlaybackTransportAction.hpp
-    src/app/PlaybackTransportAction.cpp
-    src/app/AppConfig.hpp
-    src/app/AppConfig.cpp
-    src/app/PlaybackTransportControls.hpp
-    src/app/PlaybackTransportControls.cpp
-    src/ui/TransportControlsConfig.hpp
-    src/ui/TransportControlsConfig.cpp
-    src/ui/TransportTime.hpp
-    src/ui/TransportTime.cpp
-    src/input/Key.hpp
-    src/render/RendererView.cpp
 )
 
 target_link_libraries(KeyWaveMidiTests
     PRIVATE
         Catch2::Catch2WithMain
+        keywave_app_core
         keywave_fallingnotes
         keywave_midi
         keywave_playback
+        keywave_render
         keywave_test_support
-)
-
-target_include_directories(KeyWaveMidiTests
-    PRIVATE
-        external/imgui
+        keywave_ui
 )
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
