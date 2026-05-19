@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include "midi/MidiTimelineQuery.hpp"
 #include "midi/MidiTypes.hpp"
 
 struct FallingNotesViewport
