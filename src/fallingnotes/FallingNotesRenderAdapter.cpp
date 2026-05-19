@@ -31,10 +31,6 @@ Color colorForNote(const FallingNoteLayout& noteLayout, const FallingNotesRender
     return style.activeNoteColor;
   }
 
-  if (noteLayout.clippedBottom || noteLayout.clippedTop) {
-    return style.clippedNoteColor;
-  }
-
   return style.noteColor;
 }
 
@@ -67,6 +63,5 @@ FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(const FallingNotesSe
   return FallingNotesRenderStyle{
     .noteColor = sanitizedSettings.noteColor,
     .activeNoteColor = sanitizedSettings.activeNoteColor,
-    .clippedNoteColor = sanitizedSettings.clippedNoteColor,
   };
 }

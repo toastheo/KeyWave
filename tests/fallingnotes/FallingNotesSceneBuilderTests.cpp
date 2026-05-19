@@ -117,7 +117,6 @@ TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
     .visiblePastSeconds = 1.0,
     .noteColor = Color{.r = 0.7f, .g = 0.2f, .b = 0.1f, .a = 1.0f},
     .activeNoteColor = Color{.r = 0.1f, .g = 0.9f, .b = 0.2f, .a = 1.0f},
-    .clippedNoteColor = Color{.r = 0.8f, .g = 0.4f, .b = 0.1f, .a = 1.0f},
   };
   constexpr KeyboardSettings keyboardSettings{
     .whiteKeyWidth = 2.0,
