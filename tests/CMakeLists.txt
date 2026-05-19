@@ -1,47 +1,48 @@
 include(FetchContent)
 
 FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v3.11.0
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.11.0
 )
 FetchContent_MakeAvailable(Catch2)
 
 add_library(keywave_test_support STATIC
-    midi/MidiFixtures.hpp
-    midi/MidiFixtures.cpp
+        midi/MidiFixtures.hpp
+        midi/MidiFixtures.cpp
 )
 
 target_include_directories(keywave_test_support
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_executable(KeyWaveMidiTests
-    app/AppConfigTests.cpp
-    app/PlaybackTransportControlsTests.cpp
-    ui/TransportControlsConfigTests.cpp
-    ui/TransportTimeTests.cpp
-    midi/MidiFileLoaderTests.cpp
-    midi/MidiTimelineQueryTests.cpp
-    keyboard/KeyboardStateTests.cpp
-    keyboard/KeyboardGeometryTests.cpp
-    keyboard/KeyboardLayoutTests.cpp
-    keyboard/KeyboardRenderAdapterTests.cpp
-    fallingnotes/FallingNotesLayoutTests.cpp
-    fallingnotes/FallingNotesRenderAdapterTests.cpp
-    fallingnotes/FallingNotesSceneBuilderTests.cpp
-    playback/PlaybackTransportTests.cpp
-    render/RendererViewTests.cpp
+        app/AppConfigTests.cpp
+        app/AppSettingsTests.cpp
+        app/PlaybackTransportControlsTests.cpp
+        ui/TransportControlsConfigTests.cpp
+        ui/TransportTimeTests.cpp
+        midi/MidiFileLoaderTests.cpp
+        midi/MidiTimelineQueryTests.cpp
+        keyboard/KeyboardStateTests.cpp
+        keyboard/KeyboardGeometryTests.cpp
+        keyboard/KeyboardLayoutTests.cpp
+        keyboard/KeyboardRenderAdapterTests.cpp
+        fallingnotes/FallingNotesLayoutTests.cpp
+        fallingnotes/FallingNotesRenderAdapterTests.cpp
+        fallingnotes/FallingNotesSceneBuilderTests.cpp
+        playback/PlaybackTransportTests.cpp
+        render/RendererViewTests.cpp
 )
 
 set_target_properties(KeyWaveMidiTests
-    PROPERTIES
+        PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
 target_link_libraries(KeyWaveMidiTests
-    PRIVATE
+        PRIVATE
         Catch2::Catch2WithMain
         keywave_app_core
         keywave_fallingnotes

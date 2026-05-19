@@ -56,6 +56,7 @@ TEST_CASE("FallingNotesRenderAdapter converts falling note layouts into draw rec
   constexpr FallingNotesRenderStyle style{
     .noteColor = Color{.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 0.4f},
     .activeNoteColor = Color{.r = 0.4f, .g = 0.5f, .b = 0.6f, .a = 0.7f},
+    .clippedNoteColor = Color{.r = 0.7f, .g = 0.8f, .b = 0.9f, .a = 1.0f},
   };
 
   const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
@@ -81,7 +82,7 @@ TEST_CASE("FallingNotesRenderAdapter converts falling note layouts into draw rec
   CHECK(clipped.rect.y == Catch::Approx(9.5));
   CHECK(clipped.rect.width == Catch::Approx(0.9));
   CHECK(clipped.rect.height == Catch::Approx(0.5));
-  checkColor(clipped.color, style.noteColor);
+  checkColor(clipped.color, style.clippedNoteColor);
 }
 
 TEST_CASE("FallingNotesRenderAdapter highlights notes intersecting the keyboard hit line",
@@ -97,12 +98,13 @@ TEST_CASE("FallingNotesRenderAdapter highlights notes intersecting the keyboard 
   constexpr FallingNotesRenderStyle style{
     .noteColor = Color{.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 1.0f},
     .activeNoteColor = Color{.r = 0.4f, .g = 0.5f, .b = 0.6f, .a = 1.0f},
+    .clippedNoteColor = Color{.r = 0.7f, .g = 0.8f, .b = 0.9f, .a = 1.0f},
   };
 
   const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
 
   REQUIRE(commands.size() == 2);
-  checkColor(rectAt(commands, 0).color, style.noteColor);
+  checkColor(rectAt(commands, 0).color, style.clippedNoteColor);
   checkColor(rectAt(commands, 1).color, style.activeNoteColor);
 }
 

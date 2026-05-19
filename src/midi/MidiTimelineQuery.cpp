@@ -113,8 +113,8 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
     }
 
     const bool startsBeforeRange = note.startSeconds < viewport.timeRange.startSeconds;
-    const bool endsAfterRange =
-      note.startSeconds + note.durationSeconds > viewport.timeRange.endSeconds;
+    const bool endsAfterRange = note.startSeconds + note.durationSeconds >
+                                viewport.timeRange.endSeconds;
 
     result.push_back(QueriedNote{
       .note = note,

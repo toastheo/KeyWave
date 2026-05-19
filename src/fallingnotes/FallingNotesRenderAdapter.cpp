@@ -31,6 +31,10 @@ Color colorForNote(const FallingNoteLayout& noteLayout, const FallingNotesRender
     return style.activeNoteColor;
   }
 
+  if (noteLayout.clippedBottom || noteLayout.clippedTop) {
+    return style.clippedNoteColor;
+  }
+
   return style.noteColor;
 }
 
@@ -55,4 +59,14 @@ std::vector<RenderCommand> FallingNotesRenderAdapter::buildCommands(
   }
 
   return commands;
+}
+
+FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(const FallingNotesSettings& settings)
+{
+  const auto sanitizedSettings = sanitizeFallingNotesSettings(settings);
+  return FallingNotesRenderStyle{
+    .noteColor = sanitizedSettings.noteColor,
+    .activeNoteColor = sanitizedSettings.activeNoteColor,
+    .clippedNoteColor = sanitizedSettings.clippedNoteColor,
+  };
 }

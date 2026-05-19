@@ -3,6 +3,7 @@
 #include <limits>
 #include <variant>
 
+#include "app/AppSettings.hpp"
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
 #include "midi/MidiTimeline.hpp"
@@ -25,6 +26,11 @@ bool sameColor(const Color& left, const Color& right)
 {
   return left.r == Catch::Approx(right.r) && left.g == Catch::Approx(right.g) &&
          left.b == Catch::Approx(right.b) && left.a == Catch::Approx(right.a);
+}
+
+void checkColor(const Color& actual, const Color& expected)
+{
+  CHECK(sameColor(actual, expected));
 }
 
 bool isKeyboardRect(const DrawRectCommand& command)
@@ -96,6 +102,53 @@ TEST_CASE("FallingNotesSceneBuilder highlights keyboard keys for currently activ
 
   CHECK(activeWhiteKeyCount == 1);
   CHECK(activeBlackKeyCount == 1);
+}
+
+TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
+          "[fallingnotes][scene]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 9.5, .durationSeconds = 1.0});
+  timeline.addNote(Note{.pitch = 72, .velocity = 90, .startSeconds = 10.0, .durationSeconds = 1.0});
+
+  constexpr FallingNotesSettings fallingNotesSettings{
+    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 64},
+    .lookAheadSeconds = 4.0,
+    .visiblePastSeconds = 1.0,
+    .noteColor = Color{.r = 0.7f, .g = 0.2f, .b = 0.1f, .a = 1.0f},
+    .activeNoteColor = Color{.r = 0.1f, .g = 0.9f, .b = 0.2f, .a = 1.0f},
+    .clippedNoteColor = Color{.r = 0.8f, .g = 0.4f, .b = 0.1f, .a = 1.0f},
+  };
+  constexpr KeyboardSettings keyboardSettings{
+    .whiteKeyWidth = 2.0,
+    .whiteKeyHeight = 1.25,
+    .blackKeyWidth = 1.0,
+    .blackKeyHeight = 0.75,
+    .whiteKeyGap = 0.2,
+    .whiteKeyColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 1.0f},
+    .blackKeyColor = Color{.r = 0.1f, .g = 0.1f, .b = 0.1f, .a = 1.0f},
+    .activeWhiteKeyColor = Color{.r = 0.2f, .g = 0.8f, .b = 0.9f, .a = 1.0f},
+    .activeBlackKeyColor = Color{.r = 0.2f, .g = 0.4f, .b = 0.9f, .a = 1.0f},
+    .whiteKeySeparatorColor = Color{.r = 0.25f, .g = 0.25f, .b = 0.27f, .a = 1.0f},
+    .hitLineColor = Color{.r = 0.6f, .g = 0.6f, .b = 0.9f, .a = 1.0f},
+    .separatorWidth = 2.0,
+    .hitLineHeight = 0.05,
+  };
+
+  const auto scene =
+    FallingNotesSceneBuilder::build(timeline, 10.0, fallingNotesSettings, keyboardSettings);
+  const auto rects = rectsForScene(scene);
+
+  CHECK(scene.view.visibleWorldRect.y == Catch::Approx(-1.25));
+  CHECK(scene.view.visibleWorldRect.width == Catch::Approx(6.0));
+  CHECK(scene.view.visibleWorldRect.height == Catch::Approx(5.25));
+
+  REQUIRE_FALSE(rects.empty());
+  checkColor(rects.front().color, fallingNotesSettings.activeNoteColor);
+  CHECK(rects.front().rect.x == Catch::Approx(0.1));
+  CHECK(rects.front().rect.width == Catch::Approx(1.8));
+  CHECK(rects.back().rect.height == Catch::Approx(keyboardSettings.hitLineHeight));
+  checkColor(rects.back().color, keyboardSettings.hitLineColor);
 }
 
 } // namespace

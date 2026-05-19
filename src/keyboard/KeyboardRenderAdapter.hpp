@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "app/AppSettings.hpp"
 #include "keyboard/KeyboardTypes.hpp"
 #include "render/RenderCommand.hpp"
 
@@ -20,6 +21,8 @@ struct KeyboardRenderStyle
   bool includeSeparators = true;
   bool includeHitLine = true;
 };
+
+[[nodiscard]] KeyboardRenderStyle keyboardRenderStyleFromSettings(const KeyboardSettings& settings);
 
 class KeyboardRenderAdapter
 {

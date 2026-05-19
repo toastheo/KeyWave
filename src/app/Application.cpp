@@ -13,6 +13,7 @@
 
 Application::Application(AppConfig config)
     : m_config(std::move(config))
+    , m_settings(sanitizeAppSettings(AppSettings{}))
 {}
 
 Application::~Application()
@@ -26,9 +27,9 @@ bool Application::initialize()
   m_timeline = std::move(startupData.timeline);
 
   const WindowConfig windowConfig{
-    .title = "KeyWave",
-    .width = 1280,
-    .height = 720,
+    .title = m_settings.window.title,
+    .width = m_settings.window.width,
+    .height = m_settings.window.height,
   };
 
   if (!m_window.initialize(windowConfig)) {
@@ -36,9 +37,8 @@ bool Application::initialize()
     return false;
   }
 
-  m_renderer =
-    std::make_unique<OpenGLRendererBackend>(Window::nativeProcAddressLoader(),
-                                            Color{.r = 0.025f, .g = 0.03f, .b = 0.04f, .a = 1.0f});
+  m_renderer = std::make_unique<OpenGLRendererBackend>(Window::nativeProcAddressLoader(),
+                                                       m_settings.renderer.clearColor);
 
   if (!m_renderer->initialize()) {
     std::cerr << "Application initialization failed: renderer could not be initialized.\n";
@@ -82,7 +82,8 @@ void Application::run()
     const auto pressedKeys = m_window.consumePressedKeys();
     if (!m_imguiLayer.wantsKeyboardCapture()) {
       for (const auto key : pressedKeys) {
-        applyPlaybackTransportControl(key, m_playbackTransport, std::cout);
+        applyPlaybackTransportControl(
+          key, m_playbackTransport, std::cout, m_settings.playbackControls);
       }
     }
 
@@ -91,12 +92,14 @@ void Application::run()
     const double durationSeconds = m_timeline.has_value() ? m_timeline->lengthSeconds() : 0.0;
 
     m_imguiLayer.beginFrame();
-    TransportControls::render(m_playbackTransport, durationSeconds);
+    TransportControls::render(m_playbackTransport, durationSeconds, m_settings.playbackControls);
 
     RenderScene scene;
     if (m_timeline.has_value()) {
-      scene =
-        FallingNotesSceneBuilder::build(*m_timeline, m_playbackTransport.currentTimeSeconds());
+      scene = FallingNotesSceneBuilder::build(*m_timeline,
+                                              m_playbackTransport.currentTimeSeconds(),
+                                              m_settings.fallingNotes,
+                                              m_settings.keyboard);
     }
 
     m_renderer->setView(scene.view);

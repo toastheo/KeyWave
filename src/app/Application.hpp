@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "app/AppConfig.hpp"
+#include "app/AppSettings.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "platform/Window.hpp"
 #include "playback/PlaybackTransport.hpp"
@@ -26,6 +27,7 @@ public:
 
 private:
   AppConfig m_config;
+  AppSettings m_settings;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
   ImGuiLayer m_imguiLayer;

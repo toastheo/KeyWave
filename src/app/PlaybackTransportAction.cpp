@@ -4,20 +4,19 @@
 #include <ostream>
 
 namespace {
-constexpr double kSeekStepSeconds = 5.0;
-constexpr double kPlaybackRateStep = 0.25;
-constexpr double kMinimumPlaybackRate = 0.25;
-constexpr double kMaximumPlaybackRate = 4.0;
 
-double clampedPlaybackRate(const double rate)
+double clampedPlaybackRate(const double rate, const PlaybackControlSettings& settings)
 {
-  return std::clamp(rate, kMinimumPlaybackRate, kMaximumPlaybackRate);
+  return std::clamp(rate, settings.minPlaybackRate, settings.maxPlaybackRate);
 }
 } // namespace
 
 void applyPlaybackTransportAction(const PlaybackTransportAction action,
-                                  PlaybackTransport& transport)
+                                  PlaybackTransport& transport,
+                                  const PlaybackControlSettings& settings)
 {
+  const auto sanitizedSettings = sanitizePlaybackControlSettings(settings);
+
   switch (action) {
     case PlaybackTransportAction::TogglePlayPause:
       if (transport.state() == PlaybackState::Playing) {
@@ -37,20 +36,22 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
       transport.stop();
       break;
 
-    case PlaybackTransportAction::SeekBackwardFiveSeconds:
-      transport.seek(transport.currentTimeSeconds() - kSeekStepSeconds);
+    case PlaybackTransportAction::SeekBackward:
+      transport.seek(transport.currentTimeSeconds() - sanitizedSettings.seekStepSeconds);
       break;
 
-    case PlaybackTransportAction::SeekForwardFiveSeconds:
-      transport.seek(transport.currentTimeSeconds() + kSeekStepSeconds);
+    case PlaybackTransportAction::SeekForward:
+      transport.seek(transport.currentTimeSeconds() + sanitizedSettings.seekStepSeconds);
       break;
 
     case PlaybackTransportAction::IncreasePlaybackRate:
-      transport.setPlaybackRate(clampedPlaybackRate(transport.playbackRate() + kPlaybackRateStep));
+      transport.setPlaybackRate(clampedPlaybackRate(
+        transport.playbackRate() + sanitizedSettings.playbackRateStep, sanitizedSettings));
       break;
 
     case PlaybackTransportAction::DecreasePlaybackRate:
-      transport.setPlaybackRate(clampedPlaybackRate(transport.playbackRate() - kPlaybackRateStep));
+      transport.setPlaybackRate(clampedPlaybackRate(
+        transport.playbackRate() - sanitizedSettings.playbackRateStep, sanitizedSettings));
       break;
   }
 }
@@ -77,8 +78,8 @@ void writePlaybackTransportActionLog(const PlaybackTransportAction action,
       output << "Playback stopped.\n";
       break;
 
-    case PlaybackTransportAction::SeekBackwardFiveSeconds:
-    case PlaybackTransportAction::SeekForwardFiveSeconds:
+    case PlaybackTransportAction::SeekBackward:
+    case PlaybackTransportAction::SeekForward:
       output << "Playback seeked to " << transport.currentTimeSeconds() << "s.\n";
       break;
 

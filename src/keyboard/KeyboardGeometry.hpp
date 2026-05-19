@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 
+#include "app/AppSettings.hpp"
 #include "keyboard/KeyboardTypes.hpp"
 
 /**
@@ -36,3 +37,6 @@ private:
   int m_whiteKeyCount = 0;
   double m_width = 0.0;
 };
+
+[[nodiscard]] KeyboardLayoutConfig keyboardLayoutConfigFromSettings(
+  const KeyboardSettings& settings, const PitchRange& pitchRange);

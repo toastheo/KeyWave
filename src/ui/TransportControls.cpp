@@ -2,12 +2,28 @@
 
 #include <imgui.h>
 
+#include <sstream>
+
 #include "app/PlaybackTransportAction.hpp"
 #include "ui/TransportControlsConfig.hpp"
 #include "ui/TransportTime.hpp"
 
-void TransportControls::render(PlaybackTransport& transport, const double durationSeconds)
+namespace {
+
+std::string formatSeekStepLabel(const double seekStepSeconds)
 {
+  std::ostringstream output;
+  output << seekStepSeconds << "s";
+  return output.str();
+}
+
+} // namespace
+
+void TransportControls::render(PlaybackTransport& transport,
+                               const double durationSeconds,
+                               const PlaybackControlSettings& settings)
+{
+  const auto sanitizedSettings = sanitizePlaybackControlSettings(settings);
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   const ImVec2 position{viewport->WorkPos.x + 16.0f,
                         viewport->WorkPos.y + viewport->WorkSize.y - 96.0f};
@@ -20,24 +36,31 @@ void TransportControls::render(PlaybackTransport& transport, const double durati
     return;
   }
 
-  if (ImGui::Button("<< 5s")) {
-    applyPlaybackTransportAction(PlaybackTransportAction::SeekBackwardFiveSeconds, transport);
+  const auto seekLabel = formatSeekStepLabel(sanitizedSettings.seekStepSeconds);
+  const auto seekBackwardLabel = "<< " + seekLabel;
+  const auto seekForwardLabel = seekLabel + " >>";
+
+  if (ImGui::Button(seekBackwardLabel.c_str())) {
+    applyPlaybackTransportAction(
+      PlaybackTransportAction::SeekBackward, transport, sanitizedSettings);
   }
 
   ImGui::SameLine();
   const char* playPauseLabel = transport.state() == PlaybackState::Playing ? "Pause" : "Play";
   if (ImGui::Button(playPauseLabel)) {
-    applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause, transport);
+    applyPlaybackTransportAction(
+      PlaybackTransportAction::TogglePlayPause, transport, sanitizedSettings);
   }
 
   ImGui::SameLine();
   if (ImGui::Button("Stop")) {
-    applyPlaybackTransportAction(PlaybackTransportAction::Stop, transport);
+    applyPlaybackTransportAction(PlaybackTransportAction::Stop, transport, sanitizedSettings);
   }
 
   ImGui::SameLine();
-  if (ImGui::Button("5s >>")) {
-    applyPlaybackTransportAction(PlaybackTransportAction::SeekForwardFiveSeconds, transport);
+  if (ImGui::Button(seekForwardLabel.c_str())) {
+    applyPlaybackTransportAction(
+      PlaybackTransportAction::SeekForward, transport, sanitizedSettings);
   }
 
   ImGui::SameLine();

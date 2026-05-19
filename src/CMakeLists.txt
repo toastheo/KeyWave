@@ -1,191 +1,210 @@
 add_library(keywave_midi STATIC
-    midi/MidiTypes.hpp
-    midi/MidiTrack.hpp
-    midi/MidiTrack.cpp
-    midi/MidiTimeline.hpp
-    midi/MidiTimeline.cpp
-    midi/MidiTimelineQuery.hpp
-    midi/MidiTimelineQuery.cpp
-    midi/MidiFileLoader.hpp
-    midi/MidiFileLoader.cpp
+        midi/MidiTypes.hpp
+        midi/MidiTrack.hpp
+        midi/MidiTrack.cpp
+        midi/MidiTimeline.hpp
+        midi/MidiTimeline.cpp
+        midi/MidiTimelineQuery.hpp
+        midi/MidiTimelineQuery.cpp
+        midi/MidiFileLoader.hpp
+        midi/MidiFileLoader.cpp
 )
 
 target_include_directories(keywave_midi
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(keywave_midi
-    PRIVATE
+        PRIVATE
         midifile
 )
 
+add_library(keywave_render STATIC
+        render/RendererBackend.hpp
+        render/RenderCommand.hpp
+        render/RenderScene.hpp
+        render/RenderTypes.hpp
+        render/RendererView.hpp
+        render/RendererView.cpp
+)
+
+target_include_directories(keywave_render
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_library(keywave_app_settings STATIC
+        app/AppSettings.hpp
+        app/AppSettings.cpp
+)
+
+target_include_directories(keywave_app_settings
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(keywave_app_settings
+        PUBLIC
+        keywave_midi
+        keywave_render
+)
+
 add_library(keywave_keyboard STATIC
-    keyboard/KeyboardTypes.hpp
-    keyboard/KeyboardState.hpp
-    keyboard/KeyboardState.cpp
-    keyboard/KeyboardGeometry.hpp
-    keyboard/KeyboardGeometry.cpp
-    keyboard/KeyboardLayout.hpp
-    keyboard/KeyboardLayout.cpp
-    keyboard/KeyboardRenderAdapter.hpp
-    keyboard/KeyboardRenderAdapter.cpp
+        keyboard/KeyboardTypes.hpp
+        keyboard/KeyboardState.hpp
+        keyboard/KeyboardState.cpp
+        keyboard/KeyboardGeometry.hpp
+        keyboard/KeyboardGeometry.cpp
+        keyboard/KeyboardLayout.hpp
+        keyboard/KeyboardLayout.cpp
+        keyboard/KeyboardRenderAdapter.hpp
+        keyboard/KeyboardRenderAdapter.cpp
 )
 
 target_include_directories(keywave_keyboard
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(keywave_keyboard
-    PUBLIC
+        PUBLIC
+        keywave_app_settings
         keywave_midi
 )
 
 add_library(keywave_fallingnotes STATIC
-    fallingnotes/FallingNotesTypes.hpp
-    fallingnotes/FallingNotesLayout.hpp
-    fallingnotes/FallingNotesLayout.cpp
-    fallingnotes/FallingNotesRenderAdapter.hpp
-    fallingnotes/FallingNotesRenderAdapter.cpp
-    fallingnotes/FallingNotesSceneBuilder.hpp
-    fallingnotes/FallingNotesSceneBuilder.cpp
+        fallingnotes/FallingNotesTypes.hpp
+        fallingnotes/FallingNotesLayout.hpp
+        fallingnotes/FallingNotesLayout.cpp
+        fallingnotes/FallingNotesRenderAdapter.hpp
+        fallingnotes/FallingNotesRenderAdapter.cpp
+        fallingnotes/FallingNotesSceneBuilder.hpp
+        fallingnotes/FallingNotesSceneBuilder.cpp
 )
 
 target_include_directories(keywave_fallingnotes
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(keywave_fallingnotes
-    PUBLIC
+        PUBLIC
+        keywave_app_settings
         keywave_keyboard
         keywave_midi
 )
 
 add_library(keywave_playback STATIC
-    playback/PlaybackTransport.hpp
-    playback/PlaybackTransport.cpp
+        playback/PlaybackTransport.hpp
+        playback/PlaybackTransport.cpp
 )
 
 target_include_directories(keywave_playback
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-add_library(keywave_render STATIC
-    render/RendererBackend.hpp
-    render/RenderCommand.hpp
-    render/RenderScene.hpp
-    render/RenderTypes.hpp
-    render/RendererView.hpp
-    render/RendererView.cpp
-)
-
-target_include_directories(keywave_render
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_library(keywave_platform STATIC
-    input/Key.hpp
-    platform/Window.hpp
-    platform/Window.cpp
+        input/Key.hpp
+        platform/Window.hpp
+        platform/Window.cpp
 )
 
 target_include_directories(keywave_platform
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(keywave_platform
-    PUBLIC
+        PUBLIC
         keywave_render
-    PRIVATE
+        PRIVATE
         glfw
 )
 
 add_library(keywave_app_core STATIC
-    app/AppConfig.hpp
-    app/AppConfig.cpp
-    app/PlaybackTransportAction.hpp
-    app/PlaybackTransportAction.cpp
-    app/PlaybackTransportControls.hpp
-    app/PlaybackTransportControls.cpp
-    app/StartupDataLoader.hpp
-    app/StartupDataLoader.cpp
+        app/AppConfig.hpp
+        app/AppConfig.cpp
+        app/PlaybackTransportAction.hpp
+        app/PlaybackTransportAction.cpp
+        app/PlaybackTransportControls.hpp
+        app/PlaybackTransportControls.cpp
+        app/StartupDataLoader.hpp
+        app/StartupDataLoader.cpp
 )
 
 target_include_directories(keywave_app_core
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(keywave_app_core
-    PUBLIC
+        PUBLIC
+        keywave_app_settings
         keywave_midi
         keywave_playback
 )
 
 add_library(keywave_ui STATIC
-    ui/ImGuiLayer.hpp
-    ui/ImGuiLayer.cpp
-    ui/TransportControls.hpp
-    ui/TransportControls.cpp
-    ui/TransportControlsConfig.hpp
-    ui/TransportControlsConfig.cpp
-    ui/TransportTime.hpp
-    ui/TransportTime.cpp
+        ui/ImGuiLayer.hpp
+        ui/ImGuiLayer.cpp
+        ui/TransportControls.hpp
+        ui/TransportControls.cpp
+        ui/TransportControlsConfig.hpp
+        ui/TransportControlsConfig.cpp
+        ui/TransportTime.hpp
+        ui/TransportTime.cpp
 )
 
 target_include_directories(keywave_ui
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(keywave_ui
-    PUBLIC
+        PUBLIC
         keywave_app_core
         keywave_playback
         imgui
-    PRIVATE
+        PRIVATE
         glfw
         OpenGL::GL
 )
 
 add_library(keywave_render_opengl STATIC
-    render_opengl/OpenGLRendererBackend.hpp
-    render_opengl/OpenGLRendererBackend.cpp
-    render_opengl/OpenGLShader.hpp
-    render_opengl/OpenGLShader.cpp
+        render_opengl/OpenGLRendererBackend.hpp
+        render_opengl/OpenGLRendererBackend.cpp
+        render_opengl/OpenGLShader.hpp
+        render_opengl/OpenGLShader.cpp
 )
 
 target_include_directories(keywave_render_opengl
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(keywave_render_opengl
-    PUBLIC
+        PUBLIC
         keywave_platform
         keywave_render
-    PRIVATE
+        PRIVATE
         glad
         OpenGL::GL
 )
 
 add_library(keywave_app STATIC
-    app/Application.hpp
-    app/Application.cpp
+        app/Application.hpp
+        app/Application.cpp
 )
 
 target_include_directories(keywave_app
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(keywave_app
-    PUBLIC
+        PUBLIC
         keywave_app_core
         keywave_fallingnotes
         keywave_midi
@@ -197,15 +216,15 @@ target_link_libraries(keywave_app
 )
 
 add_executable(KeyWave
-    main.cpp
+        main.cpp
 )
 
 set_target_properties(KeyWave
-    PROPERTIES
+        PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
 target_link_libraries(KeyWave
-    PRIVATE
+        PRIVATE
         keywave_app
 )

@@ -18,10 +18,10 @@ std::optional<PlaybackTransportAction> actionFromKey(const Key key)
       return PlaybackTransportAction::Stop;
 
     case Key::Left:
-      return PlaybackTransportAction::SeekBackwardFiveSeconds;
+      return PlaybackTransportAction::SeekBackward;
 
     case Key::Right:
-      return PlaybackTransportAction::SeekForwardFiveSeconds;
+      return PlaybackTransportAction::SeekForward;
 
     case Key::Up:
       return PlaybackTransportAction::IncreasePlaybackRate;
@@ -36,13 +36,14 @@ std::optional<PlaybackTransportAction> actionFromKey(const Key key)
 
 void applyPlaybackTransportControl(const Key key,
                                    PlaybackTransport& transport,
-                                   std::ostream& output)
+                                   std::ostream& output,
+                                   const PlaybackControlSettings& settings)
 {
   const auto action = actionFromKey(key);
   if (!action.has_value()) {
     return;
   }
 
-  applyPlaybackTransportAction(*action, transport);
+  applyPlaybackTransportAction(*action, transport, settings);
   writePlaybackTransportActionLog(*action, transport, output);
 }

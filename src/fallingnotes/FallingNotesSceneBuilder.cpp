@@ -15,14 +15,6 @@
 
 namespace {
 
-constexpr PitchRange kPianoPitchRange{
-  .minPitch = 21,
-  .maxPitch = 108,
-};
-
-constexpr double kLookAheadSeconds = 10.0;
-constexpr double kVisiblePastSeconds = 0.0;
-
 RendererView rendererViewForKeyboard(const KeyboardGeometry& geometry,
                                      const FallingNotesViewport& viewport)
 {
@@ -56,18 +48,20 @@ void appendCommands(std::vector<RenderCommand>& destination, std::vector<RenderC
 } // namespace
 
 RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
-                                            const double currentTimeSeconds)
+                                            const double currentTimeSeconds,
+                                            const FallingNotesSettings& fallingNotesSettings,
+                                            const KeyboardSettings& keyboardSettings)
 {
-  constexpr KeyboardLayoutConfig keyboardConfig{
-    .pitchRange = kPianoPitchRange,
-  };
+  const auto sanitizedFallingNotesSettings = sanitizeFallingNotesSettings(fallingNotesSettings);
+  const auto keyboardConfig =
+    keyboardLayoutConfigFromSettings(keyboardSettings, sanitizedFallingNotesSettings.pitchRange);
   const KeyboardGeometry keyboardGeometry(keyboardConfig);
 
   const FallingNotesViewport viewport{
-    .pitchRange = kPianoPitchRange,
+    .pitchRange = sanitizedFallingNotesSettings.pitchRange,
     .currentTimeSeconds = currentTimeSeconds,
-    .lookAheadSeconds = kLookAheadSeconds,
-    .visiblePastSeconds = kVisiblePastSeconds,
+    .lookAheadSeconds = sanitizedFallingNotesSettings.lookAheadSeconds,
+    .visiblePastSeconds = sanitizedFallingNotesSettings.visiblePastSeconds,
   };
 
   std::vector<QueriedNote> notes;
@@ -77,10 +71,10 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
     notes = query.findNotes(TimelineViewport{
       .timeRange =
         TimeRange{
-          .startSeconds = currentTimeSeconds - kVisiblePastSeconds,
-          .endSeconds = currentTimeSeconds + kLookAheadSeconds,
+          .startSeconds = currentTimeSeconds - sanitizedFallingNotesSettings.visiblePastSeconds,
+          .endSeconds = currentTimeSeconds + sanitizedFallingNotesSettings.lookAheadSeconds,
         },
-      .pitchRange = kPianoPitchRange,
+      .pitchRange = sanitizedFallingNotesSettings.pitchRange,
     });
     activeNotes = query.findActiveNotesAt(currentTimeSeconds);
   }
@@ -90,8 +84,13 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
   const auto keyboardLayout = KeyboardLayout::build(keyboardGeometry, keyboardState);
 
   std::vector<RenderCommand> commands;
-  appendCommands(commands, FallingNotesRenderAdapter::buildCommands(fallingNotesLayout));
-  appendCommands(commands, KeyboardRenderAdapter::buildCommands(keyboardLayout));
+  appendCommands(commands,
+                 FallingNotesRenderAdapter::buildCommands(fallingNotesLayout,
+                                                          fallingNotesRenderStyleFromSettings(
+                                                            sanitizedFallingNotesSettings)));
+  appendCommands(commands,
+                 KeyboardRenderAdapter::buildCommands(
+                   keyboardLayout, keyboardRenderStyleFromSettings(keyboardSettings)));
 
   return RenderScene{
     .commands = std::move(commands),
