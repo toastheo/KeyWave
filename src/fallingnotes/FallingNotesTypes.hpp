@@ -10,6 +10,7 @@ struct FallingNotesViewport
   double currentTimeSeconds = 0.0;
   double lookAheadSeconds = 10.0;
   double visiblePastSeconds = 0.0;
+  double displayHeight = 0.0;
 };
 
 struct FallingNoteLayout
@@ -37,6 +38,7 @@ struct FallingNotesLayoutResult
   double currentTimeSeconds = 0.0;
   double lookAheadSeconds = 0.0;
   double visiblePastSeconds = 0.0;
+  double displayHeight = 0.0;
 
   int pitchLaneCount = 0;
   double contentWidth = 0.0;

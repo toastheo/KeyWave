@@ -140,7 +140,7 @@ TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
 
   CHECK(scene.view.visibleWorldRect.y == Catch::Approx(-1.25));
   CHECK(scene.view.visibleWorldRect.width == Catch::Approx(6.0));
-  CHECK(scene.view.visibleWorldRect.height == Catch::Approx(5.25));
+  CHECK(scene.view.visibleWorldRect.height == Catch::Approx(11.25));
 
   REQUIRE_FALSE(rects.empty());
   checkColor(rects.front().color, fallingNotesSettings.activeNoteColor);
@@ -148,6 +148,36 @@ TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
   CHECK(rects.front().rect.width == Catch::Approx(1.8));
   CHECK(rects.back().rect.height == Catch::Approx(keyboardSettings.hitLineHeight));
   checkColor(rects.back().color, keyboardSettings.hitLineColor);
+}
+
+TEST_CASE("FallingNotesSceneBuilder keeps keyboard view size independent from lookahead",
+          "[fallingnotes][scene]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 18.0, .durationSeconds = 1.0});
+
+  FallingNotesSettings shortLookaheadSettings;
+  shortLookaheadSettings.lookAheadSeconds = 4.0;
+
+  FallingNotesSettings longLookaheadSettings;
+  longLookaheadSettings.lookAheadSeconds = 20.0;
+
+  constexpr KeyboardSettings keyboardSettings;
+
+  const auto shortScene =
+    FallingNotesSceneBuilder::build(timeline, 0.0, shortLookaheadSettings, keyboardSettings);
+  const auto longScene =
+    FallingNotesSceneBuilder::build(timeline, 0.0, longLookaheadSettings, keyboardSettings);
+
+  CHECK(shortScene.view.visibleWorldRect.y == Catch::Approx(longScene.view.visibleWorldRect.y));
+  CHECK(shortScene.view.visibleWorldRect.height ==
+        Catch::Approx(longScene.view.visibleWorldRect.height));
+
+  const auto longRects = rectsForScene(longScene);
+  REQUIRE_FALSE(longRects.empty());
+  CHECK(longRects.front().rect.y >= 0.0);
+  CHECK(longRects.front().rect.y + longRects.front().rect.height <=
+        longScene.view.visibleWorldRect.y + longScene.view.visibleWorldRect.height);
 }
 
 } // namespace

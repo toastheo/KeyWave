@@ -14,7 +14,8 @@ bool isValidViewport(const FallingNotesViewport& viewport)
 {
   return isValidPitchRange(viewport.pitchRange) && std::isfinite(viewport.currentTimeSeconds) &&
          std::isfinite(viewport.lookAheadSeconds) && viewport.lookAheadSeconds > 0.0 &&
-         std::isfinite(viewport.visiblePastSeconds) && viewport.visiblePastSeconds >= 0.0;
+         std::isfinite(viewport.visiblePastSeconds) && viewport.visiblePastSeconds >= 0.0 &&
+         std::isfinite(viewport.displayHeight);
 }
 
 double noteEndSeconds(const Note& note)
@@ -25,6 +26,11 @@ double noteEndSeconds(const Note& note)
 bool hasPositiveWidth(const Rect& rect)
 {
   return std::isfinite(rect.x) && std::isfinite(rect.width) && rect.width > 0.0;
+}
+
+double displayHeightFor(const FallingNotesViewport& viewport)
+{
+  return viewport.displayHeight > 0.0 ? viewport.displayHeight : viewport.lookAheadSeconds;
 }
 
 } // namespace
@@ -43,6 +49,7 @@ FallingNotesLayoutResult FallingNotesLayout::build(const std::vector<QueriedNote
     .currentTimeSeconds = viewport.currentTimeSeconds,
     .lookAheadSeconds = viewport.lookAheadSeconds,
     .visiblePastSeconds = viewport.visiblePastSeconds,
+    .displayHeight = displayHeightFor(viewport),
   };
 
   if (!isValidViewport(viewport)) {
@@ -54,10 +61,11 @@ FallingNotesLayoutResult FallingNotesLayout::build(const std::vector<QueriedNote
   // notes.
   const auto minY = -viewport.visiblePastSeconds;
   const auto maxY = viewport.lookAheadSeconds;
+  const auto secondsToWorldScale = result.displayHeight / viewport.lookAheadSeconds;
 
   result.pitchLaneCount = geometry.whiteKeyCount();
   result.contentWidth = geometry.width();
-  result.contentHeight = viewport.lookAheadSeconds;
+  result.contentHeight = result.displayHeight;
   result.notes.reserve(queriedNotes.size());
 
   for (const auto& queriedNote : queriedNotes) {
@@ -93,9 +101,9 @@ FallingNotesLayoutResult FallingNotesLayout::build(const std::vector<QueriedNote
     result.notes.push_back(FallingNoteLayout{
       .note = note,
       .x = noteRect.x,
-      .y = visibleStartOffset,
+      .y = visibleStartOffset * secondsToWorldScale,
       .width = noteRect.width,
-      .height = visibleHeight,
+      .height = visibleHeight * secondsToWorldScale,
       .visibleStartOffsetSeconds = visibleStartOffset,
       .visibleEndOffsetSeconds = visibleEndOffset,
       .clippedBottom = (noteStartOffset < minY),

@@ -107,7 +107,7 @@ void renderKeyboardSettings(KeyboardSettings& settings)
 
   ImGui::SeparatorText("Dimensions");
   editDoubleSlider("White Key Width", settings.whiteKeyWidth, 0.1, 3.0);
-  editDoubleSlider("White Key Height", settings.whiteKeyHeight, 0.2, 6.0);
+  editDoubleSlider("Keyboard Height", settings.whiteKeyHeight, 0.2, 6.0);
 
   settings.whiteKeyWidth = clampPositive(settings.whiteKeyWidth, KeyboardSettings{}.whiteKeyWidth);
   settings.whiteKeyHeight =

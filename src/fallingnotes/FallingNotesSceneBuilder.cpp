@@ -15,16 +15,20 @@
 
 namespace {
 
+constexpr double kFallingNotesDisplayHeight = 10.0;
+
 RendererView rendererViewForKeyboard(const KeyboardGeometry& geometry,
                                      const FallingNotesViewport& viewport)
 {
+  const auto fallingNotesHeight = viewport.displayHeight > 0.0 ? viewport.displayHeight
+                                                               : viewport.lookAheadSeconds;
   const RendererView view{
     .visibleWorldRect =
       WorldRect{
         .x = 0.0,
         .y = -geometry.height(),
         .width = geometry.width(),
-        .height = viewport.lookAheadSeconds + geometry.height(),
+        .height = fallingNotesHeight + geometry.height(),
       },
   };
 
@@ -62,6 +66,7 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
     .currentTimeSeconds = currentTimeSeconds,
     .lookAheadSeconds = sanitizedFallingNotesSettings.lookAheadSeconds,
     .visiblePastSeconds = sanitizedFallingNotesSettings.visiblePastSeconds,
+    .displayHeight = kFallingNotesDisplayHeight,
   };
 
   std::vector<QueriedNote> notes;
