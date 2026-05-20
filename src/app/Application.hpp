@@ -11,6 +11,7 @@
 #include "render/RendererBackend.hpp"
 #include "ui/ImGuiLayer.hpp"
 #include "ui/TransportControls.hpp"
+#include "ui/VisualizationSettingsPanel.hpp"
 
 class Application
 {

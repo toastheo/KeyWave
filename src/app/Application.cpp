@@ -93,6 +93,8 @@ void Application::run()
 
     m_imguiLayer.beginFrame();
     TransportControls::render(m_playbackTransport, durationSeconds, m_settings.playbackControls);
+    VisualizationSettingsPanel::render(m_settings, m_playbackTransport);
+    m_renderer->setClearColor(m_settings.renderer.clearColor);
 
     RenderScene scene;
     if (m_timeline.has_value()) {

@@ -20,6 +20,7 @@ public:
   bool initialize() override;
   void shutdown() override;
   void setFramebufferSize(const FramebufferSize& size) override;
+  void setClearColor(Color color) override;
   void setView(const RendererView& view) override;
   void beginFrame() override;
   void submit(const std::vector<RenderCommand>& commands) override;

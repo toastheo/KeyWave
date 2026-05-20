@@ -149,6 +149,11 @@ void OpenGLRendererBackend::setFramebufferSize(const FramebufferSize& size)
   }
 }
 
+void OpenGLRendererBackend::setClearColor(const Color color)
+{
+  m_clearColor = color;
+}
+
 void OpenGLRendererBackend::setView(const RendererView& view)
 {
   if (!isValid(view.visibleWorldRect)) {

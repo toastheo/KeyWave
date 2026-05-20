@@ -155,6 +155,8 @@ add_library(keywave_ui STATIC
         ui/TransportControlsConfig.cpp
         ui/TransportTime.hpp
         ui/TransportTime.cpp
+        ui/VisualizationSettingsPanel.hpp
+        ui/VisualizationSettingsPanel.cpp
 )
 
 target_include_directories(keywave_ui
