@@ -29,6 +29,8 @@ std::optional<Key> keyFromGlfwKey(const int key)
   switch (key) {
     case GLFW_KEY_SPACE:
       return Key::Space;
+    case GLFW_KEY_ESCAPE:
+      return Key::Escape;
     case GLFW_KEY_R:
       return Key::R;
     case GLFW_KEY_S:

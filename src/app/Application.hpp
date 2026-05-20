@@ -11,7 +11,6 @@
 #include "render/RendererBackend.hpp"
 #include "ui/ImGuiLayer.hpp"
 #include "ui/TransportControls.hpp"
-#include "ui/VisualizationSettingsPanel.hpp"
 
 class Application
 {
@@ -35,5 +34,6 @@ private:
   TransportControls m_transportControls;
   std::optional<MidiTimeline> m_timeline;
   PlaybackTransport m_playbackTransport;
+  bool m_visualizationSettingsPanelVisible = true;
   bool m_initialized = false;
 };

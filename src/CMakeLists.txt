@@ -130,6 +130,8 @@ add_library(keywave_app_core STATIC
         app/PlaybackTransportAction.cpp
         app/PlaybackTransportControls.hpp
         app/PlaybackTransportControls.cpp
+        app/VisualizationSettingsPanelControls.hpp
+        app/VisualizationSettingsPanelControls.cpp
         app/StartupDataLoader.hpp
         app/StartupDataLoader.cpp
 )

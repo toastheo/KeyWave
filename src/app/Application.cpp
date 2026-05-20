@@ -7,9 +7,11 @@
 
 #include "app/PlaybackTransportControls.hpp"
 #include "app/StartupDataLoader.hpp"
+#include "app/VisualizationSettingsPanelControls.hpp"
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
 #include "render/RenderScene.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
+#include "ui/VisualizationSettingsPanel.hpp"
 
 Application::Application(AppConfig config)
     : m_config(std::move(config))
@@ -80,8 +82,11 @@ void Application::run()
 
     Window::pollEvents();
     const auto pressedKeys = m_window.consumePressedKeys();
-    if (!m_imguiLayer.wantsKeyboardCapture()) {
-      for (const auto key : pressedKeys) {
+    const auto imguiWantsKeyboardCapture = m_imguiLayer.wantsKeyboardCapture();
+    for (const auto key : pressedKeys) {
+      applyVisualizationSettingsPanelControl(key, m_visualizationSettingsPanelVisible);
+
+      if (!imguiWantsKeyboardCapture) {
         applyPlaybackTransportControl(
           key, m_playbackTransport, std::cout, m_settings.playbackControls);
       }
@@ -93,7 +98,9 @@ void Application::run()
 
     m_imguiLayer.beginFrame();
     TransportControls::render(m_playbackTransport, durationSeconds, m_settings.playbackControls);
-    VisualizationSettingsPanel::render(m_settings, m_playbackTransport);
+    if (m_visualizationSettingsPanelVisible) {
+      VisualizationSettingsPanel::render(m_settings, m_playbackTransport);
+    }
     m_renderer->setClearColor(m_settings.renderer.clearColor);
 
     RenderScene scene;
