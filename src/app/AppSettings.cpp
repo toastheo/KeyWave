@@ -120,3 +120,8 @@ AppSettings sanitizeAppSettings(AppSettings settings)
   settings.keyboard = sanitizeKeyboardSettings(settings.keyboard);
   return settings;
 }
+
+void resetAppSettingsToDefaults(AppSettings& settings)
+{
+  settings = sanitizeAppSettings(AppSettings{});
+}

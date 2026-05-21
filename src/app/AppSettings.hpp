@@ -72,3 +72,4 @@ struct AppSettings
 [[nodiscard]] FallingNotesSettings sanitizeFallingNotesSettings(FallingNotesSettings settings);
 [[nodiscard]] KeyboardSettings sanitizeKeyboardSettings(KeyboardSettings settings);
 [[nodiscard]] AppSettings sanitizeAppSettings(AppSettings settings);
+void resetAppSettingsToDefaults(AppSettings& settings);

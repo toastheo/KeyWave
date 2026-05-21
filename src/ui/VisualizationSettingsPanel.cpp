@@ -138,6 +138,10 @@ void VisualizationSettingsPanel::render(AppSettings& settings, PlaybackTransport
     return;
   }
 
+  if (ImGui::Button("Reset Settings")) {
+    resetAppSettingsToDefaults(settings);
+  }
+
   if (ImGui::CollapsingHeader("Playback", ImGuiTreeNodeFlags_DefaultOpen)) {
     renderPlaybackSettings(settings, transport);
   }

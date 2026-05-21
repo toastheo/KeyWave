@@ -69,4 +69,26 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   CHECK(sanitized.keyboard.blackKeyHeight == Catch::Approx(1.55));
 }
 
+TEST_CASE("resetAppSettingsToDefaults restores all settings defaults", "[app][settings]")
+{
+  AppSettings settings;
+  settings.renderer.clearColor = Color{.r = 1.0f, .g = 0.0f, .b = 0.0f, .a = 1.0f};
+  settings.fallingNotes.lookAheadSeconds = 24.0;
+  settings.fallingNotes.noteColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 0.6f};
+  settings.keyboard.includeHitLine = false;
+  settings.keyboard.whiteKeyHeight = 4.0;
+
+  resetAppSettingsToDefaults(settings);
+
+  const AppSettings defaults;
+  CHECK(settings.renderer.clearColor.r == Catch::Approx(defaults.renderer.clearColor.r));
+  CHECK(settings.renderer.clearColor.g == Catch::Approx(defaults.renderer.clearColor.g));
+  CHECK(settings.renderer.clearColor.b == Catch::Approx(defaults.renderer.clearColor.b));
+  CHECK(settings.renderer.clearColor.a == Catch::Approx(defaults.renderer.clearColor.a));
+  CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(defaults.fallingNotes.lookAheadSeconds));
+  CHECK(settings.fallingNotes.noteColor.r == Catch::Approx(defaults.fallingNotes.noteColor.r));
+  CHECK(settings.keyboard.includeHitLine == defaults.keyboard.includeHitLine);
+  CHECK(settings.keyboard.whiteKeyHeight == Catch::Approx(defaults.keyboard.whiteKeyHeight));
+}
+
 } // namespace
