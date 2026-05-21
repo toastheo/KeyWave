@@ -25,6 +25,13 @@ Application::~Application()
 
 bool Application::initialize()
 {
+  std::cout << "Settings path: " << m_settingsStorage.path() << '\n';
+  if (auto loadedSettings = m_settingsStorage.load(); loadedSettings.has_value()) {
+    m_settings = sanitizeAppSettings(*loadedSettings);
+    std::cout << "Settings loaded.\n";
+  }
+  std::cout << "Settings will be saved on exit.\n";
+
   auto startupData = StartupDataLoader::load(m_config);
   m_timeline = std::move(startupData.timeline);
 
@@ -122,6 +129,13 @@ void Application::run()
 
 void Application::shutdown()
 {
+  if (!m_settingsSaved) {
+    if (m_settingsStorage.save(m_settings)) {
+      std::cout << "Settings saved: " << m_settingsStorage.path() << '\n';
+    }
+    m_settingsSaved = true;
+  }
+
   m_imguiLayer.shutdown();
 
   if (m_renderer) {

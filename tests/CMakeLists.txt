@@ -20,7 +20,9 @@ target_include_directories(keywave_test_support
 add_executable(KeyWaveMidiTests
         app/AppConfigTests.cpp
         app/AppSettingsTests.cpp
+        app/AppSettingsSerializerTests.cpp
         app/PlaybackTransportControlsTests.cpp
+        app/SettingsStorageTests.cpp
         app/VisualizationSettingsPanelControlsTests.cpp
         ui/TransportControlsConfigTests.cpp
         ui/TransportTimeTests.cpp

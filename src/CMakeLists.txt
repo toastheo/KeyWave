@@ -37,11 +37,16 @@ target_include_directories(keywave_render
 add_library(keywave_app_settings STATIC
         app/AppSettings.hpp
         app/AppSettings.cpp
+        app/AppSettingsSerializer.hpp
+        app/AppSettingsSerializer.cpp
+        app/SettingsStorage.hpp
+        app/SettingsStorage.cpp
 )
 
 target_include_directories(keywave_app_settings
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/external
 )
 
 target_link_libraries(keywave_app_settings

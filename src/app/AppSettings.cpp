@@ -102,7 +102,7 @@ KeyboardSettings sanitizeKeyboardSettings(KeyboardSettings settings)
   settings.whiteKeyGap =
     std::min(settings.whiteKeyGap, std::max(0.0, settings.whiteKeyWidth - 0.000001));
 
-  if (!isPositiveFinite(settings.separatorWidth)) {
+  if (!isNonNegativeFinite(settings.separatorWidth)) {
     settings.separatorWidth = defaults.separatorWidth;
   }
   if (!isPositiveFinite(settings.hitLineHeight)) {
