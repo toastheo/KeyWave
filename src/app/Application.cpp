@@ -5,18 +5,14 @@
 #include <memory>
 #include <utility>
 
-#include "app/PlaybackTransportControls.hpp"
 #include "app/StartupDataLoader.hpp"
-#include "app/VisualizationSettingsAdapters.hpp"
-#include "app/VisualizationSettingsPanelControls.hpp"
-#include "fallingnotes/FallingNotesSceneBuilder.hpp"
 #include "render/RenderScene.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
+#include "ui/TransportControls.hpp"
 #include "ui/VisualizationSettingsPanel.hpp"
 
 Application::Application(AppConfig config)
     : m_config(std::move(config))
-    , m_settings(sanitizeAppSettings(AppSettings{}))
 {}
 
 Application::~Application()
@@ -28,18 +24,19 @@ bool Application::initialize()
 {
   std::cout << "Settings path: " << m_settingsStorage.path() << '\n';
   if (auto loadedSettings = m_settingsStorage.load(); loadedSettings.has_value()) {
-    m_settings = sanitizeAppSettings(*loadedSettings);
+    m_visualizerController.setSettings(*loadedSettings);
     std::cout << "Settings loaded.\n";
   }
   std::cout << "Settings will be saved on exit.\n";
 
   auto startupData = StartupDataLoader::load(m_config);
-  m_timeline = std::move(startupData.timeline);
+  m_visualizerController.setTimeline(std::move(startupData.timeline));
+  const auto& settings = m_visualizerController.settings();
 
   const WindowConfig windowConfig{
-    .title = m_settings.window.title,
-    .width = m_settings.window.width,
-    .height = m_settings.window.height,
+    .title = settings.window.title,
+    .width = settings.window.width,
+    .height = settings.window.height,
   };
 
   if (!m_window.initialize(windowConfig)) {
@@ -48,7 +45,7 @@ bool Application::initialize()
   }
 
   m_renderer = std::make_unique<OpenGLRendererBackend>(Window::nativeProcAddressLoader(),
-                                                       m_settings.renderer.clearColor);
+                                                       settings.renderer.clearColor);
 
   if (!m_renderer->initialize()) {
     std::cerr << "Application initialization failed: renderer could not be initialized.\n";
@@ -66,8 +63,8 @@ bool Application::initialize()
     return false;
   }
 
-  if (m_timeline.has_value()) {
-    m_playbackTransport.play();
+  if (m_visualizerController.hasTimeline()) {
+    m_visualizerController.playbackTransport().play();
     std::cout << "Playback started.\n";
   }
 
@@ -91,33 +88,22 @@ void Application::run()
     Window::pollEvents();
     const auto pressedKeys = m_window.consumePressedKeys();
     const auto imguiWantsKeyboardCapture = m_imguiLayer.wantsKeyboardCapture();
-    for (const auto key : pressedKeys) {
-      applyVisualizationSettingsPanelControl(key, m_visualizationSettingsPanelVisible);
-
-      if (!imguiWantsKeyboardCapture) {
-        applyPlaybackTransportControl(
-          key, m_playbackTransport, std::cout, m_settings.playbackControls);
-      }
-    }
+    m_visualizerController.handleInput(pressedKeys, imguiWantsKeyboardCapture, std::cout);
 
     m_renderer->setFramebufferSize(m_window.framebufferSize());
-    m_playbackTransport.update(elapsed.count());
-    const double durationSeconds = m_timeline.has_value() ? m_timeline->lengthSeconds() : 0.0;
+    m_visualizerController.update(elapsed.count());
 
     m_imguiLayer.beginFrame();
-    TransportControls::render(m_playbackTransport, durationSeconds, m_settings.playbackControls);
-    if (m_visualizationSettingsPanelVisible) {
-      VisualizationSettingsPanel::render(m_settings, m_playbackTransport);
+    TransportControls::render(m_visualizerController.playbackTransport(),
+                              m_visualizerController.durationSeconds(),
+                              m_visualizerController.settings().playbackControls);
+    if (m_visualizerController.visualizationSettingsPanelVisible()) {
+      VisualizationSettingsPanel::render(m_visualizerController.settings(),
+                                         m_visualizerController.playbackTransport());
     }
-    m_renderer->setClearColor(m_settings.renderer.clearColor);
+    m_renderer->setClearColor(m_visualizerController.settings().renderer.clearColor);
 
-    RenderScene scene;
-    if (m_timeline.has_value()) {
-      scene = FallingNotesSceneBuilder::build(
-        *m_timeline,
-        m_playbackTransport.currentTimeSeconds(),
-        fallingNotesSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard));
-    }
+    const auto scene = m_visualizerController.buildScene();
 
     m_renderer->setView(scene.view);
     m_renderer->beginFrame();
@@ -131,7 +117,7 @@ void Application::run()
 void Application::shutdown()
 {
   if (!m_settingsSaved) {
-    if (m_settingsStorage.save(m_settings)) {
+    if (m_settingsStorage.save(m_visualizerController.settings())) {
       std::cout << "Settings saved: " << m_settingsStorage.path() << '\n';
     }
     m_settingsSaved = true;
@@ -145,7 +131,7 @@ void Application::shutdown()
   }
 
   m_window.shutdown();
-  m_timeline.reset();
-  m_playbackTransport.stop();
+  m_visualizerController.setTimeline(std::nullopt);
+  m_visualizerController.playbackTransport().stop();
   m_initialized = false;
 }

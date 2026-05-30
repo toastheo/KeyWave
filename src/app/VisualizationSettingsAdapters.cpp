@@ -31,8 +31,7 @@ KeyboardRenderStyle keyboardRenderStyleFromSettings(const KeyboardSettings& sett
   };
 }
 
-FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(
-  const FallingNotesSettings& settings)
+FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(const FallingNotesSettings& settings)
 {
   const auto sanitizedSettings = sanitizeFallingNotesSettings(settings);
   return FallingNotesRenderStyle{
@@ -49,8 +48,8 @@ FallingNotesSceneConfig fallingNotesSceneConfigFromSettings(
     .pitchRange = sanitizedFallingNotesSettings.pitchRange,
     .lookAheadSeconds = sanitizedFallingNotesSettings.lookAheadSeconds,
     .visiblePastSeconds = sanitizedFallingNotesSettings.visiblePastSeconds,
-    .keyboardLayout = keyboardLayoutConfigFromSettings(keyboardSettings,
-                                                       sanitizedFallingNotesSettings.pitchRange),
+    .keyboardLayout =
+      keyboardLayoutConfigFromSettings(keyboardSettings, sanitizedFallingNotesSettings.pitchRange),
     .fallingNotesStyle = fallingNotesRenderStyleFromSettings(sanitizedFallingNotesSettings),
     .keyboardStyle = keyboardRenderStyleFromSettings(keyboardSettings),
   };

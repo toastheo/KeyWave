@@ -24,6 +24,7 @@ add_executable(KeyWaveMidiTests
         app/AppSettingsSerializerTests.cpp
         app/PlaybackTransportControlsTests.cpp
         app/SettingsStorageTests.cpp
+        app/VisualizerControllerTests.cpp
         app/VisualizationSettingsAdaptersTests.cpp
         app/VisualizationSettingsPanelControlsTests.cpp
         ui/TransportControlsConfigTests.cpp
@@ -67,9 +68,9 @@ list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
 
 set(KEYWAVE_CATCH_DISCOVERY_ARGS DISCOVERY_MODE PRE_TEST)
-if(WIN32)
+if (WIN32)
     get_filename_component(KEYWAVE_TEST_RUNTIME_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
     list(APPEND KEYWAVE_CATCH_DISCOVERY_ARGS DL_PATHS "${KEYWAVE_TEST_RUNTIME_DIR}")
-endif()
+endif ()
 
 catch_discover_tests(KeyWaveMidiTests ${KEYWAVE_CATCH_DISCOVERY_ARGS})

@@ -157,6 +157,8 @@ add_library(keywave_app_core STATIC
         app/VisualizationSettingsAdapters.cpp
         app/StartupDataLoader.hpp
         app/StartupDataLoader.cpp
+        app/VisualizerController.hpp
+        app/VisualizerController.cpp
 )
 
 target_include_directories(keywave_app_core
