@@ -22,6 +22,10 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
     return std::nullopt;
   }
 
+  // Keep smf::MidiFile local to this loader.
+  // craigsapp/midifile has known copy/move assignment issues with raw-owned event lists:
+  // https://github.com/craigsapp/midifile/issues/69
+  // Extract values into MidiTimeline instead of storing or exposing smf::MidiFile.
   smf::MidiFile midiFile;
   if (!midiFile.read(path.string())) {
     reportError(diagnostics, "MIDI load failed: could not parse file: " + path.string());
