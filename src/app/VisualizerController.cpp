@@ -100,9 +100,9 @@ RenderScene VisualizerController::buildScene() const
     return {};
   }
 
-  return PianoRollSceneBuilder::build(
-    *m_timeline,
-    m_playbackTransport.currentTimeSeconds(),
-    pianoRollSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard),
-    *m_diagnostics);
+  return PianoRollSceneBuilder::build(*m_timeline,
+                                      m_playbackTransport.currentTimeSeconds(),
+                                      pianoRollSceneConfigFromSettings(m_settings.fallingNotes,
+                                                                       m_settings.keyboard),
+                                      *m_diagnostics);
 }

@@ -1,7 +1,7 @@
-#include "app/AppSettingsSerializer.hpp"
-
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include "app/AppSettingsSerializer.hpp"
 
 namespace {
 
@@ -97,6 +97,21 @@ TEST_CASE("AppSettingsSerializer falls back for invalid values and clamps colors
   CHECK(settings.keyboard.separatorWidth == Catch::Approx(0.015));
   CHECK(settings.keyboard.hitLineHeight == Catch::Approx(defaults.keyboard.hitLineHeight));
   CHECK(settings.keyboard.whiteKeyColor.r == Catch::Approx(defaults.keyboard.whiteKeyColor.r));
+}
+
+TEST_CASE("AppSettingsSerializer clamps pitch values through shared constraints", "[app][settings]")
+{
+  AppSettings defaults;
+  defaults.fallingNotes.pitchRange = PitchRange{.minPitch = 21, .maxPitch = 108};
+
+  const nlohmann::json json = {
+    {"fallingNotes", {{"pitchRange", {{"minPitch", -12}, {"maxPitch", 140}}}}},
+  };
+
+  const auto settings = AppSettingsSerializer::deserialize(json, defaults);
+
+  CHECK(settings.fallingNotes.pitchRange.minPitch == 0);
+  CHECK(settings.fallingNotes.pitchRange.maxPitch == 127);
 }
 
 } // namespace

@@ -127,8 +127,7 @@ TEST_CASE("PianoRollSceneBuilder highlights keyboard keys for currently active M
   CHECK(activeBlackKeyCount == 1);
 }
 
-TEST_CASE("PianoRollSceneBuilder uses falling note and keyboard settings",
-          "[fallingnotes][scene]")
+TEST_CASE("PianoRollSceneBuilder uses falling note and keyboard settings", "[fallingnotes][scene]")
 {
   MidiTimeline timeline;
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 9.5, .durationSeconds = 1.0});

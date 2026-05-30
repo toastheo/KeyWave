@@ -1,5 +1,7 @@
 #include "app/AppSettingsSerializer.hpp"
 
+#include "app/AppSettingsConstraints.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -49,11 +51,12 @@ PitchRange pitchRangeFromJson(const nlohmann::json& json, const PitchRange fallb
   }
 
   PitchRange range = fallback;
+  const auto constraints = appSettingsConstraints().fallingNotes.pitchRange;
   if (const auto iter = json.find("minPitch"); iter != json.end() && iter->is_number_integer()) {
-    range.minPitch = std::clamp(iter->get<int>(), 0, 127);
+    range.minPitch = std::clamp(iter->get<int>(), constraints.minimum, constraints.maximum);
   }
   if (const auto iter = json.find("maxPitch"); iter != json.end() && iter->is_number_integer()) {
-    range.maxPitch = std::clamp(iter->get<int>(), 0, 127);
+    range.maxPitch = std::clamp(iter->get<int>(), constraints.minimum, constraints.maximum);
   }
 
   if (range.minPitch > range.maxPitch) {
@@ -85,6 +88,24 @@ double numberOrFallback(const nlohmann::json& object,
 
   const double value = iter->get<double>();
   if (requirePositive ? isPositiveFinite(value) : isNonNegativeFinite(value)) {
+    return value;
+  }
+
+  return fallback;
+}
+
+double numberInRangeOrFallback(const nlohmann::json& object,
+                               const char* key,
+                               const double fallback,
+                               const DoubleSettingRange range)
+{
+  const auto iter = object.find(key);
+  if (iter == object.end() || !iter->is_number()) {
+    return fallback;
+  }
+
+  const double value = iter->get<double>();
+  if (std::isfinite(value) && value >= range.minimum && value <= range.maximum) {
     return value;
   }
 
@@ -143,10 +164,17 @@ void deserializeFallingNotesSettings(const nlohmann::json& json, FallingNotesSet
   if (const auto iter = json.find("pitchRange"); iter != json.end()) {
     settings.pitchRange = pitchRangeFromJson(*iter, settings.pitchRange);
   }
+  const auto constraints = appSettingsConstraints().fallingNotes;
   settings.lookAheadSeconds =
-    numberOrFallback(json, "lookAheadSeconds", settings.lookAheadSeconds, true);
+    numberInRangeOrFallback(json,
+                            "lookAheadSeconds",
+                            settings.lookAheadSeconds,
+                            constraints.lookAheadSeconds);
   settings.visiblePastSeconds =
-    numberOrFallback(json, "visiblePastSeconds", settings.visiblePastSeconds, false);
+    numberInRangeOrFallback(json,
+                            "visiblePastSeconds",
+                            settings.visiblePastSeconds,
+                            constraints.visiblePastSeconds);
   if (const auto iter = json.find("noteColor"); iter != json.end()) {
     settings.noteColor = colorFromJson(*iter, settings.noteColor);
   }
@@ -161,10 +189,15 @@ void deserializeKeyboardSettings(const nlohmann::json& json, KeyboardSettings& s
     return;
   }
 
-  settings.whiteKeyWidth = numberOrFallback(json, "whiteKeyWidth", settings.whiteKeyWidth, true);
-  settings.whiteKeyHeight = numberOrFallback(json, "whiteKeyHeight", settings.whiteKeyHeight, true);
-  settings.blackKeyWidth = numberOrFallback(json, "blackKeyWidth", settings.blackKeyWidth, true);
-  settings.blackKeyHeight = numberOrFallback(json, "blackKeyHeight", settings.blackKeyHeight, true);
+  const auto constraints = appSettingsConstraints().keyboard;
+  settings.whiteKeyWidth =
+    numberInRangeOrFallback(json, "whiteKeyWidth", settings.whiteKeyWidth, constraints.whiteKeyWidth);
+  settings.whiteKeyHeight =
+    numberInRangeOrFallback(json, "whiteKeyHeight", settings.whiteKeyHeight, constraints.whiteKeyHeight);
+  settings.blackKeyWidth =
+    numberOrFallback(json, "blackKeyWidth", settings.blackKeyWidth, true);
+  settings.blackKeyHeight =
+    numberOrFallback(json, "blackKeyHeight", settings.blackKeyHeight, true);
   settings.whiteKeyGap = numberOrFallback(json, "whiteKeyGap", settings.whiteKeyGap, false);
 
   if (const auto iter = json.find("whiteKeyColor"); iter != json.end()) {
@@ -187,8 +220,9 @@ void deserializeKeyboardSettings(const nlohmann::json& json, KeyboardSettings& s
   }
 
   settings.separatorWidth =
-    numberOrFallback(json, "separatorWidth", settings.separatorWidth, false);
-  settings.hitLineHeight = numberOrFallback(json, "hitLineHeight", settings.hitLineHeight, true);
+    numberInRangeOrFallback(json, "separatorWidth", settings.separatorWidth, constraints.separatorWidth);
+  settings.hitLineHeight =
+    numberInRangeOrFallback(json, "hitLineHeight", settings.hitLineHeight, constraints.hitLineHeight);
   settings.includeSeparators =
     boolOrFallback(json, "includeSeparators", settings.includeSeparators);
   settings.includeHitLine = boolOrFallback(json, "includeHitLine", settings.includeHitLine);

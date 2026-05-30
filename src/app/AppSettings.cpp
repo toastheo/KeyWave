@@ -1,5 +1,7 @@
 #include "app/AppSettings.hpp"
 
+#include "app/AppSettingsConstraints.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -20,9 +22,21 @@ bool isNonNegativeFinite(const double value)
   return std::isfinite(value) && value >= 0.0;
 }
 
+bool isFiniteInRange(const double value, const DoubleSettingRange range)
+{
+  return std::isfinite(value) && value >= range.minimum && value <= range.maximum;
+}
+
+double defaultWithinRange(const double fallback, const DoubleSettingRange range)
+{
+  return std::clamp(fallback, range.minimum, range.maximum);
+}
+
 bool isValidPitchRange(const PitchRange& range)
 {
-  return range.minPitch <= range.maxPitch;
+  const auto pitchConstraints = appSettingsConstraints().fallingNotes.pitchRange;
+  return range.minPitch >= pitchConstraints.minimum && range.maxPitch <= pitchConstraints.maximum &&
+         range.minPitch <= range.maxPitch;
 }
 
 } // namespace
@@ -66,14 +80,15 @@ PlaybackControlSettings sanitizePlaybackControlSettings(PlaybackControlSettings 
 FallingNotesSettings sanitizeFallingNotesSettings(FallingNotesSettings settings)
 {
   const auto defaults = defaultsFor<FallingNotesSettings>();
+  const auto constraints = appSettingsConstraints().fallingNotes;
 
   if (!isValidPitchRange(settings.pitchRange)) {
     settings.pitchRange = defaults.pitchRange;
   }
-  if (!isNonNegativeFinite(settings.lookAheadSeconds)) {
+  if (!isFiniteInRange(settings.lookAheadSeconds, constraints.lookAheadSeconds)) {
     settings.lookAheadSeconds = defaults.lookAheadSeconds;
   }
-  if (!isNonNegativeFinite(settings.visiblePastSeconds)) {
+  if (!isFiniteInRange(settings.visiblePastSeconds, constraints.visiblePastSeconds)) {
     settings.visiblePastSeconds = defaults.visiblePastSeconds;
   }
 
@@ -83,18 +98,29 @@ FallingNotesSettings sanitizeFallingNotesSettings(FallingNotesSettings settings)
 KeyboardSettings sanitizeKeyboardSettings(KeyboardSettings settings)
 {
   const auto defaults = defaultsFor<KeyboardSettings>();
+  const auto constraints = appSettingsConstraints().keyboard;
 
-  if (!isPositiveFinite(settings.whiteKeyWidth)) {
+  if (!isFiniteInRange(settings.whiteKeyWidth, constraints.whiteKeyWidth)) {
     settings.whiteKeyWidth = defaults.whiteKeyWidth;
   }
-  if (!isPositiveFinite(settings.whiteKeyHeight)) {
+  if (!isFiniteInRange(settings.whiteKeyHeight, constraints.whiteKeyHeight)) {
     settings.whiteKeyHeight = defaults.whiteKeyHeight;
   }
-  if (!isPositiveFinite(settings.blackKeyWidth)) {
-    settings.blackKeyWidth = defaults.blackKeyWidth;
+  if (!std::isfinite(settings.blackKeyWidth) ||
+      settings.blackKeyWidth < constraints.blackKeyWidth.minimum ||
+      settings.blackKeyWidth > settings.whiteKeyWidth) {
+    settings.blackKeyWidth = defaultWithinRange(
+      defaults.blackKeyWidth,
+      DoubleSettingRange{.minimum = constraints.blackKeyWidth.minimum,
+                         .maximum = settings.whiteKeyWidth});
   }
-  if (!isPositiveFinite(settings.blackKeyHeight)) {
-    settings.blackKeyHeight = defaults.blackKeyHeight;
+  if (!std::isfinite(settings.blackKeyHeight) ||
+      settings.blackKeyHeight < constraints.blackKeyHeight.minimum ||
+      settings.blackKeyHeight > settings.whiteKeyHeight) {
+    settings.blackKeyHeight = defaultWithinRange(
+      defaults.blackKeyHeight,
+      DoubleSettingRange{.minimum = constraints.blackKeyHeight.minimum,
+                         .maximum = settings.whiteKeyHeight});
   }
   if (!isNonNegativeFinite(settings.whiteKeyGap)) {
     settings.whiteKeyGap = defaults.whiteKeyGap;
@@ -102,10 +128,10 @@ KeyboardSettings sanitizeKeyboardSettings(KeyboardSettings settings)
   settings.whiteKeyGap =
     std::min(settings.whiteKeyGap, std::max(0.0, settings.whiteKeyWidth - 0.000001));
 
-  if (!isNonNegativeFinite(settings.separatorWidth)) {
+  if (!isFiniteInRange(settings.separatorWidth, constraints.separatorWidth)) {
     settings.separatorWidth = defaults.separatorWidth;
   }
-  if (!isPositiveFinite(settings.hitLineHeight)) {
+  if (!isFiniteInRange(settings.hitLineHeight, constraints.hitLineHeight)) {
     settings.hitLineHeight = defaults.hitLineHeight;
   }
 

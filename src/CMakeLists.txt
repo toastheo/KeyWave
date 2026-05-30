@@ -62,6 +62,8 @@ target_link_libraries(keywave_render
 )
 
 add_library(keywave_app_settings STATIC
+        app/AppSettingsConstraints.hpp
+        app/AppSettingsConstraints.cpp
         app/AppSettings.hpp
         app/AppSettings.cpp
         app/AppSettingsSerializer.hpp

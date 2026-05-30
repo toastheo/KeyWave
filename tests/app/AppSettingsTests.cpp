@@ -1,7 +1,8 @@
-#include "app/AppSettings.hpp"
-
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include "app/AppSettings.hpp"
+#include "app/AppSettingsConstraints.hpp"
 
 namespace {
 
@@ -32,6 +33,29 @@ TEST_CASE("AppSettings defaults preserve the current runtime configuration", "[a
   CHECK(settings.keyboard.whiteKeyHeight == Catch::Approx(2.5));
   CHECK(settings.keyboard.blackKeyWidth == Catch::Approx(0.6));
   CHECK(settings.keyboard.blackKeyHeight == Catch::Approx(1.55));
+}
+
+TEST_CASE("AppSettings constraints expose editable setting ranges by group", "[app][settings]")
+{
+  const auto& constraints = appSettingsConstraints();
+
+  CHECK(constraints.fallingNotes.pitchRange.minimum == 0);
+  CHECK(constraints.fallingNotes.pitchRange.maximum == 127);
+  CHECK(constraints.fallingNotes.lookAheadSeconds.minimum == Catch::Approx(1.0));
+  CHECK(constraints.fallingNotes.lookAheadSeconds.maximum == Catch::Approx(30.0));
+  CHECK(constraints.fallingNotes.visiblePastSeconds.minimum == Catch::Approx(0.0));
+  CHECK(constraints.fallingNotes.visiblePastSeconds.maximum == Catch::Approx(5.0));
+
+  CHECK(constraints.keyboard.whiteKeyWidth.minimum == Catch::Approx(0.1));
+  CHECK(constraints.keyboard.whiteKeyWidth.maximum == Catch::Approx(3.0));
+  CHECK(constraints.keyboard.whiteKeyHeight.minimum == Catch::Approx(0.2));
+  CHECK(constraints.keyboard.whiteKeyHeight.maximum == Catch::Approx(6.0));
+  CHECK(constraints.keyboard.blackKeyWidth.minimum == Catch::Approx(0.05));
+  CHECK(constraints.keyboard.blackKeyHeight.minimum == Catch::Approx(0.1));
+  CHECK(constraints.keyboard.separatorWidth.minimum == Catch::Approx(0.0));
+  CHECK(constraints.keyboard.separatorWidth.maximum == Catch::Approx(8.0));
+  CHECK(constraints.keyboard.hitLineHeight.minimum == Catch::Approx(0.005));
+  CHECK(constraints.keyboard.hitLineHeight.maximum == Catch::Approx(0.25));
 }
 
 TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][settings]")
@@ -69,6 +93,24 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   CHECK(sanitized.keyboard.blackKeyHeight == Catch::Approx(1.55));
 }
 
+TEST_CASE(
+  "sanitizeAppSettings keeps dependent keyboard dimensions within current parent dimensions",
+  "[app][settings]")
+{
+  AppSettings settings;
+  settings.keyboard.whiteKeyWidth = 0.2;
+  settings.keyboard.whiteKeyHeight = 0.3;
+  settings.keyboard.blackKeyWidth = 0.5;
+  settings.keyboard.blackKeyHeight = 0.6;
+
+  const auto sanitized = sanitizeAppSettings(settings);
+
+  CHECK(sanitized.keyboard.whiteKeyWidth == Catch::Approx(0.2));
+  CHECK(sanitized.keyboard.whiteKeyHeight == Catch::Approx(0.3));
+  CHECK(sanitized.keyboard.blackKeyWidth <= sanitized.keyboard.whiteKeyWidth);
+  CHECK(sanitized.keyboard.blackKeyHeight <= sanitized.keyboard.whiteKeyHeight);
+}
+
 TEST_CASE("resetAppSettingsToDefaults restores all settings defaults", "[app][settings]")
 {
   AppSettings settings;
@@ -85,7 +127,8 @@ TEST_CASE("resetAppSettingsToDefaults restores all settings defaults", "[app][se
   CHECK(settings.renderer.clearColor.g == Catch::Approx(defaults.renderer.clearColor.g));
   CHECK(settings.renderer.clearColor.b == Catch::Approx(defaults.renderer.clearColor.b));
   CHECK(settings.renderer.clearColor.a == Catch::Approx(defaults.renderer.clearColor.a));
-  CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(defaults.fallingNotes.lookAheadSeconds));
+  CHECK(settings.fallingNotes.lookAheadSeconds ==
+        Catch::Approx(defaults.fallingNotes.lookAheadSeconds));
   CHECK(settings.fallingNotes.noteColor.r == Catch::Approx(defaults.fallingNotes.noteColor.r));
   CHECK(settings.keyboard.includeHitLine == defaults.keyboard.includeHitLine);
   CHECK(settings.keyboard.whiteKeyHeight == Catch::Approx(defaults.keyboard.whiteKeyHeight));

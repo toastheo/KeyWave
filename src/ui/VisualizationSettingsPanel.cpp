@@ -1,5 +1,7 @@
 #include "ui/VisualizationSettingsPanel.hpp"
 
+#include "app/AppSettingsConstraints.hpp"
+
 #include <imgui.h>
 
 #include <algorithm>
@@ -18,12 +20,6 @@ double clampRange(const double value, const double minimum, const double maximum
   return std::clamp(finiteOr(value, minimum), minimum, maximum);
 }
 
-double clampPositive(const double value, const double fallback)
-{
-  constexpr double kMinimumPositive = 0.000001;
-  return std::max(kMinimumPositive, finiteOr(value, fallback));
-}
-
 bool editDoubleSlider(const char* label, double& value, const double minimum, const double maximum)
 {
   auto editableValue = static_cast<float>(clampRange(value, minimum, maximum));
@@ -33,19 +29,22 @@ bool editDoubleSlider(const char* label, double& value, const double minimum, co
   return changed;
 }
 
-bool editSeparatorWidth(double& value)
+bool editDoubleSlider(const char* label, double& value, const DoubleSettingRange range)
+{
+  return editDoubleSlider(label, value, range.minimum, range.maximum);
+}
+
+bool editSeparatorWidth(double& value, const DoubleSettingRange range)
 {
   constexpr double kDragSpeed = 0.05;
-  constexpr double kMinimum = 0.0;
-  constexpr double kMaximum = 8.0;
 
-  auto editableValue = static_cast<float>(clampRange(value, kMinimum, kMaximum));
+  auto editableValue = static_cast<float>(clampRange(value, range.minimum, range.maximum));
   const auto changed = ImGui::DragFloat("Separator Width",
                                         &editableValue,
                                         kDragSpeed,
-                                        kMinimum,
-                                        kMaximum);
-  value = clampRange(editableValue, kMinimum, kMaximum);
+                                        static_cast<float>(range.minimum),
+                                        static_cast<float>(range.maximum));
+  value = clampRange(editableValue, range.minimum, range.maximum);
   return changed;
 }
 
@@ -84,8 +83,9 @@ void renderPlaybackSettings(AppSettings const& settings, PlaybackTransport& tran
 
 void renderFallingNotesSettings(FallingNotesSettings& settings)
 {
-  editDoubleSlider("Look Ahead", settings.lookAheadSeconds, 1.0, 30.0);
-  editDoubleSlider("Visible Past", settings.visiblePastSeconds, 0.0, 5.0);
+  const auto constraints = appSettingsConstraints().fallingNotes;
+  editDoubleSlider("Look Ahead", settings.lookAheadSeconds, constraints.lookAheadSeconds);
+  editDoubleSlider("Visible Past", settings.visiblePastSeconds, constraints.visiblePastSeconds);
 
   ImGui::SeparatorText("Colors");
   editColor("Note", settings.noteColor);
@@ -94,6 +94,8 @@ void renderFallingNotesSettings(FallingNotesSettings& settings)
 
 void renderKeyboardSettings(KeyboardSettings& settings)
 {
+  const auto constraints = appSettingsConstraints().keyboard;
+
   editColor("White Key", settings.whiteKeyColor);
   editColor("Black Key", settings.blackKeyColor);
   editColor("Active White Key", settings.activeWhiteKeyColor);
@@ -106,22 +108,36 @@ void renderKeyboardSettings(KeyboardSettings& settings)
   ImGui::Checkbox("Show Hit Line", &settings.includeHitLine);
 
   ImGui::SeparatorText("Dimensions");
-  editDoubleSlider("White Key Width", settings.whiteKeyWidth, 0.1, 3.0);
-  editDoubleSlider("Keyboard Height", settings.whiteKeyHeight, 0.2, 6.0);
+  editDoubleSlider("White Key Width", settings.whiteKeyWidth, constraints.whiteKeyWidth);
+  editDoubleSlider("Keyboard Height", settings.whiteKeyHeight, constraints.whiteKeyHeight);
 
-  settings.whiteKeyWidth = clampPositive(settings.whiteKeyWidth, KeyboardSettings{}.whiteKeyWidth);
+  settings.whiteKeyWidth =
+    std::max(constraints.minimumPositiveValue,
+             finiteOr(settings.whiteKeyWidth, KeyboardSettings{}.whiteKeyWidth));
   settings.whiteKeyHeight =
-    clampPositive(settings.whiteKeyHeight, KeyboardSettings{}.whiteKeyHeight);
+    std::max(constraints.minimumPositiveValue,
+             finiteOr(settings.whiteKeyHeight, KeyboardSettings{}.whiteKeyHeight));
 
-  editDoubleSlider("Black Key Width", settings.blackKeyWidth, 0.05, settings.whiteKeyWidth);
-  editDoubleSlider("Black Key Height", settings.blackKeyHeight, 0.1, settings.whiteKeyHeight);
-  editSeparatorWidth(settings.separatorWidth);
-  editDoubleSlider("Hit Line Height", settings.hitLineHeight, 0.005, 0.25);
+  editDoubleSlider("Black Key Width",
+                   settings.blackKeyWidth,
+                   constraints.blackKeyWidth.minimum,
+                   settings.whiteKeyWidth);
+  editDoubleSlider("Black Key Height",
+                   settings.blackKeyHeight,
+                   constraints.blackKeyHeight.minimum,
+                   settings.whiteKeyHeight);
+  editSeparatorWidth(settings.separatorWidth, constraints.separatorWidth);
+  editDoubleSlider("Hit Line Height", settings.hitLineHeight, constraints.hitLineHeight);
 
-  settings.blackKeyWidth = clampRange(settings.blackKeyWidth, 0.000001, settings.whiteKeyWidth);
-  settings.blackKeyHeight = clampRange(settings.blackKeyHeight, 0.000001, settings.whiteKeyHeight);
-  settings.separatorWidth = std::max(0.0, finiteOr(settings.separatorWidth, 0.0));
-  settings.hitLineHeight = clampPositive(settings.hitLineHeight, KeyboardSettings{}.hitLineHeight);
+  settings.blackKeyWidth =
+    clampRange(settings.blackKeyWidth, constraints.minimumPositiveValue, settings.whiteKeyWidth);
+  settings.blackKeyHeight =
+    clampRange(settings.blackKeyHeight, constraints.minimumPositiveValue, settings.whiteKeyHeight);
+  settings.separatorWidth =
+    std::max(constraints.separatorWidth.minimum, finiteOr(settings.separatorWidth, 0.0));
+  settings.hitLineHeight =
+    std::max(constraints.minimumPositiveValue,
+             finiteOr(settings.hitLineHeight, KeyboardSettings{}.hitLineHeight));
 }
 
 void renderRendererSettings(RendererSettings& settings)

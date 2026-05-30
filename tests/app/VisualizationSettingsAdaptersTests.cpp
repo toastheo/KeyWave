@@ -53,8 +53,7 @@ TEST_CASE("Visualization settings adapters sanitize app settings into piano-roll
   checkColor(config.keyboardStyle.hitLineColor, keyboardSettings.hitLineColor);
 }
 
-TEST_CASE("Visualization settings adapters fall back from invalid settings",
-          "[app][settings]")
+TEST_CASE("Visualization settings adapters fall back from invalid settings", "[app][settings]")
 {
   FallingNotesSettings fallingNotesSettings;
   fallingNotesSettings.pitchRange = PitchRange{.minPitch = 108, .maxPitch = 21};
