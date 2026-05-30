@@ -2,7 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
+
+PlaybackTransport::PlaybackTransport(DiagnosticSink& diagnostics)
+    : m_diagnostics(&diagnostics)
+{}
 
 void PlaybackTransport::play()
 {
@@ -23,7 +26,7 @@ void PlaybackTransport::stop()
 void PlaybackTransport::seek(const double seconds)
 {
   if (!std::isfinite(seconds)) {
-    std::cerr << "Playback seek ignored: time must be finite.\n";
+    reportWarning(*m_diagnostics, "Playback seek ignored: time must be finite.");
     return;
   }
 
@@ -52,7 +55,7 @@ PlaybackState PlaybackTransport::state() const
 void PlaybackTransport::setPlaybackRate(const double rate)
 {
   if (!std::isfinite(rate) || rate <= 0.0) {
-    std::cerr << "Playback rate ignored: rate must be a finite positive value.\n";
+    reportWarning(*m_diagnostics, "Playback rate ignored: rate must be a finite positive value.");
     return;
   }
 

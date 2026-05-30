@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "diagnostics/Diagnostics.hpp"
 #include "input/Key.hpp"
 #include "render/RenderTypes.hpp"
 
@@ -24,7 +25,7 @@ public:
   Window(const Window&) = delete;
   Window& operator=(const Window&) = delete;
 
-  bool initialize(const WindowConfig& config);
+  bool initialize(const WindowConfig& config, DiagnosticSink& diagnostics = nullDiagnosticSink());
   void shutdown();
 
   [[nodiscard]] bool shouldClose() const;

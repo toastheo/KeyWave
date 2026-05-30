@@ -2,6 +2,8 @@
 
 #include <string_view>
 
+#include "diagnostics/Diagnostics.hpp"
+
 struct OpenGLShaderSources
 {
   std::string_view vertex;
@@ -11,7 +13,7 @@ struct OpenGLShaderSources
 class OpenGLShader final
 {
 public:
-  OpenGLShader() = default;
+  explicit OpenGLShader(DiagnosticSink& diagnostics = nullDiagnosticSink());
   ~OpenGLShader();
 
   OpenGLShader(const OpenGLShader&) = delete;
@@ -24,5 +26,6 @@ public:
   [[nodiscard]] bool valid() const;
 
 private:
+  DiagnosticSink* m_diagnostics = nullptr;
   unsigned int m_program = 0;
 };

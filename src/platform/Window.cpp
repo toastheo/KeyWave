@@ -2,20 +2,22 @@
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-#include <iostream>
 #include <optional>
+#include <sstream>
 
 namespace {
-void printGlfwError(const char* fallbackMessage)
+void reportGlfwError(const char* fallbackMessage, DiagnosticSink& diagnostics)
 {
   const char* description = nullptr;
   const int errorCode = glfwGetError(&description);
 
   if (description != nullptr) {
-    std::cerr << fallbackMessage << " GLFW error " << errorCode << ": " << description << '\n';
+    std::ostringstream message;
+    message << fallbackMessage << " GLFW error " << errorCode << ": " << description;
+    reportError(diagnostics, message.str());
   }
   else {
-    std::cerr << fallbackMessage << '\n';
+    reportError(diagnostics, fallbackMessage);
   }
 }
 
@@ -54,14 +56,14 @@ Window::~Window()
   shutdown();
 }
 
-bool Window::initialize(const WindowConfig& config)
+bool Window::initialize(const WindowConfig& config, DiagnosticSink& diagnostics)
 {
   if (m_handle != nullptr) {
     return true;
   }
 
   if (glfwInit() != GLFW_TRUE) {
-    printGlfwError("Failed to initialize GLFW.");
+    reportGlfwError("Failed to initialize GLFW.", diagnostics);
     return false;
   }
   m_ownsGlfw = true;
@@ -77,7 +79,7 @@ bool Window::initialize(const WindowConfig& config)
   GLFWwindow* window =
     glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
   if (window == nullptr) {
-    printGlfwError("Failed to create the KeyWave window.");
+    reportGlfwError("Failed to create the KeyWave window.", diagnostics);
     shutdown();
     return false;
   }

@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <glad/glad.h>
-#include <iostream>
+#include <sstream>
 #include <string_view>
 #include <variant>
 
@@ -44,9 +44,12 @@ bool isValidRect(const Rect& rect)
 } // namespace
 
 OpenGLRendererBackend::OpenGLRendererBackend(const NativeProcAddressLoader procAddressLoader,
-                                             const Color clearColor)
+                                             const Color clearColor,
+                                             DiagnosticSink& diagnostics)
     : m_procAddressLoader(procAddressLoader)
+    , m_diagnostics(&diagnostics)
     , m_clearColor(clearColor)
+    , m_rectShader(diagnostics)
 {}
 
 OpenGLRendererBackend::~OpenGLRendererBackend()
@@ -61,12 +64,14 @@ bool OpenGLRendererBackend::initialize()
   }
 
   if (m_procAddressLoader == nullptr) {
-    std::cerr << "OpenGL renderer initialization failed: missing OpenGL procedure loader.\n";
+    reportError(*m_diagnostics,
+                "OpenGL renderer initialization failed: missing OpenGL procedure loader.");
     return false;
   }
 
   if (gladLoadGLLoader(m_procAddressLoader) == 0) {
-    std::cerr << "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.\n";
+    reportError(*m_diagnostics,
+                "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.");
     return false;
   }
 
@@ -74,7 +79,8 @@ bool OpenGLRendererBackend::initialize()
         .vertex = kRectVertexShaderSource,
         .fragment = kRectFragmentShaderSource,
       })) {
-    std::cerr << "OpenGL renderer initialization failed: rectangle shader could not be created.\n";
+    reportError(*m_diagnostics,
+                "OpenGL renderer initialization failed: rectangle shader could not be created.");
     shutdown();
     return false;
   }
@@ -83,7 +89,8 @@ bool OpenGLRendererBackend::initialize()
   glGenBuffers(1, &m_rectVertexBuffer);
 
   if (m_rectVertexArray == 0 || m_rectVertexBuffer == 0) {
-    std::cerr << "OpenGL renderer initialization failed: rectangle buffers could not be created.\n";
+    reportError(*m_diagnostics,
+                "OpenGL renderer initialization failed: rectangle buffers could not be created.");
     shutdown();
     return false;
   }
@@ -157,10 +164,12 @@ void OpenGLRendererBackend::setClearColor(const Color color)
 void OpenGLRendererBackend::setView(const RendererView& view)
 {
   if (!isValid(view.visibleWorldRect)) {
-    std::cerr << "OpenGL renderer ignored invalid visible world rectangle"
-              << " (x=" << view.visibleWorldRect.x << ", y=" << view.visibleWorldRect.y
-              << ", width=" << view.visibleWorldRect.width
-              << ", height=" << view.visibleWorldRect.height << ").\n";
+    std::ostringstream message;
+    message << "OpenGL renderer ignored invalid visible world rectangle"
+            << " (x=" << view.visibleWorldRect.x << ", y=" << view.visibleWorldRect.y
+            << ", width=" << view.visibleWorldRect.width
+            << ", height=" << view.visibleWorldRect.height << ").";
+    reportWarning(*m_diagnostics, message.str());
     return;
   }
 

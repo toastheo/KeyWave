@@ -1,5 +1,6 @@
 #pragma once
 
+#include "diagnostics/Diagnostics.hpp"
 #include "fallingnotes/FallingNotesRenderAdapter.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
 #include "keyboard/KeyboardTypes.hpp"
@@ -22,5 +23,6 @@ class FallingNotesSceneBuilder
 public:
   [[nodiscard]] static RenderScene build(const MidiTimeline& timeline,
                                          double currentTimeSeconds,
-                                         const FallingNotesSceneConfig& config = {});
+                                         const FallingNotesSceneConfig& config = {},
+                                         DiagnosticSink& diagnostics = nullDiagnosticSink());
 };

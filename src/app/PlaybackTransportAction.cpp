@@ -1,7 +1,8 @@
 #include "app/PlaybackTransportAction.hpp"
 
 #include <algorithm>
-#include <ostream>
+#include <sstream>
+#include <string>
 
 namespace {
 
@@ -56,36 +57,40 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
   }
 }
 
-void writePlaybackTransportActionLog(const PlaybackTransportAction action,
-                                     const PlaybackTransport& transport,
-                                     std::ostream& output)
+void reportPlaybackTransportAction(const PlaybackTransportAction action,
+                                   const PlaybackTransport& transport,
+                                   DiagnosticSink& diagnostics)
 {
+  std::ostringstream message;
+
   switch (action) {
     case PlaybackTransportAction::TogglePlayPause:
       if (transport.state() == PlaybackState::Playing) {
-        output << "Playback started at " << transport.currentTimeSeconds() << "s.\n";
+        message << "Playback started at " << transport.currentTimeSeconds() << "s.";
       }
       else {
-        output << "Playback paused at " << transport.currentTimeSeconds() << "s.\n";
+        message << "Playback paused at " << transport.currentTimeSeconds() << "s.";
       }
       break;
 
     case PlaybackTransportAction::Restart:
-      output << "Playback restarted.\n";
+      message << "Playback restarted.";
       break;
 
     case PlaybackTransportAction::Stop:
-      output << "Playback stopped.\n";
+      message << "Playback stopped.";
       break;
 
     case PlaybackTransportAction::SeekBackward:
     case PlaybackTransportAction::SeekForward:
-      output << "Playback seeked to " << transport.currentTimeSeconds() << "s.\n";
+      message << "Playback seeked to " << transport.currentTimeSeconds() << "s.";
       break;
 
     case PlaybackTransportAction::IncreasePlaybackRate:
     case PlaybackTransportAction::DecreasePlaybackRate:
-      output << "Playback rate set to " << transport.playbackRate() << "x.\n";
+      message << "Playback rate set to " << transport.playbackRate() << "x.";
       break;
   }
+
+  reportInfo(diagnostics, message.str());
 }

@@ -5,6 +5,7 @@
 #include "app/AppConfig.hpp"
 #include "app/SettingsStorage.hpp"
 #include "app/VisualizerController.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "platform/Window.hpp"
 #include "render/RendererBackend.hpp"
 #include "ui/ImGuiLayer.hpp"
@@ -13,6 +14,7 @@ class Application
 {
 public:
   explicit Application(AppConfig config = {});
+  Application(AppConfig config, DiagnosticSink& diagnostics);
   ~Application();
 
   Application(const Application&) = delete;
@@ -24,6 +26,7 @@ public:
 
 private:
   AppConfig m_config;
+  DiagnosticSink* m_diagnostics = nullptr;
   SettingsStorage m_settingsStorage;
   VisualizerController m_visualizerController;
   Window m_window;

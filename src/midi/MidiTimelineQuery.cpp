@@ -2,31 +2,36 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
+#include <sstream>
 
 namespace {
 
-bool isValidTimeRange(const TimeRange& range)
+bool isValidTimeRange(const TimeRange& range, DiagnosticSink& diagnostics)
 {
   if (!std::isfinite(range.startSeconds) || !std::isfinite(range.endSeconds)) {
-    std::cerr << "MIDI timeline query skipped: time range must contain finite values.\n";
+    reportWarning(diagnostics,
+                  "MIDI timeline query skipped: time range must contain finite values.");
     return false;
   }
 
   if (range.startSeconds >= range.endSeconds) {
-    std::cerr << "MIDI timeline query skipped: time range start must be before end"
-              << " (start=" << range.startSeconds << ", end=" << range.endSeconds << ").\n";
+    std::ostringstream message;
+    message << "MIDI timeline query skipped: time range start must be before end"
+            << " (start=" << range.startSeconds << ", end=" << range.endSeconds << ").";
+    reportWarning(diagnostics, message.str());
     return false;
   }
 
   return true;
 }
 
-bool isValidPitchRange(const PitchRange& range)
+bool isValidPitchRange(const PitchRange& range, DiagnosticSink& diagnostics)
 {
   if (range.minPitch > range.maxPitch) {
-    std::cerr << "MIDI timeline query skipped: pitch range min must be less than or equal to max"
-              << " (min=" << range.minPitch << ", max=" << range.maxPitch << ").\n";
+    std::ostringstream message;
+    message << "MIDI timeline query skipped: pitch range min must be less than or equal to max"
+            << " (min=" << range.minPitch << ", max=" << range.maxPitch << ").";
+    reportWarning(diagnostics, message.str());
     return false;
   }
 
@@ -94,13 +99,15 @@ bool isActiveAt(const Note& note, const double timeSeconds)
 
 } // namespace
 
-MidiTimelineQuery::MidiTimelineQuery(const MidiTimeline& timeline)
+MidiTimelineQuery::MidiTimelineQuery(const MidiTimeline& timeline, DiagnosticSink& diagnostics)
     : m_timeline(timeline)
+    , m_diagnostics(&diagnostics)
 {}
 
 std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& viewport) const
 {
-  if (!isValidTimeRange(viewport.timeRange) || !isValidPitchRange(viewport.pitchRange)) {
+  if (!isValidTimeRange(viewport.timeRange, *m_diagnostics) ||
+      !isValidPitchRange(viewport.pitchRange, *m_diagnostics)) {
     return {};
   }
 
@@ -129,7 +136,7 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
 
 std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange& range) const
 {
-  if (!isValidTimeRange(range)) {
+  if (!isValidTimeRange(range, *m_diagnostics)) {
     return {};
   }
 
@@ -156,7 +163,7 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange
 
 std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRange& range) const
 {
-  if (!isValidPitchRange(range)) {
+  if (!isValidPitchRange(range, *m_diagnostics)) {
     return {};
   }
 

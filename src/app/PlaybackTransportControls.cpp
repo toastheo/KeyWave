@@ -36,7 +36,7 @@ std::optional<PlaybackTransportAction> actionFromKey(const Key key)
 
 void applyPlaybackTransportControl(const Key key,
                                    PlaybackTransport& transport,
-                                   std::ostream& output,
+                                   DiagnosticSink& diagnostics,
                                    const PlaybackControlSettings& settings)
 {
   const auto action = actionFromKey(key);
@@ -45,5 +45,5 @@ void applyPlaybackTransportControl(const Key key,
   }
 
   applyPlaybackTransportAction(*action, transport, settings);
-  writePlaybackTransportActionLog(*action, transport, output);
+  reportPlaybackTransportAction(*action, transport, diagnostics);
 }

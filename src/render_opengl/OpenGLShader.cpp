@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 
 #include <cstddef>
-#include <iostream>
+#include <sstream>
 #include <string>
 
 namespace {
@@ -34,7 +34,9 @@ std::string programInfoLog(const unsigned int program)
   return log;
 }
 
-unsigned int compileShader(const unsigned int shaderType, const std::string_view source)
+unsigned int compileShader(const unsigned int shaderType,
+                           const std::string_view source,
+                           DiagnosticSink& diagnostics)
 {
   const auto shader = glCreateShader(shaderType);
   const char* sourceData = source.data();
@@ -45,7 +47,8 @@ unsigned int compileShader(const unsigned int shaderType, const std::string_view
   int compileStatus = GL_FALSE;
   glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
   if (compileStatus != GL_TRUE) {
-    std::cerr << "OpenGL shader compilation failed:\n" << shaderInfoLog(shader) << '\n';
+    reportError(diagnostics,
+                "OpenGL shader compilation failed:\n" + shaderInfoLog(shader));
     glDeleteShader(shader);
     return 0;
   }
@@ -54,6 +57,10 @@ unsigned int compileShader(const unsigned int shaderType, const std::string_view
 }
 
 } // namespace
+
+OpenGLShader::OpenGLShader(DiagnosticSink& diagnostics)
+    : m_diagnostics(&diagnostics)
+{}
 
 OpenGLShader::~OpenGLShader()
 {
@@ -64,12 +71,12 @@ bool OpenGLShader::create(const OpenGLShaderSources& sources)
 {
   destroy();
 
-  const auto vertexShader = compileShader(GL_VERTEX_SHADER, sources.vertex);
+  const auto vertexShader = compileShader(GL_VERTEX_SHADER, sources.vertex, *m_diagnostics);
   if (vertexShader == 0) {
     return false;
   }
 
-  const auto fragmentShader = compileShader(GL_FRAGMENT_SHADER, sources.fragment);
+  const auto fragmentShader = compileShader(GL_FRAGMENT_SHADER, sources.fragment, *m_diagnostics);
   if (fragmentShader == 0) {
     glDeleteShader(vertexShader);
     return false;
@@ -88,7 +95,7 @@ bool OpenGLShader::create(const OpenGLShaderSources& sources)
   int linkStatus = GL_FALSE;
   glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
   if (linkStatus != GL_TRUE) {
-    std::cerr << "OpenGL shader link failed:\n" << programInfoLog(program) << '\n';
+    reportError(*m_diagnostics, "OpenGL shader link failed:\n" + programInfoLog(program));
     glDeleteProgram(program);
     return false;
   }

@@ -1,21 +1,22 @@
 #include "app/AppConfig.hpp"
 
-#include <iostream>
-
 namespace {
 
-void printUsage()
+void reportUsage(DiagnosticSink& diagnostics)
 {
-  std::cerr << "Usage:\n";
-  std::cerr << "  KeyWave [path-to-midi-file]\n\n";
-  std::cerr << "Examples:\n";
-  std::cerr << "  KeyWave assets/test-midi/test.mid\n";
-  std::cerr << "  KeyWave C:\\Music\\song.mid\n";
+  reportError(diagnostics,
+              "Usage:\n"
+              "  KeyWave [path-to-midi-file]\n\n"
+              "Examples:\n"
+              "  KeyWave assets/test-midi/test.mid\n"
+              "  KeyWave C:\\Music\\song.mid");
 }
 
 } // namespace
 
-std::optional<AppConfig> parseAppConfig(const int argc, char* const* argv)
+std::optional<AppConfig> parseAppConfig(const int argc,
+                                        char* const* argv,
+                                        DiagnosticSink& diagnostics)
 {
   if (argc <= 1) {
     return AppConfig{};
@@ -27,6 +28,6 @@ std::optional<AppConfig> parseAppConfig(const int argc, char* const* argv)
     };
   }
 
-  printUsage();
+  reportUsage(diagnostics);
   return std::nullopt;
 }

@@ -8,10 +8,20 @@
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
 
 VisualizerController::VisualizerController()
-    : VisualizerController(AppSettings{})
+    : VisualizerController(AppSettings{}, nullDiagnosticSink())
+{}
+
+VisualizerController::VisualizerController(DiagnosticSink& diagnostics)
+    : VisualizerController(AppSettings{}, diagnostics)
 {}
 
 VisualizerController::VisualizerController(AppSettings settings)
+    : VisualizerController(std::move(settings), nullDiagnosticSink())
+{}
+
+VisualizerController::VisualizerController(AppSettings settings, DiagnosticSink& diagnostics)
+    : m_diagnostics(&diagnostics)
+    , m_playbackTransport(diagnostics)
 {
   setSettings(std::move(settings));
 }
@@ -67,14 +77,14 @@ void VisualizerController::setVisualizationSettingsPanelVisible(bool visible)
 }
 
 void VisualizerController::handleInput(const std::span<const Key> pressedKeys,
-                                       const bool imguiWantsKeyboardCapture,
-                                       std::ostream& output)
+                                       const bool imguiWantsKeyboardCapture)
 {
   for (const auto key : pressedKeys) {
     applyVisualizationSettingsPanelControl(key, m_visualizationSettingsPanelVisible);
 
     if (!imguiWantsKeyboardCapture) {
-      applyPlaybackTransportControl(key, m_playbackTransport, output, m_settings.playbackControls);
+      applyPlaybackTransportControl(
+        key, m_playbackTransport, *m_diagnostics, m_settings.playbackControls);
     }
   }
 }
@@ -93,5 +103,6 @@ RenderScene VisualizerController::buildScene() const
   return FallingNotesSceneBuilder::build(
     *m_timeline,
     m_playbackTransport.currentTimeSeconds(),
-    fallingNotesSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard));
+    fallingNotesSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard),
+    *m_diagnostics);
 }

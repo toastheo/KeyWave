@@ -1,8 +1,8 @@
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
 
 #include <cmath>
-#include <iostream>
 #include <iterator>
+#include <sstream>
 #include <vector>
 
 #include "fallingnotes/FallingNotesLayout.hpp"
@@ -52,7 +52,8 @@ FallingNotesSceneConfig sanitizedConfig(FallingNotesSceneConfig config)
 }
 
 RendererView rendererViewForKeyboard(const KeyboardGeometry& geometry,
-                                     const FallingNotesViewport& viewport)
+                                     const FallingNotesViewport& viewport,
+                                     DiagnosticSink& diagnostics)
 {
   const auto fallingNotesHeight = viewport.displayHeight > 0.0 ? viewport.displayHeight
                                                                : viewport.lookAheadSeconds;
@@ -67,9 +68,11 @@ RendererView rendererViewForKeyboard(const KeyboardGeometry& geometry,
   };
 
   if (!std::isfinite(viewport.currentTimeSeconds) || !isValid(view.visibleWorldRect)) {
-    std::cerr << "Using default renderer view because the piano-roll view is invalid"
-              << " (keyboardWidth=" << geometry.width() << ", keyboardHeight=" << geometry.height()
-              << ", lookAheadSeconds=" << viewport.lookAheadSeconds << ").\n";
+    std::ostringstream message;
+    message << "Using default renderer view because the piano-roll view is invalid"
+            << " (keyboardWidth=" << geometry.width() << ", keyboardHeight=" << geometry.height()
+            << ", lookAheadSeconds=" << viewport.lookAheadSeconds << ").";
+    reportWarning(diagnostics, message.str());
     return RendererView{};
   }
 
@@ -87,7 +90,8 @@ void appendCommands(std::vector<RenderCommand>& destination, std::vector<RenderC
 
 RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
                                             const double currentTimeSeconds,
-                                            const FallingNotesSceneConfig& config)
+                                            const FallingNotesSceneConfig& config,
+                                            DiagnosticSink& diagnostics)
 {
   const auto sanitized = sanitizedConfig(config);
   const KeyboardGeometry keyboardGeometry(sanitized.keyboardLayout);
@@ -103,7 +107,7 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
   std::vector<QueriedNote> notes;
   std::vector<Note> activeNotes;
   if (std::isfinite(currentTimeSeconds)) {
-    const MidiTimelineQuery query(timeline);
+    const MidiTimelineQuery query(timeline, diagnostics);
     notes = query.findNotes(TimelineViewport{
       .timeRange =
         TimeRange{
@@ -128,6 +132,6 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
 
   return RenderScene{
     .commands = std::move(commands),
-    .view = rendererViewForKeyboard(keyboardGeometry, viewport),
+    .view = rendererViewForKeyboard(keyboardGeometry, viewport, diagnostics),
   };
 }

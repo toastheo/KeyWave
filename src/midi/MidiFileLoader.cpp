@@ -3,27 +3,28 @@
 #include <MidiFile.h>
 
 #include <filesystem>
-#include <iostream>
+#include <sstream>
 
-std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::path& path) {
+std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::path& path,
+                                                         DiagnosticSink& diagnostics) {
   if (path.empty()) {
-    std::cerr << "MIDI load failed: file path is empty.\n";
+    reportError(diagnostics, "MIDI load failed: file path is empty.");
     return std::nullopt;
   }
 
   if (!std::filesystem::exists(path)) {
-    std::cerr << "MIDI load skipped: file does not exist: " << path.string() << '\n';
+    reportWarning(diagnostics, "MIDI load skipped: file does not exist: " + path.string());
     return std::nullopt;
   }
 
   if (!std::filesystem::is_regular_file(path)) {
-    std::cerr << "MIDI load failed: path is not a regular file: " << path.string() << '\n';
+    reportError(diagnostics, "MIDI load failed: path is not a regular file: " + path.string());
     return std::nullopt;
   }
 
   smf::MidiFile midiFile;
   if (!midiFile.read(path.string())) {
-    std::cerr << "MIDI load failed: could not parse file: " << path.string() << '\n';
+    reportError(diagnostics, "MIDI load failed: could not parse file: " + path.string());
     return std::nullopt;
   }
 
@@ -53,10 +54,11 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
       const auto startSeconds = event.seconds;
       const auto durationSeconds = linkedEvent->seconds - event.seconds;
       if (durationSeconds < 0.0) {
-        std::cerr << "MIDI note ignored: linked note-off occurs before note-on"
-                  << " track=" << track
-                  << " pitch=" << event.getKeyNumber()
-                  << '\n';
+        std::ostringstream message;
+        message << "MIDI note ignored: linked note-off occurs before note-on"
+                << " track=" << track
+                << " pitch=" << event.getKeyNumber();
+        reportWarning(diagnostics, message.str());
         continue;
       }
 

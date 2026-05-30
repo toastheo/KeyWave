@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "diagnostics/Diagnostics.hpp"
 #include "platform/Window.hpp"
 #include "render/RenderTypes.hpp"
 #include "render/RendererBackend.hpp"
@@ -11,7 +12,9 @@
 class OpenGLRendererBackend final : public RendererBackend
 {
 public:
-  explicit OpenGLRendererBackend(NativeProcAddressLoader procAddressLoader, Color clearColor);
+  OpenGLRendererBackend(NativeProcAddressLoader procAddressLoader,
+                        Color clearColor,
+                        DiagnosticSink& diagnostics = nullDiagnosticSink());
   ~OpenGLRendererBackend() override;
 
   OpenGLRendererBackend(const OpenGLRendererBackend&) = delete;
@@ -40,6 +43,7 @@ private:
   void appendRectVertices(const Rect& rect, const Color& color);
 
   NativeProcAddressLoader m_procAddressLoader = nullptr;
+  DiagnosticSink* m_diagnostics = nullptr;
   Color m_clearColor;
   FramebufferSize m_framebufferSize;
   RendererView m_view;

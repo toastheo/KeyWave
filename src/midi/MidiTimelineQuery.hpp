@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "core/CoreTypes.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "midi/MidiTypes.hpp"
 
@@ -32,7 +33,8 @@ struct QueriedNote
 class MidiTimelineQuery
 {
 public:
-  explicit MidiTimelineQuery(const MidiTimeline& timeline);
+  explicit MidiTimelineQuery(const MidiTimeline& timeline,
+                             DiagnosticSink& diagnostics = nullDiagnosticSink());
 
   [[nodiscard]] std::vector<QueriedNote> findNotes(const TimelineViewport& viewport) const;
   [[nodiscard]] std::vector<QueriedNote> findNotesInTimeRange(const TimeRange& range) const;
@@ -43,4 +45,5 @@ public:
 
 private:
   const MidiTimeline& m_timeline;
+  DiagnosticSink* m_diagnostics = nullptr;
 };

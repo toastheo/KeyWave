@@ -1,10 +1,10 @@
 #pragma once
 
-#include <iosfwd>
 #include <optional>
 #include <span>
 
 #include "app/AppSettings.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "playback/PlaybackTransport.hpp"
@@ -14,7 +14,9 @@ class VisualizerController
 {
 public:
   VisualizerController();
+  explicit VisualizerController(DiagnosticSink& diagnostics);
   explicit VisualizerController(AppSettings settings);
+  VisualizerController(AppSettings settings, DiagnosticSink& diagnostics);
 
   void setSettings(AppSettings settings);
   [[nodiscard]] AppSettings& settings();
@@ -30,13 +32,12 @@ public:
   [[nodiscard]] bool visualizationSettingsPanelVisible() const;
   void setVisualizationSettingsPanelVisible(bool visible);
 
-  void handleInput(std::span<const Key> pressedKeys,
-                   bool imguiWantsKeyboardCapture,
-                   std::ostream& output);
+  void handleInput(std::span<const Key> pressedKeys, bool imguiWantsKeyboardCapture);
   void update(double elapsedSeconds);
   [[nodiscard]] RenderScene buildScene() const;
 
 private:
+  DiagnosticSink* m_diagnostics = nullptr;
   AppSettings m_settings;
   std::optional<MidiTimeline> m_timeline;
   PlaybackTransport m_playbackTransport;

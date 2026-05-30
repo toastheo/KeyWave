@@ -5,16 +5,15 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-#include <iostream>
 
-bool ImGuiLayer::initialize(void* nativeWindowHandle)
+bool ImGuiLayer::initialize(void* nativeWindowHandle, DiagnosticSink& diagnostics)
 {
   if (m_initialized) {
     return true;
   }
 
   if (nativeWindowHandle == nullptr) {
-    std::cerr << "ImGui initialization failed: missing native window handle.\n";
+    reportError(diagnostics, "ImGui initialization failed: missing native window handle.");
     return false;
   }
 
@@ -28,14 +27,14 @@ bool ImGuiLayer::initialize(void* nativeWindowHandle)
 
   auto* window = static_cast<GLFWwindow*>(nativeWindowHandle);
   if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) {
-    std::cerr << "ImGui initialization failed: GLFW backend could not initialize.\n";
+    reportError(diagnostics, "ImGui initialization failed: GLFW backend could not initialize.");
     shutdown();
     return false;
   }
   m_glfwBackendInitialized = true;
 
   if (!ImGui_ImplOpenGL3_Init("#version 330")) {
-    std::cerr << "ImGui initialization failed: OpenGL3 backend could not initialize.\n";
+    reportError(diagnostics, "ImGui initialization failed: OpenGL3 backend could not initialize.");
     shutdown();
     return false;
   }

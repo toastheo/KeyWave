@@ -1,7 +1,6 @@
 #include "app/Application.hpp"
 
 #include <chrono>
-#include <iostream>
 #include <memory>
 #include <utility>
 
@@ -12,7 +11,13 @@
 #include "ui/VisualizationSettingsPanel.hpp"
 
 Application::Application(AppConfig config)
+    : Application(std::move(config), consoleDiagnosticSink())
+{}
+
+Application::Application(AppConfig config, DiagnosticSink& diagnostics)
     : m_config(std::move(config))
+    , m_diagnostics(&diagnostics)
+    , m_visualizerController(diagnostics)
 {}
 
 Application::~Application()
@@ -22,14 +27,14 @@ Application::~Application()
 
 bool Application::initialize()
 {
-  std::cout << "Settings path: " << m_settingsStorage.path() << '\n';
-  if (auto loadedSettings = m_settingsStorage.load(); loadedSettings.has_value()) {
+  reportInfo(*m_diagnostics, "Settings path: " + m_settingsStorage.path().string());
+  if (auto loadedSettings = m_settingsStorage.load(*m_diagnostics); loadedSettings.has_value()) {
     m_visualizerController.setSettings(*loadedSettings);
-    std::cout << "Settings loaded.\n";
+    reportInfo(*m_diagnostics, "Settings loaded.");
   }
-  std::cout << "Settings will be saved on exit.\n";
+  reportInfo(*m_diagnostics, "Settings will be saved on exit.");
 
-  auto startupData = StartupDataLoader::load(m_config);
+  auto startupData = StartupDataLoader::load(m_config, *m_diagnostics);
   m_visualizerController.setTimeline(std::move(startupData.timeline));
   const auto& settings = m_visualizerController.settings();
 
@@ -39,24 +44,27 @@ bool Application::initialize()
     .height = settings.window.height,
   };
 
-  if (!m_window.initialize(windowConfig)) {
-    std::cerr << "Application initialization failed: window could not be created.\n";
+  if (!m_window.initialize(windowConfig, *m_diagnostics)) {
+    reportError(*m_diagnostics, "Application initialization failed: window could not be created.");
     return false;
   }
 
   m_renderer = std::make_unique<OpenGLRendererBackend>(Window::nativeProcAddressLoader(),
-                                                       settings.renderer.clearColor);
+                                                       settings.renderer.clearColor,
+                                                       *m_diagnostics);
 
   if (!m_renderer->initialize()) {
-    std::cerr << "Application initialization failed: renderer could not be initialized.\n";
+    reportError(*m_diagnostics,
+                "Application initialization failed: renderer could not be initialized.");
     m_renderer.reset();
     m_window.shutdown();
     return false;
   }
   m_renderer->setFramebufferSize(m_window.framebufferSize());
 
-  if (!m_imguiLayer.initialize(m_window.nativeHandle())) {
-    std::cerr << "Application initialization failed: UI layer could not be initialized.\n";
+  if (!m_imguiLayer.initialize(m_window.nativeHandle(), *m_diagnostics)) {
+    reportError(*m_diagnostics,
+                "Application initialization failed: UI layer could not be initialized.");
     m_renderer->shutdown();
     m_renderer.reset();
     m_window.shutdown();
@@ -65,7 +73,7 @@ bool Application::initialize()
 
   if (m_visualizerController.hasTimeline()) {
     m_visualizerController.playbackTransport().play();
-    std::cout << "Playback started.\n";
+    reportInfo(*m_diagnostics, "Playback started.");
   }
 
   m_initialized = true;
@@ -88,7 +96,7 @@ void Application::run()
     Window::pollEvents();
     const auto pressedKeys = m_window.consumePressedKeys();
     const auto imguiWantsKeyboardCapture = m_imguiLayer.wantsKeyboardCapture();
-    m_visualizerController.handleInput(pressedKeys, imguiWantsKeyboardCapture, std::cout);
+    m_visualizerController.handleInput(pressedKeys, imguiWantsKeyboardCapture);
 
     m_renderer->setFramebufferSize(m_window.framebufferSize());
     m_visualizerController.update(elapsed.count());
@@ -117,8 +125,8 @@ void Application::run()
 void Application::shutdown()
 {
   if (!m_settingsSaved) {
-    if (m_settingsStorage.save(m_visualizerController.settings())) {
-      std::cout << "Settings saved: " << m_settingsStorage.path() << '\n';
+    if (m_settingsStorage.save(m_visualizerController.settings(), *m_diagnostics)) {
+      reportInfo(*m_diagnostics, "Settings saved: " + m_settingsStorage.path().string());
     }
     m_settingsSaved = true;
   }

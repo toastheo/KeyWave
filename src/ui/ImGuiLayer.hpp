@@ -1,9 +1,11 @@
 #pragma once
 
+#include "diagnostics/Diagnostics.hpp"
+
 class ImGuiLayer
 {
 public:
-  bool initialize(void* nativeWindowHandle);
+  bool initialize(void* nativeWindowHandle, DiagnosticSink& diagnostics = nullDiagnosticSink());
   void shutdown();
 
   void beginFrame() const;

@@ -1,11 +1,11 @@
 #include "app/AppConfig.hpp"
 #include "app/Application.hpp"
-
-#include <iostream>
+#include "diagnostics/Diagnostics.hpp"
 
 int main(const int argc, char** argv)
 {
-  const auto config = parseAppConfig(argc, argv);
+  auto& diagnostics = consoleDiagnosticSink();
+  const auto config = parseAppConfig(argc, argv, diagnostics);
   if (!config.has_value()) {
     return 1;
   }
@@ -13,7 +13,7 @@ int main(const int argc, char** argv)
   Application application{*config};
 
   if (!application.initialize()) {
-    std::cerr << "KeyWave failed to initialize.\n";
+    reportError(diagnostics, "KeyWave failed to initialize.");
     return 1;
   }
 

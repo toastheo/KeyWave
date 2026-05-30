@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "diagnostics/Diagnostics.hpp"
+
 enum class PlaybackState : std::uint8_t
 {
   Stopped,
@@ -12,6 +14,8 @@ enum class PlaybackState : std::uint8_t
 class PlaybackTransport
 {
 public:
+  explicit PlaybackTransport(DiagnosticSink& diagnostics = nullDiagnosticSink());
+
   void play();
   void pause();
   void stop();
@@ -25,6 +29,7 @@ public:
   [[nodiscard]] double playbackRate() const;
 
 private:
+  DiagnosticSink* m_diagnostics = nullptr;
   double m_currentTimeSeconds = 0.0;
   double m_playbackRate = 1.0;
   PlaybackState m_state = PlaybackState::Stopped;

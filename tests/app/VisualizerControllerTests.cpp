@@ -1,7 +1,6 @@
 #include <array>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <sstream>
 #include <variant>
 
 #include "app/VisualizerController.hpp"
@@ -25,18 +24,17 @@ std::vector<DrawRectCommand> rectsForScene(const RenderScene& scene)
 TEST_CASE("VisualizerController routes keyboard input around UI capture", "[app][visualizer]")
 {
   VisualizerController controller;
-  std::ostringstream log;
 
   controller.playbackTransport().play();
 
   constexpr auto capturedKeys = std::array{Key::Escape, Key::Space};
-  controller.handleInput(capturedKeys, true, log);
+  controller.handleInput(capturedKeys, true);
 
   CHECK_FALSE(controller.visualizationSettingsPanelVisible());
   CHECK(controller.playbackTransport().state() == PlaybackState::Playing);
 
   constexpr auto applicationKeys = std::array{Key::Space};
-  controller.handleInput(applicationKeys, false, log);
+  controller.handleInput(applicationKeys, false);
 
   CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
 }

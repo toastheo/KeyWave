@@ -1,8 +1,7 @@
 #pragma once
 
-#include <iosfwd>
-
 #include "app/AppSettings.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "playback/PlaybackTransport.hpp"
 
 enum class PlaybackTransportAction : std::uint8_t
@@ -19,6 +18,6 @@ enum class PlaybackTransportAction : std::uint8_t
 void applyPlaybackTransportAction(PlaybackTransportAction action,
                                   PlaybackTransport& transport,
                                   const PlaybackControlSettings& settings = {});
-void writePlaybackTransportActionLog(PlaybackTransportAction action,
-                                     const PlaybackTransport& transport,
-                                     std::ostream& output);
+void reportPlaybackTransportAction(PlaybackTransportAction action,
+                                   const PlaybackTransport& transport,
+                                   DiagnosticSink& diagnostics);

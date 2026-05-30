@@ -34,6 +34,23 @@ std::string targetLinkBlock(const std::string& cmakeLists, const std::string& ta
   return cmakeLists.substr(start, end - start);
 }
 
+std::vector<std::filesystem::path> sourceFilesUnder(const std::filesystem::path& root)
+{
+  std::vector<std::filesystem::path> files;
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(root)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+
+    const auto extension = entry.path().extension();
+    if (extension == ".cpp" || extension == ".hpp") {
+      files.push_back(entry.path());
+    }
+  }
+
+  return files;
+}
+
 TEST_CASE("Visualization targets do not publicly depend on app settings",
           "[architecture][layers]")
 {
@@ -61,5 +78,34 @@ TEST_CASE("Visualization targets do not publicly depend on app settings",
                        "keywave_app_settings"));
 }
 
-} // namespace
+TEST_CASE("First-party code routes diagnostics through the diagnostics boundary",
+          "[architecture][diagnostics]")
+{
+  const auto sourceRoot = std::filesystem::path{KEYWAVE_SOURCE_DIR};
 
+  for (const auto& file : sourceFilesUnder(sourceRoot / "src")) {
+    const auto relativePath = std::filesystem::relative(file, sourceRoot).generic_string();
+    if (relativePath == "src/diagnostics/Diagnostics.cpp") {
+      continue;
+    }
+
+    CAPTURE(relativePath);
+    const auto contents = readTextFile(file);
+    CHECK_FALSE(contains(contents, "std::cout"));
+    CHECK_FALSE(contains(contents, "std::cerr"));
+  }
+}
+
+TEST_CASE("Ostream diagnostics use named streams instead of adjacent stream parameters",
+          "[architecture][diagnostics]")
+{
+  const auto sourceRoot = std::filesystem::path{KEYWAVE_SOURCE_DIR};
+  const auto diagnosticsHeader =
+    readTextFile(sourceRoot / "src" / "diagnostics" / "Diagnostics.hpp");
+
+  CHECK_FALSE(contains(diagnosticsHeader,
+                       "OstreamDiagnosticSink(std::ostream& infoStream, "
+                       "std::ostream& warningErrorStream)"));
+}
+
+} // namespace

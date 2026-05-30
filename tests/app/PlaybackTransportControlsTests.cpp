@@ -1,10 +1,10 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <sstream>
 
 #include "app/AppSettings.hpp"
 #include "app/PlaybackTransportAction.hpp"
 #include "app/PlaybackTransportControls.hpp"
+#include "diagnostics/RecordingDiagnosticSink.hpp"
 #include "input/Key.hpp"
 #include "playback/PlaybackTransport.hpp"
 
@@ -13,28 +13,28 @@ namespace {
 TEST_CASE("Playback transport controls map keys to transport actions", "[app][playback]")
 {
   PlaybackTransport transport;
-  std::ostringstream log;
+  RecordingDiagnosticSink diagnostics;
   constexpr PlaybackControlSettings settings;
 
-  applyPlaybackTransportControl(Key::Space, transport, log, settings);
+  applyPlaybackTransportControl(Key::Space, transport, diagnostics, settings);
   CHECK(transport.state() == PlaybackState::Playing);
 
-  applyPlaybackTransportControl(Key::Space, transport, log, settings);
+  applyPlaybackTransportControl(Key::Space, transport, diagnostics, settings);
   CHECK(transport.state() == PlaybackState::Paused);
 
   transport.seek(12.0);
-  applyPlaybackTransportControl(Key::Left, transport, log, settings);
+  applyPlaybackTransportControl(Key::Left, transport, diagnostics, settings);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(7.0));
 
-  applyPlaybackTransportControl(Key::Right, transport, log, settings);
+  applyPlaybackTransportControl(Key::Right, transport, diagnostics, settings);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(12.0));
 
-  applyPlaybackTransportControl(Key::R, transport, log, settings);
+  applyPlaybackTransportControl(Key::R, transport, diagnostics, settings);
   CHECK(transport.state() == PlaybackState::Playing);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
 
   transport.seek(3.0);
-  applyPlaybackTransportControl(Key::S, transport, log, settings);
+  applyPlaybackTransportControl(Key::S, transport, diagnostics, settings);
   CHECK(transport.state() == PlaybackState::Stopped);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
 }
@@ -42,16 +42,16 @@ TEST_CASE("Playback transport controls map keys to transport actions", "[app][pl
 TEST_CASE("Playback transport controls clamp playback rate", "[app][playback]")
 {
   PlaybackTransport transport;
-  std::ostringstream log;
+  RecordingDiagnosticSink diagnostics;
   constexpr PlaybackControlSettings settings;
 
   for (int count = 0; count < 20; ++count) {
-    applyPlaybackTransportControl(Key::Up, transport, log, settings);
+    applyPlaybackTransportControl(Key::Up, transport, diagnostics, settings);
   }
   CHECK(transport.playbackRate() == Catch::Approx(4.0));
 
   for (int count = 0; count < 20; ++count) {
-    applyPlaybackTransportControl(Key::Down, transport, log, settings);
+    applyPlaybackTransportControl(Key::Down, transport, diagnostics, settings);
   }
   CHECK(transport.playbackRate() == Catch::Approx(0.25));
 }
@@ -59,7 +59,7 @@ TEST_CASE("Playback transport controls clamp playback rate", "[app][playback]")
 TEST_CASE("Playback transport controls use custom playback control settings", "[app][playback]")
 {
   PlaybackTransport transport;
-  std::ostringstream log;
+  RecordingDiagnosticSink diagnostics;
   constexpr PlaybackControlSettings settings{
     .seekStepSeconds = 2.5,
     .minPlaybackRate = 0.5,
@@ -68,19 +68,19 @@ TEST_CASE("Playback transport controls use custom playback control settings", "[
   };
 
   transport.seek(12.0);
-  applyPlaybackTransportControl(Key::Left, transport, log, settings);
+  applyPlaybackTransportControl(Key::Left, transport, diagnostics, settings);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(9.5));
 
-  applyPlaybackTransportControl(Key::Right, transport, log, settings);
+  applyPlaybackTransportControl(Key::Right, transport, diagnostics, settings);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(12.0));
 
   for (int count = 0; count < 20; ++count) {
-    applyPlaybackTransportControl(Key::Up, transport, log, settings);
+    applyPlaybackTransportControl(Key::Up, transport, diagnostics, settings);
   }
   CHECK(transport.playbackRate() == Catch::Approx(2.0));
 
   for (int count = 0; count < 20; ++count) {
-    applyPlaybackTransportControl(Key::Down, transport, log, settings);
+    applyPlaybackTransportControl(Key::Down, transport, diagnostics, settings);
   }
   CHECK(transport.playbackRate() == Catch::Approx(0.5));
 }
@@ -88,18 +88,19 @@ TEST_CASE("Playback transport controls use custom playback control settings", "[
 TEST_CASE("Playback transport controls ignore unmapped keys", "[app][playback]")
 {
   PlaybackTransport transport;
-  std::ostringstream log;
+  RecordingDiagnosticSink diagnostics;
 
   transport.play();
   transport.seek(13.0);
   transport.setPlaybackRate(1.5);
 
-  applyPlaybackTransportControl(static_cast<Key>(255), transport, log, PlaybackControlSettings{});
+  applyPlaybackTransportControl(
+    static_cast<Key>(255), transport, diagnostics, PlaybackControlSettings{});
 
   CHECK(transport.state() == PlaybackState::Playing);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(13.0));
   CHECK(transport.playbackRate() == Catch::Approx(1.5));
-  CHECK(log.str().empty());
+  CHECK(diagnostics.messages.empty());
 }
 
 TEST_CASE("Playback transport actions can be shared by keyboard and UI controls", "[app][playback]")

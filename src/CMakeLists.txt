@@ -7,6 +7,16 @@ target_include_directories(keywave_core
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+add_library(keywave_diagnostics STATIC
+        diagnostics/Diagnostics.hpp
+        diagnostics/Diagnostics.cpp
+)
+
+target_include_directories(keywave_diagnostics
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_library(keywave_midi STATIC
         midi/MidiTypes.hpp
         midi/MidiTrack.hpp
@@ -27,6 +37,7 @@ target_include_directories(keywave_midi
 target_link_libraries(keywave_midi
         PUBLIC
         keywave_core
+        keywave_diagnostics
         PRIVATE
         midifile
 )
@@ -68,6 +79,7 @@ target_include_directories(keywave_app_settings
 target_link_libraries(keywave_app_settings
         PUBLIC
         keywave_core
+        keywave_diagnostics
 )
 
 add_library(keywave_keyboard STATIC
@@ -111,6 +123,7 @@ target_include_directories(keywave_fallingnotes
 
 target_link_libraries(keywave_fallingnotes
         PUBLIC
+        keywave_diagnostics
         keywave_keyboard
         keywave_midi
         keywave_render
@@ -126,6 +139,11 @@ target_include_directories(keywave_playback
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_link_libraries(keywave_playback
+        PUBLIC
+        keywave_diagnostics
+)
+
 add_library(keywave_platform STATIC
         input/Key.hpp
         platform/Window.hpp
@@ -139,6 +157,7 @@ target_include_directories(keywave_platform
 
 target_link_libraries(keywave_platform
         PUBLIC
+        keywave_diagnostics
         keywave_render
         PRIVATE
         glfw
@@ -169,6 +188,7 @@ target_include_directories(keywave_app_core
 target_link_libraries(keywave_app_core
         PUBLIC
         keywave_app_settings
+        keywave_diagnostics
         keywave_fallingnotes
         keywave_keyboard
         keywave_midi
@@ -196,6 +216,7 @@ target_include_directories(keywave_ui
 target_link_libraries(keywave_ui
         PUBLIC
         keywave_app_core
+        keywave_diagnostics
         keywave_playback
         imgui
         PRIVATE
@@ -217,6 +238,7 @@ target_include_directories(keywave_render_opengl
 
 target_link_libraries(keywave_render_opengl
         PUBLIC
+        keywave_diagnostics
         keywave_platform
         keywave_render
         PRIVATE
@@ -237,6 +259,7 @@ target_include_directories(keywave_app
 target_link_libraries(keywave_app
         PUBLIC
         keywave_app_core
+        keywave_diagnostics
         keywave_fallingnotes
         keywave_midi
         keywave_platform

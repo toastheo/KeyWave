@@ -1,5 +1,5 @@
 #include <filesystem>
-#include <iostream>
+#include <sstream>
 #include <utility>
 
 #include "app/StartupDataLoader.hpp"
@@ -7,7 +7,7 @@
 
 namespace {
 
-void printResolvedPathIfRelative(const std::filesystem::path& path)
+void reportResolvedPathIfRelative(const std::filesystem::path& path, DiagnosticSink& diagnostics)
 {
   if (!path.is_relative()) {
     return;
@@ -16,51 +16,58 @@ void printResolvedPathIfRelative(const std::filesystem::path& path)
   std::error_code errorCode;
   const auto absolutePath = std::filesystem::absolute(path, errorCode);
   if (errorCode) {
-    std::cout << "  resolved absolute path unavailable: " << errorCode.message() << '\n';
+    reportInfo(diagnostics,
+               "  resolved absolute path unavailable: " + errorCode.message());
     return;
   }
 
-  std::cout << "  resolved absolute path: " << absolutePath.string() << '\n';
+  reportInfo(diagnostics, "  resolved absolute path: " + absolutePath.string());
 }
 
-StartupData loadStartupMidiIfPresent(const AppConfig& config)
+StartupData loadStartupMidiIfPresent(const AppConfig& config, DiagnosticSink& diagnostics)
 {
   if (!config.midiFilePath.has_value()) {
-    std::cout << "No MIDI file provided. Starting with an empty window.\n";
+    reportInfo(diagnostics, "No MIDI file provided. Starting with an empty window.");
     return {};
   }
 
   const auto& midiPath = *config.midiFilePath;
-  std::cout << "Loading MIDI file: " << midiPath.string() << '\n';
-  printResolvedPathIfRelative(midiPath);
+  reportInfo(diagnostics, "Loading MIDI file: " + midiPath.string());
+  reportResolvedPathIfRelative(midiPath, diagnostics);
 
   std::error_code errorCode;
   if (!std::filesystem::exists(midiPath, errorCode)) {
-    std::cerr << "Warning: MIDI file does not exist: " << midiPath.string();
+    std::ostringstream message;
+    message << "Warning: MIDI file does not exist: " << midiPath.string();
     if (errorCode) {
-      std::cerr << " (" << errorCode.message() << ')';
+      message << " (" << errorCode.message() << ')';
     }
-    std::cerr << ". Opening an empty window.\n";
+    message << ". Opening an empty window.";
+    reportWarning(diagnostics, message.str());
     return {};
   }
 
   if (!std::filesystem::is_regular_file(midiPath, errorCode)) {
-    std::cerr << "Warning: MIDI path is not a regular file: " << midiPath.string();
+    std::ostringstream message;
+    message << "Warning: MIDI path is not a regular file: " << midiPath.string();
     if (errorCode) {
-      std::cerr << " (" << errorCode.message() << ')';
+      message << " (" << errorCode.message() << ')';
     }
-    std::cerr << ". Opening an empty window.\n";
+    message << ". Opening an empty window.";
+    reportWarning(diagnostics, message.str());
     return {};
   }
 
-  auto timeline = MidiFileLoader::loadFromFile(midiPath);
+  auto timeline = MidiFileLoader::loadFromFile(midiPath, diagnostics);
   if (!timeline.has_value()) {
-    std::cerr << "Warning: MIDI loading failed. Opening an empty window.\n";
+    reportWarning(diagnostics, "Warning: MIDI loading failed. Opening an empty window.");
     return {};
   }
 
-  std::cout << "Loaded MIDI file with " << timeline->notes().size()
-            << " note(s), length=" << timeline->lengthSeconds() << "s.\n";
+  std::ostringstream message;
+  message << "Loaded MIDI file with " << timeline->notes().size()
+          << " note(s), length=" << timeline->lengthSeconds() << "s.";
+  reportInfo(diagnostics, message.str());
 
   return StartupData{
     .timeline = std::move(timeline),
@@ -69,7 +76,7 @@ StartupData loadStartupMidiIfPresent(const AppConfig& config)
 
 } // namespace
 
-StartupData StartupDataLoader::load(const AppConfig& config)
+StartupData StartupDataLoader::load(const AppConfig& config, DiagnosticSink& diagnostics)
 {
-  return loadStartupMidiIfPresent(config);
+  return loadStartupMidiIfPresent(config, diagnostics);
 }

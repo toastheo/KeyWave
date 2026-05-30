@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "app/AppConfig.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "midi/MidiTimeline.hpp"
 
 struct StartupData
@@ -13,5 +14,6 @@ struct StartupData
 class StartupDataLoader
 {
 public:
-  [[nodiscard]] static StartupData load(const AppConfig& config);
+  [[nodiscard]] static StartupData load(const AppConfig& config,
+                                        DiagnosticSink& diagnostics = nullDiagnosticSink());
 };

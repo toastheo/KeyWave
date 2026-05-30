@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
+#include <sstream>
 #include <utility>
 
 #include "app/AppSettingsSerializer.hpp"
@@ -58,22 +58,24 @@ const std::filesystem::path& SettingsStorage::path() const
   return m_path;
 }
 
-std::optional<AppSettings> SettingsStorage::load() const
+std::optional<AppSettings> SettingsStorage::load(DiagnosticSink& diagnostics) const
 {
-  return load(m_path);
+  return load(m_path, diagnostics);
 }
 
-std::optional<AppSettings> SettingsStorage::load(const std::filesystem::path& path)
+std::optional<AppSettings> SettingsStorage::load(const std::filesystem::path& path,
+                                                 DiagnosticSink& diagnostics)
 {
   try {
     if (!std::filesystem::exists(path)) {
-      std::cout << "Settings file not found, using defaults: " << path << '\n';
+      reportInfo(diagnostics, "Settings file not found, using defaults: " + path.string());
       return std::nullopt;
     }
 
     std::ifstream input(path);
     if (!input) {
-      std::cerr << "Warning: could not open settings file, using defaults: " << path << '\n';
+      reportWarning(diagnostics,
+                    "Warning: could not open settings file, using defaults: " + path.string());
       return std::nullopt;
     }
 
@@ -81,23 +83,29 @@ std::optional<AppSettings> SettingsStorage::load(const std::filesystem::path& pa
     return AppSettingsSerializer::deserialize(json, AppSettings{});
   }
   catch (const nlohmann::json::exception& exception) {
-    std::cerr << "Warning: malformed settings file, using defaults: " << path << " ("
-              << exception.what() << ")\n";
+    std::ostringstream message;
+    message << "Warning: malformed settings file, using defaults: " << path << " ("
+            << exception.what() << ")";
+    reportWarning(diagnostics, message.str());
   }
   catch (const std::exception& exception) {
-    std::cerr << "Warning: could not load settings file, using defaults: " << path << " ("
-              << exception.what() << ")\n";
+    std::ostringstream message;
+    message << "Warning: could not load settings file, using defaults: " << path << " ("
+            << exception.what() << ")";
+    reportWarning(diagnostics, message.str());
   }
 
   return std::nullopt;
 }
 
-bool SettingsStorage::save(const AppSettings& settings) const
+bool SettingsStorage::save(const AppSettings& settings, DiagnosticSink& diagnostics) const
 {
-  return save(settings, m_path);
+  return save(settings, m_path, diagnostics);
 }
 
-bool SettingsStorage::save(const AppSettings& settings, const std::filesystem::path& path)
+bool SettingsStorage::save(const AppSettings& settings,
+                           const std::filesystem::path& path,
+                           DiagnosticSink& diagnostics)
 {
   try {
     const auto parentPath = path.parent_path();
@@ -111,14 +119,15 @@ bool SettingsStorage::save(const AppSettings& settings, const std::filesystem::p
     {
       std::ofstream output(tempPath, std::ios::trunc);
       if (!output) {
-        std::cerr << "Warning: could not open temporary settings file for writing: " << tempPath
-                  << '\n';
+        reportWarning(diagnostics,
+                      "Warning: could not open temporary settings file for writing: " +
+                        tempPath.string());
         return false;
       }
 
       output << AppSettingsSerializer::serialize(sanitizeAppSettings(settings)).dump(2) << '\n';
       if (!output) {
-        std::cerr << "Warning: could not write settings file: " << tempPath << '\n';
+        reportWarning(diagnostics, "Warning: could not write settings file: " + tempPath.string());
         return false;
       }
     }
@@ -130,8 +139,9 @@ bool SettingsStorage::save(const AppSettings& settings, const std::filesystem::p
     return true;
   }
   catch (const std::exception& exception) {
-    std::cerr << "Warning: could not save settings file: " << path << " (" << exception.what()
-              << ")\n";
+    std::ostringstream message;
+    message << "Warning: could not save settings file: " << path << " (" << exception.what() << ")";
+    reportWarning(diagnostics, message.str());
   }
 
   return false;
