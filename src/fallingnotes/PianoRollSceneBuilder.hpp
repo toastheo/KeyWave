@@ -7,7 +7,7 @@
 #include "midi/MidiTimeline.hpp"
 #include "render/RenderScene.hpp"
 
-struct FallingNotesSceneConfig
+struct PianoRollSceneConfig
 {
   PitchRange pitchRange{.minPitch = 21, .maxPitch = 108};
   double lookAheadSeconds = 10.0;
@@ -18,11 +18,11 @@ struct FallingNotesSceneConfig
   KeyboardRenderStyle keyboardStyle;
 };
 
-class FallingNotesSceneBuilder
+class PianoRollSceneBuilder
 {
 public:
   [[nodiscard]] static RenderScene build(const MidiTimeline& timeline,
                                          double currentTimeSeconds,
-                                         const FallingNotesSceneConfig& config = {},
+                                         const PianoRollSceneConfig& config = {},
                                          DiagnosticSink& diagnostics = nullDiagnosticSink());
 };

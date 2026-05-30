@@ -65,7 +65,7 @@ TEST_CASE("Visualization targets do not publicly depend on app settings",
          sourceRoot / "src" / "keyboard" / "KeyboardGeometry.hpp",
          sourceRoot / "src" / "keyboard" / "KeyboardRenderAdapter.hpp",
          sourceRoot / "src" / "fallingnotes" / "FallingNotesRenderAdapter.hpp",
-         sourceRoot / "src" / "fallingnotes" / "FallingNotesSceneBuilder.hpp",
+         sourceRoot / "src" / "fallingnotes" / "PianoRollSceneBuilder.hpp",
        }) {
     CAPTURE(header.string());
     CHECK_FALSE(contains(readTextFile(header), "#include \"app/AppSettings.hpp\""));

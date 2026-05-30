@@ -14,7 +14,7 @@ void checkColor(const Color& actual, const Color& expected)
   CHECK(actual.a == Catch::Approx(expected.a));
 }
 
-TEST_CASE("Visualization settings adapters sanitize app settings into scene config",
+TEST_CASE("Visualization settings adapters sanitize app settings into piano-roll scene config",
           "[app][settings]")
 {
   constexpr FallingNotesSettings fallingNotesSettings{
@@ -34,7 +34,7 @@ TEST_CASE("Visualization settings adapters sanitize app settings into scene conf
     .hitLineHeight = 0.05,
   };
 
-  const auto config = fallingNotesSceneConfigFromSettings(fallingNotesSettings, keyboardSettings);
+  const auto config = pianoRollSceneConfigFromSettings(fallingNotesSettings, keyboardSettings);
 
   CHECK(config.pitchRange.minPitch == 60);
   CHECK(config.pitchRange.maxPitch == 64);
@@ -63,7 +63,7 @@ TEST_CASE("Visualization settings adapters fall back from invalid settings",
   KeyboardSettings keyboardSettings;
   keyboardSettings.whiteKeyWidth = -1.0;
 
-  const auto config = fallingNotesSceneConfigFromSettings(fallingNotesSettings, keyboardSettings);
+  const auto config = pianoRollSceneConfigFromSettings(fallingNotesSettings, keyboardSettings);
 
   CHECK(config.pitchRange.minPitch == FallingNotesSettings{}.pitchRange.minPitch);
   CHECK(config.pitchRange.maxPitch == FallingNotesSettings{}.pitchRange.maxPitch);
@@ -72,4 +72,3 @@ TEST_CASE("Visualization settings adapters fall back from invalid settings",
 }
 
 } // namespace
-

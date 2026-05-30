@@ -112,8 +112,8 @@ add_library(keywave_fallingnotes STATIC
         fallingnotes/FallingNotesLayout.cpp
         fallingnotes/FallingNotesRenderAdapter.hpp
         fallingnotes/FallingNotesRenderAdapter.cpp
-        fallingnotes/FallingNotesSceneBuilder.hpp
-        fallingnotes/FallingNotesSceneBuilder.cpp
+        fallingnotes/PianoRollSceneBuilder.hpp
+        fallingnotes/PianoRollSceneBuilder.cpp
 )
 
 target_include_directories(keywave_fallingnotes

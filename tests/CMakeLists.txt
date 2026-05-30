@@ -37,7 +37,7 @@ add_executable(KeyWaveMidiTests
         keyboard/KeyboardRenderAdapterTests.cpp
         fallingnotes/FallingNotesLayoutTests.cpp
         fallingnotes/FallingNotesRenderAdapterTests.cpp
-        fallingnotes/FallingNotesSceneBuilderTests.cpp
+        fallingnotes/PianoRollSceneBuilderTests.cpp
         playback/PlaybackTransportTests.cpp
         render/RendererViewTests.cpp
 )

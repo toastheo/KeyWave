@@ -5,7 +5,7 @@
 #include "app/PlaybackTransportControls.hpp"
 #include "app/VisualizationSettingsAdapters.hpp"
 #include "app/VisualizationSettingsPanelControls.hpp"
-#include "fallingnotes/FallingNotesSceneBuilder.hpp"
+#include "fallingnotes/PianoRollSceneBuilder.hpp"
 
 VisualizerController::VisualizerController()
     : VisualizerController(AppSettings{}, nullDiagnosticSink())
@@ -100,9 +100,9 @@ RenderScene VisualizerController::buildScene() const
     return {};
   }
 
-  return FallingNotesSceneBuilder::build(
+  return PianoRollSceneBuilder::build(
     *m_timeline,
     m_playbackTransport.currentTimeSeconds(),
-    fallingNotesSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard),
+    pianoRollSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard),
     *m_diagnostics);
 }

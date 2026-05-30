@@ -40,11 +40,11 @@ FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(const FallingNotesSe
   };
 }
 
-FallingNotesSceneConfig fallingNotesSceneConfigFromSettings(
+PianoRollSceneConfig pianoRollSceneConfigFromSettings(
   const FallingNotesSettings& fallingNotesSettings, const KeyboardSettings& keyboardSettings)
 {
   const auto sanitizedFallingNotesSettings = sanitizeFallingNotesSettings(fallingNotesSettings);
-  return FallingNotesSceneConfig{
+  return PianoRollSceneConfig{
     .pitchRange = sanitizedFallingNotesSettings.pitchRange,
     .lookAheadSeconds = sanitizedFallingNotesSettings.lookAheadSeconds,
     .visiblePastSeconds = sanitizedFallingNotesSettings.visiblePastSeconds,

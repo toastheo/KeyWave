@@ -1,4 +1,4 @@
-#include "fallingnotes/FallingNotesSceneBuilder.hpp"
+#include "fallingnotes/PianoRollSceneBuilder.hpp"
 
 #include <cmath>
 #include <iterator>
@@ -30,9 +30,9 @@ bool isPositiveFinite(const double value)
   return std::isfinite(value) && value > 0.0;
 }
 
-FallingNotesSceneConfig sanitizedConfig(FallingNotesSceneConfig config)
+PianoRollSceneConfig sanitizedConfig(PianoRollSceneConfig config)
 {
-  constexpr FallingNotesSceneConfig defaults;
+  constexpr PianoRollSceneConfig defaults;
 
   if (!isValidPitchRange(config.pitchRange)) {
     config.pitchRange = defaults.pitchRange;
@@ -88,10 +88,10 @@ void appendCommands(std::vector<RenderCommand>& destination, std::vector<RenderC
 
 } // namespace
 
-RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
-                                            const double currentTimeSeconds,
-                                            const FallingNotesSceneConfig& config,
-                                            DiagnosticSink& diagnostics)
+RenderScene PianoRollSceneBuilder::build(const MidiTimeline& timeline,
+                                         const double currentTimeSeconds,
+                                         const PianoRollSceneConfig& config,
+                                         DiagnosticSink& diagnostics)
 {
   const auto sanitized = sanitizedConfig(config);
   const KeyboardGeometry keyboardGeometry(sanitized.keyboardLayout);

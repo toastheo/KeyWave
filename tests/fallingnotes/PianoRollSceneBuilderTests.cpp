@@ -3,7 +3,7 @@
 #include <limits>
 #include <variant>
 
-#include "fallingnotes/FallingNotesSceneBuilder.hpp"
+#include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "render/RenderCommand.hpp"
@@ -47,14 +47,14 @@ bool hasFallingNoteRect(const std::vector<DrawRectCommand>& rects)
   return false;
 }
 
-TEST_CASE("FallingNotesSceneBuilder rebuilds note positions for the current playback time",
+TEST_CASE("PianoRollSceneBuilder rebuilds note positions for the current playback time",
           "[fallingnotes][scene]")
 {
   MidiTimeline timeline;
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 2.0, .durationSeconds = 1.0});
 
-  const auto firstScene = FallingNotesSceneBuilder::build(timeline, 0.0);
-  const auto laterScene = FallingNotesSceneBuilder::build(timeline, 1.5);
+  const auto firstScene = PianoRollSceneBuilder::build(timeline, 0.0);
+  const auto laterScene = PianoRollSceneBuilder::build(timeline, 1.5);
 
   CHECK(firstScene.view.visibleWorldRect.x == Catch::Approx(0.0));
   CHECK(firstScene.view.visibleWorldRect.y == Catch::Approx(-2.5));
@@ -71,35 +71,35 @@ TEST_CASE("FallingNotesSceneBuilder rebuilds note positions for the current play
   CHECK(firstRects.back().rect.width == Catch::Approx(52.0));
 }
 
-TEST_CASE("FallingNotesSceneBuilder falls back from zero lookahead", "[fallingnotes][scene]")
+TEST_CASE("PianoRollSceneBuilder falls back from zero lookahead", "[fallingnotes][scene]")
 {
   MidiTimeline timeline;
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 2.0, .durationSeconds = 1.0});
 
-  FallingNotesSceneConfig config;
+  PianoRollSceneConfig config;
   config.lookAheadSeconds = 0.0;
 
-  const auto scene = FallingNotesSceneBuilder::build(timeline, 0.0, config);
+  const auto scene = PianoRollSceneBuilder::build(timeline, 0.0, config);
   const auto rects = rectsForScene(scene);
 
   CHECK(hasFallingNoteRect(rects));
 }
 
-TEST_CASE("FallingNotesSceneBuilder returns a default scene when layout input is invalid",
+TEST_CASE("PianoRollSceneBuilder returns a default scene when layout input is invalid",
           "[fallingnotes][scene]")
 {
   MidiTimeline timeline;
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 2.0, .durationSeconds = 1.0});
 
   const auto scene =
-    FallingNotesSceneBuilder::build(timeline, std::numeric_limits<double>::quiet_NaN());
+    PianoRollSceneBuilder::build(timeline, std::numeric_limits<double>::quiet_NaN());
 
   CHECK_FALSE(scene.commands.empty());
   CHECK(scene.view.visibleWorldRect.width == Catch::Approx(kDefaultVisibleWorldRect.width));
   CHECK(scene.view.visibleWorldRect.height == Catch::Approx(kDefaultVisibleWorldRect.height));
 }
 
-TEST_CASE("FallingNotesSceneBuilder highlights keyboard keys for currently active MIDI notes",
+TEST_CASE("PianoRollSceneBuilder highlights keyboard keys for currently active MIDI notes",
           "[fallingnotes][scene]")
 {
   MidiTimeline timeline;
@@ -107,7 +107,7 @@ TEST_CASE("FallingNotesSceneBuilder highlights keyboard keys for currently activ
   timeline.addNote(Note{.pitch = 61, .velocity = 90, .startSeconds = 1.5, .durationSeconds = 2.0});
   timeline.addNote(Note{.pitch = 64, .velocity = 90, .startSeconds = 4.0, .durationSeconds = 1.0});
 
-  const auto scene = FallingNotesSceneBuilder::build(timeline, 2.0);
+  const auto scene = PianoRollSceneBuilder::build(timeline, 2.0);
   const auto rects = rectsForScene(scene);
 
   int activeWhiteKeyCount = 0;
@@ -127,14 +127,14 @@ TEST_CASE("FallingNotesSceneBuilder highlights keyboard keys for currently activ
   CHECK(activeBlackKeyCount == 1);
 }
 
-TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
+TEST_CASE("PianoRollSceneBuilder uses falling note and keyboard settings",
           "[fallingnotes][scene]")
 {
   MidiTimeline timeline;
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 9.5, .durationSeconds = 1.0});
   timeline.addNote(Note{.pitch = 72, .velocity = 90, .startSeconds = 10.0, .durationSeconds = 1.0});
 
-  constexpr FallingNotesSceneConfig config{
+  constexpr PianoRollSceneConfig config{
     .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 64},
     .lookAheadSeconds = 4.0,
     .visiblePastSeconds = 1.0,
@@ -165,7 +165,7 @@ TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
       },
   };
 
-  const auto scene = FallingNotesSceneBuilder::build(timeline, 10.0, config);
+  const auto scene = PianoRollSceneBuilder::build(timeline, 10.0, config);
   const auto rects = rectsForScene(scene);
 
   CHECK(scene.view.visibleWorldRect.y == Catch::Approx(-1.25));
@@ -180,20 +180,20 @@ TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
   checkColor(rects.back().color, config.keyboardStyle.hitLineColor);
 }
 
-TEST_CASE("FallingNotesSceneBuilder keeps keyboard view size independent from lookahead",
+TEST_CASE("PianoRollSceneBuilder keeps keyboard view size independent from lookahead",
           "[fallingnotes][scene]")
 {
   MidiTimeline timeline;
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 18.0, .durationSeconds = 1.0});
 
-  FallingNotesSceneConfig shortLookaheadConfig;
+  PianoRollSceneConfig shortLookaheadConfig;
   shortLookaheadConfig.lookAheadSeconds = 4.0;
 
-  FallingNotesSceneConfig longLookaheadConfig;
+  PianoRollSceneConfig longLookaheadConfig;
   longLookaheadConfig.lookAheadSeconds = 20.0;
 
-  const auto shortScene = FallingNotesSceneBuilder::build(timeline, 0.0, shortLookaheadConfig);
-  const auto longScene = FallingNotesSceneBuilder::build(timeline, 0.0, longLookaheadConfig);
+  const auto shortScene = PianoRollSceneBuilder::build(timeline, 0.0, shortLookaheadConfig);
+  const auto longScene = PianoRollSceneBuilder::build(timeline, 0.0, longLookaheadConfig);
 
   CHECK(shortScene.view.visibleWorldRect.y == Catch::Approx(longScene.view.visibleWorldRect.y));
   CHECK(shortScene.view.visibleWorldRect.height ==
