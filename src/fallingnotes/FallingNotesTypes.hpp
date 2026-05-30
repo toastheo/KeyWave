@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "core/CoreTypes.hpp"
 #include "midi/MidiTypes.hpp"
 
 struct FallingNotesViewport

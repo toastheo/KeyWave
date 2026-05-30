@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "core/CoreTypes.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "midi/MidiTypes.hpp"
 

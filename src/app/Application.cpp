@@ -7,6 +7,7 @@
 
 #include "app/PlaybackTransportControls.hpp"
 #include "app/StartupDataLoader.hpp"
+#include "app/VisualizationSettingsAdapters.hpp"
 #include "app/VisualizationSettingsPanelControls.hpp"
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
 #include "render/RenderScene.hpp"
@@ -112,10 +113,10 @@ void Application::run()
 
     RenderScene scene;
     if (m_timeline.has_value()) {
-      scene = FallingNotesSceneBuilder::build(*m_timeline,
-                                              m_playbackTransport.currentTimeSeconds(),
-                                              m_settings.fallingNotes,
-                                              m_settings.keyboard);
+      scene = FallingNotesSceneBuilder::build(
+        *m_timeline,
+        m_playbackTransport.currentTimeSeconds(),
+        fallingNotesSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard));
     }
 
     m_renderer->setView(scene.view);

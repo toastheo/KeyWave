@@ -2,8 +2,7 @@
 
 #include <string>
 
-#include "midi/MidiTypes.hpp"
-#include "render/RenderTypes.hpp"
+#include "core/CoreTypes.hpp"
 
 struct WindowSettings
 {

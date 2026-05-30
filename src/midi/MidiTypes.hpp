@@ -9,9 +9,3 @@ struct Note
   double startSeconds = 0.0;
   double durationSeconds = 0.0;
 };
-
-struct PitchRange
-{
-  int minPitch = 0;
-  int maxPitch = 0;
-};

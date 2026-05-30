@@ -1,3 +1,12 @@
+add_library(keywave_core INTERFACE
+        core/CoreTypes.hpp
+)
+
+target_include_directories(keywave_core
+        INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_library(keywave_midi STATIC
         midi/MidiTypes.hpp
         midi/MidiTrack.hpp
@@ -16,6 +25,8 @@ target_include_directories(keywave_midi
 )
 
 target_link_libraries(keywave_midi
+        PUBLIC
+        keywave_core
         PRIVATE
         midifile
 )
@@ -32,6 +43,11 @@ add_library(keywave_render STATIC
 target_include_directories(keywave_render
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(keywave_render
+        PUBLIC
+        keywave_core
 )
 
 add_library(keywave_app_settings STATIC
@@ -51,8 +67,7 @@ target_include_directories(keywave_app_settings
 
 target_link_libraries(keywave_app_settings
         PUBLIC
-        keywave_midi
-        keywave_render
+        keywave_core
 )
 
 add_library(keywave_keyboard STATIC
@@ -74,8 +89,9 @@ target_include_directories(keywave_keyboard
 
 target_link_libraries(keywave_keyboard
         PUBLIC
-        keywave_app_settings
+        keywave_core
         keywave_midi
+        keywave_render
 )
 
 add_library(keywave_fallingnotes STATIC
@@ -95,9 +111,9 @@ target_include_directories(keywave_fallingnotes
 
 target_link_libraries(keywave_fallingnotes
         PUBLIC
-        keywave_app_settings
         keywave_keyboard
         keywave_midi
+        keywave_render
 )
 
 add_library(keywave_playback STATIC
@@ -137,6 +153,8 @@ add_library(keywave_app_core STATIC
         app/PlaybackTransportControls.cpp
         app/VisualizationSettingsPanelControls.hpp
         app/VisualizationSettingsPanelControls.cpp
+        app/VisualizationSettingsAdapters.hpp
+        app/VisualizationSettingsAdapters.cpp
         app/StartupDataLoader.hpp
         app/StartupDataLoader.cpp
 )
@@ -149,6 +167,8 @@ target_include_directories(keywave_app_core
 target_link_libraries(keywave_app_core
         PUBLIC
         keywave_app_settings
+        keywave_fallingnotes
+        keywave_keyboard
         keywave_midi
         keywave_playback
 )

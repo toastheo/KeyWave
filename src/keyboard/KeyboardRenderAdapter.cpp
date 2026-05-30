@@ -83,20 +83,3 @@ std::vector<RenderCommand> KeyboardRenderAdapter::buildCommands(const KeyboardLa
 
   return commands;
 }
-
-KeyboardRenderStyle keyboardRenderStyleFromSettings(const KeyboardSettings& settings)
-{
-  const auto sanitizedSettings = sanitizeKeyboardSettings(settings);
-  return KeyboardRenderStyle{
-    .whiteKeyColor = sanitizedSettings.whiteKeyColor,
-    .blackKeyColor = sanitizedSettings.blackKeyColor,
-    .activeWhiteKeyColor = sanitizedSettings.activeWhiteKeyColor,
-    .activeBlackKeyColor = sanitizedSettings.activeBlackKeyColor,
-    .whiteKeySeparatorColor = sanitizedSettings.whiteKeySeparatorColor,
-    .hitLineColor = sanitizedSettings.hitLineColor,
-    .separatorThicknessPixels = sanitizedSettings.separatorWidth,
-    .hitLineHeight = sanitizedSettings.hitLineHeight,
-    .includeSeparators = sanitizedSettings.includeSeparators,
-    .includeHitLine = sanitizedSettings.includeHitLine,
-  };
-}

@@ -18,11 +18,13 @@ target_include_directories(keywave_test_support
 )
 
 add_executable(KeyWaveMidiTests
+        architecture/LayeringTests.cpp
         app/AppConfigTests.cpp
         app/AppSettingsTests.cpp
         app/AppSettingsSerializerTests.cpp
         app/PlaybackTransportControlsTests.cpp
         app/SettingsStorageTests.cpp
+        app/VisualizationSettingsAdaptersTests.cpp
         app/VisualizationSettingsPanelControlsTests.cpp
         ui/TransportControlsConfigTests.cpp
         ui/TransportTimeTests.cpp
@@ -56,6 +58,18 @@ target_link_libraries(KeyWaveMidiTests
         keywave_ui
 )
 
+target_compile_definitions(KeyWaveMidiTests
+        PRIVATE
+        KEYWAVE_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+)
+
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
-catch_discover_tests(KeyWaveMidiTests DISCOVERY_MODE PRE_TEST)
+
+set(KEYWAVE_CATCH_DISCOVERY_ARGS DISCOVERY_MODE PRE_TEST)
+if(WIN32)
+    get_filename_component(KEYWAVE_TEST_RUNTIME_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    list(APPEND KEYWAVE_CATCH_DISCOVERY_ARGS DL_PATHS "${KEYWAVE_TEST_RUNTIME_DIR}")
+endif()
+
+catch_discover_tests(KeyWaveMidiTests ${KEYWAVE_CATCH_DISCOVERY_ARGS})

@@ -179,17 +179,3 @@ const KeyboardLayoutConfig& KeyboardGeometry::config() const
 {
   return m_config;
 }
-
-KeyboardLayoutConfig keyboardLayoutConfigFromSettings(const KeyboardSettings& settings,
-                                                      const PitchRange& pitchRange)
-{
-  const auto sanitizedSettings = sanitizeKeyboardSettings(settings);
-  return KeyboardLayoutConfig{
-    .pitchRange = pitchRange,
-    .whiteKeyWidth = sanitizedSettings.whiteKeyWidth,
-    .whiteKeyHeight = sanitizedSettings.whiteKeyHeight,
-    .blackKeyWidth = sanitizedSettings.blackKeyWidth,
-    .blackKeyHeight = sanitizedSettings.blackKeyHeight,
-    .whiteKeyGap = sanitizedSettings.whiteKeyGap,
-  };
-}

@@ -3,7 +3,6 @@
 #include <limits>
 #include <variant>
 
-#include "app/AppSettings.hpp"
 #include "fallingnotes/FallingNotesSceneBuilder.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
 #include "midi/MidiTimeline.hpp"
@@ -38,6 +37,16 @@ bool isKeyboardRect(const DrawRectCommand& command)
   return command.rect.y < 0.0;
 }
 
+bool hasFallingNoteRect(const std::vector<DrawRectCommand>& rects)
+{
+  for (const auto& rect : rects) {
+    if (rect.rect.y > 0.0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 TEST_CASE("FallingNotesSceneBuilder rebuilds note positions for the current playback time",
           "[fallingnotes][scene]")
 {
@@ -60,6 +69,20 @@ TEST_CASE("FallingNotesSceneBuilder rebuilds note positions for the current play
   CHECK(laterRects.front().rect.y == Catch::Approx(0.5));
   CHECK(firstRects.back().rect.y == Catch::Approx(0.0));
   CHECK(firstRects.back().rect.width == Catch::Approx(52.0));
+}
+
+TEST_CASE("FallingNotesSceneBuilder falls back from zero lookahead", "[fallingnotes][scene]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 2.0, .durationSeconds = 1.0});
+
+  FallingNotesSceneConfig config;
+  config.lookAheadSeconds = 0.0;
+
+  const auto scene = FallingNotesSceneBuilder::build(timeline, 0.0, config);
+  const auto rects = rectsForScene(scene);
+
+  CHECK(hasFallingNoteRect(rects));
 }
 
 TEST_CASE("FallingNotesSceneBuilder returns a default scene when layout input is invalid",
@@ -111,31 +134,38 @@ TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 9.5, .durationSeconds = 1.0});
   timeline.addNote(Note{.pitch = 72, .velocity = 90, .startSeconds = 10.0, .durationSeconds = 1.0});
 
-  constexpr FallingNotesSettings fallingNotesSettings{
+  constexpr FallingNotesSceneConfig config{
     .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 64},
     .lookAheadSeconds = 4.0,
     .visiblePastSeconds = 1.0,
-    .noteColor = Color{.r = 0.7f, .g = 0.2f, .b = 0.1f, .a = 1.0f},
-    .activeNoteColor = Color{.r = 0.1f, .g = 0.9f, .b = 0.2f, .a = 1.0f},
-  };
-  constexpr KeyboardSettings keyboardSettings{
-    .whiteKeyWidth = 2.0,
-    .whiteKeyHeight = 1.25,
-    .blackKeyWidth = 1.0,
-    .blackKeyHeight = 0.75,
-    .whiteKeyGap = 0.2,
-    .whiteKeyColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 1.0f},
-    .blackKeyColor = Color{.r = 0.1f, .g = 0.1f, .b = 0.1f, .a = 1.0f},
-    .activeWhiteKeyColor = Color{.r = 0.2f, .g = 0.8f, .b = 0.9f, .a = 1.0f},
-    .activeBlackKeyColor = Color{.r = 0.2f, .g = 0.4f, .b = 0.9f, .a = 1.0f},
-    .whiteKeySeparatorColor = Color{.r = 0.25f, .g = 0.25f, .b = 0.27f, .a = 1.0f},
-    .hitLineColor = Color{.r = 0.6f, .g = 0.6f, .b = 0.9f, .a = 1.0f},
-    .separatorWidth = 2.0,
-    .hitLineHeight = 0.05,
+    .keyboardLayout =
+      KeyboardLayoutConfig{
+        .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 64},
+        .whiteKeyWidth = 2.0,
+        .whiteKeyHeight = 1.25,
+        .blackKeyWidth = 1.0,
+        .blackKeyHeight = 0.75,
+        .whiteKeyGap = 0.2,
+      },
+    .fallingNotesStyle =
+      FallingNotesRenderStyle{
+        .noteColor = Color{.r = 0.7f, .g = 0.2f, .b = 0.1f, .a = 1.0f},
+        .activeNoteColor = Color{.r = 0.1f, .g = 0.9f, .b = 0.2f, .a = 1.0f},
+      },
+    .keyboardStyle =
+      KeyboardRenderStyle{
+        .whiteKeyColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 1.0f},
+        .blackKeyColor = Color{.r = 0.1f, .g = 0.1f, .b = 0.1f, .a = 1.0f},
+        .activeWhiteKeyColor = Color{.r = 0.2f, .g = 0.8f, .b = 0.9f, .a = 1.0f},
+        .activeBlackKeyColor = Color{.r = 0.2f, .g = 0.4f, .b = 0.9f, .a = 1.0f},
+        .whiteKeySeparatorColor = Color{.r = 0.25f, .g = 0.25f, .b = 0.27f, .a = 1.0f},
+        .hitLineColor = Color{.r = 0.6f, .g = 0.6f, .b = 0.9f, .a = 1.0f},
+        .separatorThicknessPixels = 2.0,
+        .hitLineHeight = 0.05,
+      },
   };
 
-  const auto scene =
-    FallingNotesSceneBuilder::build(timeline, 10.0, fallingNotesSettings, keyboardSettings);
+  const auto scene = FallingNotesSceneBuilder::build(timeline, 10.0, config);
   const auto rects = rectsForScene(scene);
 
   CHECK(scene.view.visibleWorldRect.y == Catch::Approx(-1.25));
@@ -143,11 +173,11 @@ TEST_CASE("FallingNotesSceneBuilder uses falling note and keyboard settings",
   CHECK(scene.view.visibleWorldRect.height == Catch::Approx(11.25));
 
   REQUIRE_FALSE(rects.empty());
-  checkColor(rects.front().color, fallingNotesSettings.activeNoteColor);
+  checkColor(rects.front().color, config.fallingNotesStyle.activeNoteColor);
   CHECK(rects.front().rect.x == Catch::Approx(0.1));
   CHECK(rects.front().rect.width == Catch::Approx(1.8));
-  CHECK(rects.back().rect.height == Catch::Approx(keyboardSettings.hitLineHeight));
-  checkColor(rects.back().color, keyboardSettings.hitLineColor);
+  CHECK(rects.back().rect.height == Catch::Approx(config.keyboardStyle.hitLineHeight));
+  checkColor(rects.back().color, config.keyboardStyle.hitLineColor);
 }
 
 TEST_CASE("FallingNotesSceneBuilder keeps keyboard view size independent from lookahead",
@@ -156,18 +186,14 @@ TEST_CASE("FallingNotesSceneBuilder keeps keyboard view size independent from lo
   MidiTimeline timeline;
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 18.0, .durationSeconds = 1.0});
 
-  FallingNotesSettings shortLookaheadSettings;
-  shortLookaheadSettings.lookAheadSeconds = 4.0;
+  FallingNotesSceneConfig shortLookaheadConfig;
+  shortLookaheadConfig.lookAheadSeconds = 4.0;
 
-  FallingNotesSettings longLookaheadSettings;
-  longLookaheadSettings.lookAheadSeconds = 20.0;
+  FallingNotesSceneConfig longLookaheadConfig;
+  longLookaheadConfig.lookAheadSeconds = 20.0;
 
-  constexpr KeyboardSettings keyboardSettings;
-
-  const auto shortScene =
-    FallingNotesSceneBuilder::build(timeline, 0.0, shortLookaheadSettings, keyboardSettings);
-  const auto longScene =
-    FallingNotesSceneBuilder::build(timeline, 0.0, longLookaheadSettings, keyboardSettings);
+  const auto shortScene = FallingNotesSceneBuilder::build(timeline, 0.0, shortLookaheadConfig);
+  const auto longScene = FallingNotesSceneBuilder::build(timeline, 0.0, longLookaheadConfig);
 
   CHECK(shortScene.view.visibleWorldRect.y == Catch::Approx(longScene.view.visibleWorldRect.y));
   CHECK(shortScene.view.visibleWorldRect.height ==

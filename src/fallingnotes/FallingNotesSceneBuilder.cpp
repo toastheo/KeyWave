@@ -15,7 +15,41 @@
 
 namespace {
 
-constexpr double kFallingNotesDisplayHeight = 10.0;
+bool isValidPitchRange(const PitchRange& range)
+{
+  return range.minPitch <= range.maxPitch;
+}
+
+bool isNonNegativeFinite(const double value)
+{
+  return std::isfinite(value) && value >= 0.0;
+}
+
+bool isPositiveFinite(const double value)
+{
+  return std::isfinite(value) && value > 0.0;
+}
+
+FallingNotesSceneConfig sanitizedConfig(FallingNotesSceneConfig config)
+{
+  constexpr FallingNotesSceneConfig defaults;
+
+  if (!isValidPitchRange(config.pitchRange)) {
+    config.pitchRange = defaults.pitchRange;
+  }
+  if (!isPositiveFinite(config.lookAheadSeconds)) {
+    config.lookAheadSeconds = defaults.lookAheadSeconds;
+  }
+  if (!isNonNegativeFinite(config.visiblePastSeconds)) {
+    config.visiblePastSeconds = defaults.visiblePastSeconds;
+  }
+  if (!isPositiveFinite(config.displayHeight)) {
+    config.displayHeight = defaults.displayHeight;
+  }
+  config.keyboardLayout.pitchRange = config.pitchRange;
+
+  return config;
+}
 
 RendererView rendererViewForKeyboard(const KeyboardGeometry& geometry,
                                      const FallingNotesViewport& viewport)
@@ -53,20 +87,17 @@ void appendCommands(std::vector<RenderCommand>& destination, std::vector<RenderC
 
 RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
                                             const double currentTimeSeconds,
-                                            const FallingNotesSettings& fallingNotesSettings,
-                                            const KeyboardSettings& keyboardSettings)
+                                            const FallingNotesSceneConfig& config)
 {
-  const auto sanitizedFallingNotesSettings = sanitizeFallingNotesSettings(fallingNotesSettings);
-  const auto keyboardConfig =
-    keyboardLayoutConfigFromSettings(keyboardSettings, sanitizedFallingNotesSettings.pitchRange);
-  const KeyboardGeometry keyboardGeometry(keyboardConfig);
+  const auto sanitized = sanitizedConfig(config);
+  const KeyboardGeometry keyboardGeometry(sanitized.keyboardLayout);
 
   const FallingNotesViewport viewport{
-    .pitchRange = sanitizedFallingNotesSettings.pitchRange,
+    .pitchRange = sanitized.pitchRange,
     .currentTimeSeconds = currentTimeSeconds,
-    .lookAheadSeconds = sanitizedFallingNotesSettings.lookAheadSeconds,
-    .visiblePastSeconds = sanitizedFallingNotesSettings.visiblePastSeconds,
-    .displayHeight = kFallingNotesDisplayHeight,
+    .lookAheadSeconds = sanitized.lookAheadSeconds,
+    .visiblePastSeconds = sanitized.visiblePastSeconds,
+    .displayHeight = sanitized.displayHeight,
   };
 
   std::vector<QueriedNote> notes;
@@ -76,10 +107,10 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
     notes = query.findNotes(TimelineViewport{
       .timeRange =
         TimeRange{
-          .startSeconds = currentTimeSeconds - sanitizedFallingNotesSettings.visiblePastSeconds,
-          .endSeconds = currentTimeSeconds + sanitizedFallingNotesSettings.lookAheadSeconds,
+          .startSeconds = currentTimeSeconds - sanitized.visiblePastSeconds,
+          .endSeconds = currentTimeSeconds + sanitized.lookAheadSeconds,
         },
-      .pitchRange = sanitizedFallingNotesSettings.pitchRange,
+      .pitchRange = sanitized.pitchRange,
     });
     activeNotes = query.findActiveNotesAt(currentTimeSeconds);
   }
@@ -91,11 +122,9 @@ RenderScene FallingNotesSceneBuilder::build(const MidiTimeline& timeline,
   std::vector<RenderCommand> commands;
   appendCommands(commands,
                  FallingNotesRenderAdapter::buildCommands(fallingNotesLayout,
-                                                          fallingNotesRenderStyleFromSettings(
-                                                            sanitizedFallingNotesSettings)));
+                                                          sanitized.fallingNotesStyle));
   appendCommands(commands,
-                 KeyboardRenderAdapter::buildCommands(
-                   keyboardLayout, keyboardRenderStyleFromSettings(keyboardSettings)));
+                 KeyboardRenderAdapter::buildCommands(keyboardLayout, sanitized.keyboardStyle));
 
   return RenderScene{
     .commands = std::move(commands),

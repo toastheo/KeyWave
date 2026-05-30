@@ -3,8 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "midi/MidiTypes.hpp"
-#include "render/RenderTypes.hpp"
+#include "core/CoreTypes.hpp"
 
 enum class PianoKeyKind : std::uint8_t
 {

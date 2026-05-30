@@ -56,12 +56,3 @@ std::vector<RenderCommand> FallingNotesRenderAdapter::buildCommands(
 
   return commands;
 }
-
-FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(const FallingNotesSettings& settings)
-{
-  const auto sanitizedSettings = sanitizeFallingNotesSettings(settings);
-  return FallingNotesRenderStyle{
-    .noteColor = sanitizedSettings.noteColor,
-    .activeNoteColor = sanitizedSettings.activeNoteColor,
-  };
-}
