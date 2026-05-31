@@ -43,6 +43,26 @@ TEST_CASE("SettingsStorage saves settings and creates parent directories", "[app
   CHECK(loaded->renderer.clearColor.b == Catch::Approx(0.5f));
 }
 
+TEST_CASE("SettingsStorage saves over existing settings", "[app][settings]")
+{
+  SettingsStorage const storage;
+  const auto path = uniqueSettingsPath();
+
+  AppSettings originalSettings;
+  originalSettings.renderer.clearColor = Color{.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 1.0f};
+  REQUIRE(storage.save(originalSettings, path));
+
+  AppSettings replacementSettings;
+  replacementSettings.renderer.clearColor = Color{.r = 0.8f, .g = 0.7f, .b = 0.6f, .a = 1.0f};
+  REQUIRE(storage.save(replacementSettings, path));
+
+  const auto loaded = SettingsStorage::load(path);
+  REQUIRE(loaded.has_value());
+  CHECK(loaded->renderer.clearColor.r == Catch::Approx(0.8f));
+  CHECK(loaded->renderer.clearColor.g == Catch::Approx(0.7f));
+  CHECK(loaded->renderer.clearColor.b == Catch::Approx(0.6f));
+}
+
 TEST_CASE("SettingsStorage returns nullopt for malformed JSON", "[app][settings]")
 {
   SettingsStorage const storage;

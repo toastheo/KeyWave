@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <system_error>
 #include <utility>
 
 #include "app/AppSettingsSerializer.hpp"
@@ -132,10 +133,16 @@ bool SettingsStorage::save(const AppSettings& settings,
       }
     }
 
-    if (std::filesystem::exists(path)) {
-      std::filesystem::remove(path);
+    std::error_code renameError;
+    std::filesystem::rename(tempPath, path, renameError);
+    if (renameError) {
+      std::ostringstream message;
+      message << "Warning: could not save settings file: " << path << " (" << renameError.message()
+              << ")";
+      reportWarning(diagnostics, message.str());
+      return false;
     }
-    std::filesystem::rename(tempPath, path);
+
     return true;
   }
   catch (const std::exception& exception) {
