@@ -1,37 +1,51 @@
 #include "keyboard/KeyboardState.hpp"
 
 #include <algorithm>
+#include <utility>
+
+KeyboardState::KeyboardState(std::vector<ActiveKey> activeKeys)
+    : m_activeKeys(std::move(activeKeys))
+{
+  m_maxVelocityByPitch.reserve(m_activeKeys.size());
+
+  for (const auto& key : m_activeKeys) {
+    auto& maxVelocity = m_maxVelocityByPitch[key.pitch];
+    maxVelocity = std::max(maxVelocity, key.velocity);
+  }
+}
 
 bool KeyboardState::isActive(const int pitch) const
 {
-  return std::ranges::any_of(activeKeys,
-                             [pitch](const ActiveKey& key) { return key.pitch == pitch; });
+  return m_maxVelocityByPitch.contains(pitch);
 }
 
 int KeyboardState::velocityForPitch(const int pitch) const
 {
-  auto maxVelocity = 0;
-  for (const auto& key : activeKeys) {
-    if (key.pitch == pitch) {
-      maxVelocity = std::max(maxVelocity, key.velocity);
-    }
+  const auto velocity = m_maxVelocityByPitch.find(pitch);
+  if (velocity == m_maxVelocityByPitch.end()) {
+    return 0;
   }
 
-  return maxVelocity;
+  return velocity->second;
+}
+
+const std::vector<ActiveKey>& KeyboardState::keys() const
+{
+  return m_activeKeys;
 }
 
 bool KeyboardState::empty() const
 {
-  return activeKeys.empty();
+  return m_activeKeys.empty();
 }
 
 KeyboardState KeyboardStateBuilder::build(const std::vector<Note>& activeNotes)
 {
-  KeyboardState state;
-  state.activeKeys.reserve(activeNotes.size());
+  std::vector<ActiveKey> activeKeys;
+  activeKeys.reserve(activeNotes.size());
 
   for (const auto& note : activeNotes) {
-    state.activeKeys.push_back(ActiveKey{
+    activeKeys.push_back(ActiveKey{
       .pitch = note.pitch,
       .velocity = note.velocity,
       .channel = note.channel,
@@ -39,5 +53,5 @@ KeyboardState KeyboardStateBuilder::build(const std::vector<Note>& activeNotes)
     });
   }
 
-  return state;
+  return KeyboardState(std::move(activeKeys));
 }

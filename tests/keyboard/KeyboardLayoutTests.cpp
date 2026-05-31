@@ -39,13 +39,10 @@ TEST_CASE("KeyboardLayout marks keys active from keyboard state", "[keyboard][la
   const KeyboardGeometry geometry(KeyboardLayoutConfig{
     .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 64},
   });
-  const KeyboardState state{
-    .activeKeys =
-      {
-        ActiveKey{.pitch = 60, .velocity = 64, .channel = 0, .track = 0},
-        ActiveKey{.pitch = 61, .velocity = 100, .channel = 1, .track = 0},
-      },
-  };
+  const KeyboardState state(std::vector{
+    ActiveKey{.pitch = 60, .velocity = 64, .channel = 0, .track = 0},
+    ActiveKey{.pitch = 61, .velocity = 100, .channel = 1, .track = 0},
+  });
 
   const auto layout = KeyboardLayout::build(geometry, state);
 
