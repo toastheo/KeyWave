@@ -111,6 +111,8 @@ void renderKeyboardSettings(KeyboardSettings& settings)
   editDoubleSlider("White Key Width", settings.whiteKeyWidth, constraints.whiteKeyWidth);
   editDoubleSlider("Keyboard Height", settings.whiteKeyHeight, constraints.whiteKeyHeight);
 
+  // Clamp parent dimensions before editing dependent black-key dimensions, since their maxima
+  // are dynamic.
   settings.whiteKeyWidth =
     std::max(constraints.minimumPositiveValue,
              finiteOr(settings.whiteKeyWidth, KeyboardSettings{}.whiteKeyWidth));

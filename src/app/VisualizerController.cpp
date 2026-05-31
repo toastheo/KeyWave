@@ -79,6 +79,8 @@ void VisualizerController::setVisualizationSettingsPanelVisible(bool visible)
 void VisualizerController::handleInput(const std::span<const Key> pressedKeys,
                                        const bool imguiWantsKeyboardCapture)
 {
+  // We want to keep the settings panel toggle global so that the settings panel can be hidden
+  // even when it's in focus.
   for (const auto key : pressedKeys) {
     applyVisualizationSettingsPanelControl(key, m_visualizationSettingsPanelVisible);
 
