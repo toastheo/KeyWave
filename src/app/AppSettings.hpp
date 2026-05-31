@@ -32,7 +32,7 @@ struct FallingNotesSettings
 
   Color noteColor{.r = 0.2f, .g = 0.7f, .b = 1.0f, .a = 1.0f};
   Color activeNoteColor{.r = 0.4f, .g = 1.0f, .b = 0.5f, .a = 1.0f};
-  Color outlineColor{.r = 255.f, .g = 255.f, .b = 255.f, .a = 1.0f};
+  Color outlineColor{.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f};
   double outlineThicknessPixels = 1.0;
   bool includeOutline = true;
 };

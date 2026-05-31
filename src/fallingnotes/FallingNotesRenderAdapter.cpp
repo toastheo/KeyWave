@@ -74,24 +74,28 @@ void appendOutline(std::vector<RenderCommand>& commands,
     .to = Vec2{.x = left, .y = top},
     .color = style.outlineColor,
     .thickness = thickness,
+    .cap = LineCap::Square,
   });
   commands.emplace_back(DrawLineCommand{
     .from = Vec2{.x = right, .y = bottom},
     .to = Vec2{.x = right, .y = top},
     .color = style.outlineColor,
     .thickness = thickness,
+    .cap = LineCap::Square,
   });
   commands.emplace_back(DrawLineCommand{
     .from = Vec2{.x = left, .y = bottom},
     .to = Vec2{.x = right, .y = bottom},
     .color = style.outlineColor,
     .thickness = thickness,
+    .cap = LineCap::Square,
   });
   commands.emplace_back(DrawLineCommand{
     .from = Vec2{.x = left, .y = top},
     .to = Vec2{.x = right, .y = top},
     .color = style.outlineColor,
     .thickness = thickness,
+    .cap = LineCap::Square,
   });
 }
 

@@ -53,6 +53,17 @@ double pixelThicknessToWorld(const int thicknessPixels, const PixelAxisProjectio
          axis.worldExtent;
 }
 
+double lineCapExtensionToWorld(const LineCap cap,
+                               const int thicknessPixels,
+                               const PixelAxisProjection& axis)
+{
+  if (cap != LineCap::Square) {
+    return 0.0;
+  }
+
+  return pixelThicknessToWorld(thicknessPixels, axis) * 0.5;
+}
+
 } // namespace
 
 bool isValid(const WorldRect& rect)
@@ -99,12 +110,18 @@ Rect lineToPixelAlignedRect(const DrawLineCommand& line,
       .worldExtent = view.visibleWorldRect.width,
       .pixelExtent = framebufferSize.width,
     };
+    const PixelAxisProjection yAxis{
+      .worldOrigin = view.visibleWorldRect.y,
+      .worldExtent = view.visibleWorldRect.height,
+      .pixelExtent = framebufferSize.height,
+    };
+    const auto capExtension = lineCapExtensionToWorld(line.cap, thicknessPixels, yAxis);
 
     return Rect{
       .x = pixelAlignedWorldStart(line.from.x, xAxis, thicknessPixels),
-      .y = std::min(line.from.y, line.to.y),
+      .y = std::min(line.from.y, line.to.y) - capExtension,
       .width = pixelThicknessToWorld(thicknessPixels, xAxis),
-      .height = height,
+      .height = height + (capExtension * 2.0),
     };
   }
 
@@ -119,11 +136,17 @@ Rect lineToPixelAlignedRect(const DrawLineCommand& line,
       .worldExtent = view.visibleWorldRect.height,
       .pixelExtent = framebufferSize.height,
     };
+    const PixelAxisProjection xAxis{
+      .worldOrigin = view.visibleWorldRect.x,
+      .worldExtent = view.visibleWorldRect.width,
+      .pixelExtent = framebufferSize.width,
+    };
+    const auto capExtension = lineCapExtensionToWorld(line.cap, thicknessPixels, xAxis);
 
     return Rect{
-      .x = std::min(line.from.x, line.to.x),
+      .x = std::min(line.from.x, line.to.x) - capExtension,
       .y = pixelAlignedWorldStart(line.from.y, yAxis, thicknessPixels),
-      .width = width,
+      .width = width + (capExtension * 2.0),
       .height = pixelThicknessToWorld(thicknessPixels, yAxis),
     };
   }

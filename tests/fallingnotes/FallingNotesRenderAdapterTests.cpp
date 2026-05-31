@@ -143,6 +143,7 @@ TEST_CASE("FallingNotesRenderAdapter adds note outline line commands when enable
   CHECK(left.to.x == Catch::Approx(1.0));
   CHECK(left.to.y == Catch::Approx(6.0));
   CHECK(left.thickness == Catch::Approx(2.0));
+  CHECK(left.cap == LineCap::Square);
   checkColor(left.color, style.outlineColor);
 
   const auto& right = lineAt(commands, 2);

@@ -71,4 +71,35 @@ TEST_CASE("lineToPixelAlignedRect keeps vertical lines at least one framebuffer 
   CHECK(rect.height == Catch::Approx(1.0));
 }
 
+TEST_CASE("lineToPixelAlignedRect extends square-capped lines along their length",
+          "[render][view]")
+{
+  constexpr RendererView view{
+    .visibleWorldRect = WorldRect{.x = 0.0, .y = 0.0, .width = 100.0, .height = 50.0},
+  };
+  constexpr FramebufferSize framebufferSize{.width = 1000, .height = 500};
+
+  constexpr DrawLineCommand horizontal{
+    .from = Vec2{.x = 10.0, .y = 20.0},
+    .to = Vec2{.x = 30.0, .y = 20.0},
+    .color = Color{},
+    .thickness = 4.0,
+    .cap = LineCap::Square,
+  };
+  const auto horizontalRect = lineToPixelAlignedRect(horizontal, view, framebufferSize);
+  CHECK(horizontalRect.x == Catch::Approx(9.8));
+  CHECK(horizontalRect.width == Catch::Approx(20.4));
+
+  constexpr DrawLineCommand vertical{
+    .from = Vec2{.x = 10.0, .y = 20.0},
+    .to = Vec2{.x = 10.0, .y = 30.0},
+    .color = Color{},
+    .thickness = 4.0,
+    .cap = LineCap::Square,
+  };
+  const auto verticalRect = lineToPixelAlignedRect(vertical, view, framebufferSize);
+  CHECK(verticalRect.y == Catch::Approx(19.8));
+  CHECK(verticalRect.height == Catch::Approx(10.4));
+}
+
 } // namespace

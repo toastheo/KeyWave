@@ -28,9 +28,9 @@ TEST_CASE("AppSettings defaults preserve the current runtime configuration", "[a
   CHECK(settings.fallingNotes.pitchRange.maxPitch == 108);
   CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));
   CHECK(settings.fallingNotes.visiblePastSeconds == Catch::Approx(0.0));
-  CHECK(settings.fallingNotes.outlineColor.r == Catch::Approx(0.02f));
-  CHECK(settings.fallingNotes.outlineColor.g == Catch::Approx(0.04f));
-  CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(0.05f));
+  CHECK(settings.fallingNotes.outlineColor.r == Catch::Approx(1.0f));
+  CHECK(settings.fallingNotes.outlineColor.g == Catch::Approx(1.0f));
+  CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(1.0f));
   CHECK(settings.fallingNotes.outlineColor.a == Catch::Approx(1.0f));
   CHECK(settings.fallingNotes.outlineThicknessPixels == Catch::Approx(1.0));
   CHECK(settings.fallingNotes.includeOutline);
