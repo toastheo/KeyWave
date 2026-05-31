@@ -37,6 +37,9 @@ FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(const FallingNotesSe
   return FallingNotesRenderStyle{
     .noteColor = sanitizedSettings.noteColor,
     .activeNoteColor = sanitizedSettings.activeNoteColor,
+    .outlineColor = sanitizedSettings.outlineColor,
+    .outlineThicknessPixels = sanitizedSettings.outlineThicknessPixels,
+    .includeOutline = sanitizedSettings.includeOutline,
   };
 }
 

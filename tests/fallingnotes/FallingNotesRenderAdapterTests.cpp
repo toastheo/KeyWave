@@ -32,6 +32,13 @@ const DrawRectCommand& rectAt(const std::vector<RenderCommand>& commands, const 
   return std::get<DrawRectCommand>(commands[index]);
 }
 
+const DrawLineCommand& lineAt(const std::vector<RenderCommand>& commands, const std::size_t index)
+{
+  REQUIRE(index < commands.size());
+  REQUIRE(std::holds_alternative<DrawLineCommand>(commands[index]));
+  return std::get<DrawLineCommand>(commands[index]);
+}
+
 void checkColor(const Color& actual, const Color& expected)
 {
   CHECK(actual.r == Catch::Approx(expected.r));
@@ -56,6 +63,7 @@ TEST_CASE("FallingNotesRenderAdapter converts falling note layouts into draw rec
   constexpr FallingNotesRenderStyle style{
     .noteColor = Color{.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 0.4f},
     .activeNoteColor = Color{.r = 0.4f, .g = 0.5f, .b = 0.6f, .a = 0.7f},
+    .includeOutline = false,
   };
 
   const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
@@ -97,6 +105,7 @@ TEST_CASE("FallingNotesRenderAdapter highlights notes intersecting the keyboard 
   constexpr FallingNotesRenderStyle style{
     .noteColor = Color{.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 1.0f},
     .activeNoteColor = Color{.r = 0.4f, .g = 0.5f, .b = 0.6f, .a = 1.0f},
+    .includeOutline = false,
   };
 
   const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
@@ -104,6 +113,69 @@ TEST_CASE("FallingNotesRenderAdapter highlights notes intersecting the keyboard 
   REQUIRE(commands.size() == 2);
   checkColor(rectAt(commands, 0).color, style.noteColor);
   checkColor(rectAt(commands, 1).color, style.activeNoteColor);
+}
+
+TEST_CASE("FallingNotesRenderAdapter adds note outline line commands when enabled",
+          "[fallingnotes][render]")
+{
+  const FallingNotesLayoutResult layout{
+    .notes =
+      {
+        makeNoteLayout(1.0, 2.0, 3.0, 4.0),
+      },
+  };
+  constexpr FallingNotesRenderStyle style{
+    .noteColor = Color{.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 1.0f},
+    .activeNoteColor = Color{.r = 0.4f, .g = 0.5f, .b = 0.6f, .a = 1.0f},
+    .outlineColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 1.0f},
+    .outlineThicknessPixels = 2.0,
+    .includeOutline = true,
+  };
+
+  const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
+
+  REQUIRE(commands.size() == 5);
+  checkColor(rectAt(commands, 0).color, style.noteColor);
+
+  const auto& left = lineAt(commands, 1);
+  CHECK(left.from.x == Catch::Approx(1.0));
+  CHECK(left.from.y == Catch::Approx(2.0));
+  CHECK(left.to.x == Catch::Approx(1.0));
+  CHECK(left.to.y == Catch::Approx(6.0));
+  CHECK(left.thickness == Catch::Approx(2.0));
+  checkColor(left.color, style.outlineColor);
+
+  const auto& right = lineAt(commands, 2);
+  CHECK(right.from.x == Catch::Approx(4.0));
+  CHECK(right.to.x == Catch::Approx(4.0));
+
+  const auto& bottom = lineAt(commands, 3);
+  CHECK(bottom.from.y == Catch::Approx(2.0));
+  CHECK(bottom.to.y == Catch::Approx(2.0));
+
+  const auto& top = lineAt(commands, 4);
+  CHECK(top.from.y == Catch::Approx(6.0));
+  CHECK(top.to.y == Catch::Approx(6.0));
+}
+
+TEST_CASE("FallingNotesRenderAdapter skips note outlines when disabled or non-positive",
+          "[fallingnotes][render]")
+{
+  const FallingNotesLayoutResult layout{
+    .notes =
+      {
+        makeNoteLayout(1.0, 2.0, 3.0, 4.0),
+      },
+  };
+
+  FallingNotesRenderStyle style;
+  style.includeOutline = false;
+  style.outlineThicknessPixels = 2.0;
+  CHECK(FallingNotesRenderAdapter::buildCommands(layout, style).size() == 1);
+
+  style.includeOutline = true;
+  style.outlineThicknessPixels = 0.0;
+  CHECK(FallingNotesRenderAdapter::buildCommands(layout, style).size() == 1);
 }
 
 TEST_CASE("FallingNotesRenderAdapter skips invalid note rectangles", "[fallingnotes][render]")
@@ -117,7 +189,10 @@ TEST_CASE("FallingNotesRenderAdapter skips invalid note rectangles", "[fallingno
       },
   };
 
-  const auto commands = FallingNotesRenderAdapter::buildCommands(layout);
+  FallingNotesRenderStyle style;
+  style.includeOutline = false;
+
+  const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
 
   REQUIRE(commands.size() == 1);
   const auto& [rect, color] = rectAt(commands, 0);

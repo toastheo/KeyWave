@@ -11,6 +11,9 @@ TEST_CASE("AppSettingsSerializer serializes settings without removed color keys"
   settings.renderer.clearColor = Color{.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 0.4f};
   settings.playbackControls.seekStepSeconds = 7.5;
   settings.fallingNotes.pitchRange = PitchRange{.minPitch = 30, .maxPitch = 90};
+  settings.fallingNotes.outlineColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 0.6f};
+  settings.fallingNotes.outlineThicknessPixels = 3.0;
+  settings.fallingNotes.includeOutline = false;
   settings.keyboard.includeHitLine = false;
 
   const auto json = AppSettingsSerializer::serialize(settings);
@@ -19,6 +22,9 @@ TEST_CASE("AppSettingsSerializer serializes settings without removed color keys"
   CHECK(json.at("renderer").at("clearColor").at(0) == Catch::Approx(0.1));
   CHECK(json.at("playbackControls").at("seekStepSeconds") == Catch::Approx(7.5));
   CHECK(json.at("fallingNotes").at("pitchRange").at("minPitch") == 30);
+  CHECK(json.at("fallingNotes").at("outlineColor").at(0) == Catch::Approx(0.9));
+  CHECK(json.at("fallingNotes").at("outlineThicknessPixels") == Catch::Approx(3.0));
+  CHECK(json.at("fallingNotes").at("includeOutline") == false);
   CHECK(json.at("keyboard").at("includeHitLine") == false);
   CHECK_FALSE(json.at("fallingNotes").contains("clippedNoteColor"));
 }
@@ -70,6 +76,7 @@ TEST_CASE("AppSettingsSerializer falls back for invalid values and clamps colors
      {{"pitchRange", {{"minPitch", 120}, {"maxPitch", 20}}},
       {"lookAheadSeconds", 0.0},
       {"visiblePastSeconds", -1.0},
+      {"outlineThicknessPixels", -1.0},
       {"noteColor", {0.1, 0.2}}}},
     {"keyboard",
      {{"blackKeyWidth", 0.0},
@@ -92,11 +99,32 @@ TEST_CASE("AppSettingsSerializer falls back for invalid values and clamps colors
   CHECK(settings.fallingNotes.pitchRange.maxPitch == 108);
   CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));
   CHECK(settings.fallingNotes.visiblePastSeconds == Catch::Approx(0.0));
+  CHECK(settings.fallingNotes.outlineThicknessPixels ==
+        Catch::Approx(defaults.fallingNotes.outlineThicknessPixels));
   CHECK(settings.fallingNotes.noteColor.r == Catch::Approx(defaults.fallingNotes.noteColor.r));
   CHECK(settings.keyboard.blackKeyWidth == Catch::Approx(0.6));
   CHECK(settings.keyboard.separatorWidth == Catch::Approx(0.015));
   CHECK(settings.keyboard.hitLineHeight == Catch::Approx(defaults.keyboard.hitLineHeight));
   CHECK(settings.keyboard.whiteKeyColor.r == Catch::Approx(defaults.keyboard.whiteKeyColor.r));
+}
+
+TEST_CASE("AppSettingsSerializer deserializes falling note outline settings", "[app][settings]")
+{
+  const nlohmann::json json = {
+    {"fallingNotes",
+     {{"outlineColor", {0.6, 0.5, 0.4, 0.3}},
+      {"outlineThicknessPixels", 4.0},
+      {"includeOutline", false}}},
+  };
+
+  const auto settings = AppSettingsSerializer::deserialize(json);
+
+  CHECK(settings.fallingNotes.outlineColor.r == Catch::Approx(0.6f));
+  CHECK(settings.fallingNotes.outlineColor.g == Catch::Approx(0.5f));
+  CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(0.4f));
+  CHECK(settings.fallingNotes.outlineColor.a == Catch::Approx(0.3f));
+  CHECK(settings.fallingNotes.outlineThicknessPixels == Catch::Approx(4.0));
+  CHECK_FALSE(settings.fallingNotes.includeOutline);
 }
 
 TEST_CASE("AppSettingsSerializer clamps pitch values through shared constraints", "[app][settings]")

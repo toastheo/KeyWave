@@ -23,6 +23,9 @@ TEST_CASE("Visualization settings adapters sanitize app settings into piano-roll
     .visiblePastSeconds = 1.0,
     .noteColor = Color{.r = 0.7f, .g = 0.2f, .b = 0.1f, .a = 1.0f},
     .activeNoteColor = Color{.r = 0.1f, .g = 0.9f, .b = 0.2f, .a = 1.0f},
+    .outlineColor = Color{.r = 0.8f, .g = 0.7f, .b = 0.6f, .a = 1.0f},
+    .outlineThicknessPixels = 3.0,
+    .includeOutline = true,
   };
   constexpr KeyboardSettings keyboardSettings{
     .whiteKeyWidth = 2.0,
@@ -49,6 +52,10 @@ TEST_CASE("Visualization settings adapters sanitize app settings into piano-roll
   CHECK(config.keyboardLayout.whiteKeyGap == Catch::Approx(0.2));
   checkColor(config.fallingNotesStyle.noteColor, fallingNotesSettings.noteColor);
   checkColor(config.fallingNotesStyle.activeNoteColor, fallingNotesSettings.activeNoteColor);
+  checkColor(config.fallingNotesStyle.outlineColor, fallingNotesSettings.outlineColor);
+  CHECK(config.fallingNotesStyle.outlineThicknessPixels ==
+        Catch::Approx(fallingNotesSettings.outlineThicknessPixels));
+  CHECK(config.fallingNotesStyle.includeOutline == fallingNotesSettings.includeOutline);
   CHECK(config.keyboardStyle.hitLineHeight == Catch::Approx(0.05));
   checkColor(config.keyboardStyle.hitLineColor, keyboardSettings.hitLineColor);
 }
@@ -58,6 +65,7 @@ TEST_CASE("Visualization settings adapters fall back from invalid settings", "[a
   FallingNotesSettings fallingNotesSettings;
   fallingNotesSettings.pitchRange = PitchRange{.minPitch = 108, .maxPitch = 21};
   fallingNotesSettings.lookAheadSeconds = std::numeric_limits<double>::quiet_NaN();
+  fallingNotesSettings.outlineThicknessPixels = std::numeric_limits<double>::infinity();
 
   KeyboardSettings keyboardSettings;
   keyboardSettings.whiteKeyWidth = -1.0;
@@ -67,6 +75,8 @@ TEST_CASE("Visualization settings adapters fall back from invalid settings", "[a
   CHECK(config.pitchRange.minPitch == FallingNotesSettings{}.pitchRange.minPitch);
   CHECK(config.pitchRange.maxPitch == FallingNotesSettings{}.pitchRange.maxPitch);
   CHECK(config.lookAheadSeconds == Catch::Approx(FallingNotesSettings{}.lookAheadSeconds));
+  CHECK(config.fallingNotesStyle.outlineThicknessPixels ==
+        Catch::Approx(FallingNotesSettings{}.outlineThicknessPixels));
   CHECK(config.keyboardLayout.whiteKeyWidth == Catch::Approx(KeyboardSettings{}.whiteKeyWidth));
 }
 

@@ -28,6 +28,12 @@ TEST_CASE("AppSettings defaults preserve the current runtime configuration", "[a
   CHECK(settings.fallingNotes.pitchRange.maxPitch == 108);
   CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));
   CHECK(settings.fallingNotes.visiblePastSeconds == Catch::Approx(0.0));
+  CHECK(settings.fallingNotes.outlineColor.r == Catch::Approx(0.02f));
+  CHECK(settings.fallingNotes.outlineColor.g == Catch::Approx(0.04f));
+  CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(0.05f));
+  CHECK(settings.fallingNotes.outlineColor.a == Catch::Approx(1.0f));
+  CHECK(settings.fallingNotes.outlineThicknessPixels == Catch::Approx(1.0));
+  CHECK(settings.fallingNotes.includeOutline);
 
   CHECK(settings.keyboard.whiteKeyWidth == Catch::Approx(1.0));
   CHECK(settings.keyboard.whiteKeyHeight == Catch::Approx(2.5));
@@ -45,6 +51,8 @@ TEST_CASE("AppSettings constraints expose editable setting ranges by group", "[a
   CHECK(constraints.fallingNotes.lookAheadSeconds.maximum == Catch::Approx(30.0));
   CHECK(constraints.fallingNotes.visiblePastSeconds.minimum == Catch::Approx(0.0));
   CHECK(constraints.fallingNotes.visiblePastSeconds.maximum == Catch::Approx(5.0));
+  CHECK(constraints.fallingNotes.outlineThicknessPixels.minimum == Catch::Approx(0.0));
+  CHECK(constraints.fallingNotes.outlineThicknessPixels.maximum == Catch::Approx(8.0));
 
   CHECK(constraints.keyboard.whiteKeyWidth.minimum == Catch::Approx(0.1));
   CHECK(constraints.keyboard.whiteKeyWidth.maximum == Catch::Approx(3.0));
@@ -70,6 +78,7 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   settings.fallingNotes.pitchRange = PitchRange{.minPitch = 108, .maxPitch = 21};
   settings.fallingNotes.lookAheadSeconds = -10.0;
   settings.fallingNotes.visiblePastSeconds = -0.5;
+  settings.fallingNotes.outlineThicknessPixels = -1.0;
   settings.keyboard.whiteKeyWidth = 0.0;
   settings.keyboard.whiteKeyHeight = -1.0;
   settings.keyboard.blackKeyWidth = 0.0;
@@ -87,6 +96,7 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   CHECK(sanitized.fallingNotes.pitchRange.maxPitch == 108);
   CHECK(sanitized.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));
   CHECK(sanitized.fallingNotes.visiblePastSeconds == Catch::Approx(0.0));
+  CHECK(sanitized.fallingNotes.outlineThicknessPixels == Catch::Approx(1.0));
   CHECK(sanitized.keyboard.whiteKeyWidth == Catch::Approx(1.0));
   CHECK(sanitized.keyboard.whiteKeyHeight == Catch::Approx(2.5));
   CHECK(sanitized.keyboard.blackKeyWidth == Catch::Approx(0.6));

@@ -181,6 +181,15 @@ void deserializeFallingNotesSettings(const nlohmann::json& json, FallingNotesSet
   if (const auto iter = json.find("activeNoteColor"); iter != json.end()) {
     settings.activeNoteColor = colorFromJson(*iter, settings.activeNoteColor);
   }
+  if (const auto iter = json.find("outlineColor"); iter != json.end()) {
+    settings.outlineColor = colorFromJson(*iter, settings.outlineColor);
+  }
+  settings.outlineThicknessPixels =
+    numberInRangeOrFallback(json,
+                            "outlineThicknessPixels",
+                            settings.outlineThicknessPixels,
+                            constraints.outlineThicknessPixels);
+  settings.includeOutline = boolOrFallback(json, "includeOutline", settings.includeOutline);
 }
 
 void deserializeKeyboardSettings(const nlohmann::json& json, KeyboardSettings& settings)
@@ -245,7 +254,10 @@ nlohmann::json AppSettingsSerializer::serialize(const AppSettings& settings)
       {"lookAheadSeconds", settings.fallingNotes.lookAheadSeconds},
       {"visiblePastSeconds", settings.fallingNotes.visiblePastSeconds},
       {"noteColor", colorToJson(settings.fallingNotes.noteColor)},
-      {"activeNoteColor", colorToJson(settings.fallingNotes.activeNoteColor)}}},
+      {"activeNoteColor", colorToJson(settings.fallingNotes.activeNoteColor)},
+      {"outlineColor", colorToJson(settings.fallingNotes.outlineColor)},
+      {"outlineThicknessPixels", settings.fallingNotes.outlineThicknessPixels},
+      {"includeOutline", settings.fallingNotes.includeOutline}}},
     {"keyboard",
      {{"whiteKeyWidth", settings.keyboard.whiteKeyWidth},
       {"whiteKeyHeight", settings.keyboard.whiteKeyHeight},

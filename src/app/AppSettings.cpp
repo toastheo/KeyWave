@@ -91,6 +91,9 @@ FallingNotesSettings sanitizeFallingNotesSettings(FallingNotesSettings settings)
   if (!isFiniteInRange(settings.visiblePastSeconds, constraints.visiblePastSeconds)) {
     settings.visiblePastSeconds = defaults.visiblePastSeconds;
   }
+  if (!isFiniteInRange(settings.outlineThicknessPixels, constraints.outlineThicknessPixels)) {
+    settings.outlineThicknessPixels = defaults.outlineThicknessPixels;
+  }
 
   return settings;
 }

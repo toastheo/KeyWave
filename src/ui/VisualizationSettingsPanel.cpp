@@ -48,6 +48,20 @@ bool editSeparatorWidth(double& value, const DoubleSettingRange range)
   return changed;
 }
 
+bool editOutlineThickness(double& value, const DoubleSettingRange range)
+{
+  constexpr double kDragSpeed = 0.05;
+
+  auto editableValue = static_cast<float>(clampRange(value, range.minimum, range.maximum));
+  const auto changed = ImGui::DragFloat("Outline Thickness",
+                                        &editableValue,
+                                        kDragSpeed,
+                                        static_cast<float>(range.minimum),
+                                        static_cast<float>(range.maximum));
+  value = clampRange(editableValue, range.minimum, range.maximum);
+  return changed;
+}
+
 bool editColor(const char* label, Color& color)
 {
   std::array values{color.r, color.g, color.b, color.a};
@@ -90,6 +104,11 @@ void renderFallingNotesSettings(FallingNotesSettings& settings)
   ImGui::SeparatorText("Colors");
   editColor("Note", settings.noteColor);
   editColor("Active Note", settings.activeNoteColor);
+
+  ImGui::SeparatorText("Outline");
+  ImGui::Checkbox("Show Outline", &settings.includeOutline);
+  editOutlineThickness(settings.outlineThicknessPixels, constraints.outlineThicknessPixels);
+  editColor("Outline Color", settings.outlineColor);
 }
 
 void renderKeyboardSettings(KeyboardSettings& settings)
