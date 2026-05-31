@@ -36,28 +36,22 @@ bool editDoubleSlider(const char* label, double& value, const DoubleSettingRange
 
 bool editSeparatorWidth(double& value, const DoubleSettingRange range)
 {
-  constexpr double kDragSpeed = 0.05;
-
   auto editableValue = static_cast<float>(clampRange(value, range.minimum, range.maximum));
-  const auto changed = ImGui::DragFloat("Separator Width",
-                                        &editableValue,
-                                        kDragSpeed,
-                                        static_cast<float>(range.minimum),
-                                        static_cast<float>(range.maximum));
+  const auto changed = ImGui::SliderFloat("Separator Width",
+                                          &editableValue,
+                                          static_cast<float>(range.minimum),
+                                          static_cast<float>(range.maximum));
   value = clampRange(editableValue, range.minimum, range.maximum);
   return changed;
 }
 
 bool editOutlineThickness(double& value, const DoubleSettingRange range)
 {
-  constexpr double kDragSpeed = 0.05;
-
   auto editableValue = static_cast<float>(clampRange(value, range.minimum, range.maximum));
-  const auto changed = ImGui::DragFloat("Outline Thickness",
-                                        &editableValue,
-                                        kDragSpeed,
-                                        static_cast<float>(range.minimum),
-                                        static_cast<float>(range.maximum));
+  const auto changed = ImGui::SliderFloat("Outline Thickness",
+                                          &editableValue,
+                                          static_cast<float>(range.minimum),
+                                          static_cast<float>(range.maximum));
   value = clampRange(editableValue, range.minimum, range.maximum);
   return changed;
 }
