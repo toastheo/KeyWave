@@ -22,6 +22,8 @@ struct FallingNotesSettingsConstraints
   IntSettingRange pitchRange{.minimum = 0, .maximum = 127};
   DoubleSettingRange lookAheadSeconds{.minimum = 1.0, .maximum = 30.0};
   DoubleSettingRange visiblePastSeconds{.minimum = 0.0, .maximum = 5.0};
+  DoubleSettingRange noteHorizontalInset{.minimum = 0.0, .maximum = 0.5};
+  DoubleSettingRange noteWidthScale{.minimum = 0.05, .maximum = 1.0};
   DoubleSettingRange outlineThicknessPixels{.minimum = 0.0, .maximum = 8.0};
 };
 

@@ -5,6 +5,13 @@
 #include "core/CoreTypes.hpp"
 #include "midi/MidiTypes.hpp"
 
+struct FallingNotesLayoutStyle
+{
+  double noteHorizontalInset = 0.0;
+  double blackNoteWidthScale = 1.0;
+  double whiteNoteWidthScale = 1.0;
+};
+
 struct FallingNotesViewport
 {
   PitchRange pitchRange;

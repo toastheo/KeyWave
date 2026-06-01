@@ -119,7 +119,8 @@ RenderScene PianoRollSceneBuilder::build(const MidiTimeline& timeline,
     activeNotes = query.findActiveNotesAt(currentTimeSeconds);
   }
 
-  const auto fallingNotesLayout = FallingNotesLayout::build(notes, viewport, keyboardGeometry);
+  const auto fallingNotesLayout =
+    FallingNotesLayout::build(notes, viewport, keyboardGeometry, sanitized.fallingNotesLayout);
   const auto keyboardState = KeyboardStateBuilder::build(activeNotes);
   const auto keyboardLayout = KeyboardLayout::build(keyboardGeometry, keyboardState);
 

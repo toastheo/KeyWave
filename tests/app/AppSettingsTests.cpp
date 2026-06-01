@@ -28,6 +28,9 @@ TEST_CASE("AppSettings defaults preserve the current runtime configuration", "[a
   CHECK(settings.fallingNotes.pitchRange.maxPitch == 108);
   CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));
   CHECK(settings.fallingNotes.visiblePastSeconds == Catch::Approx(0.0));
+  CHECK(settings.fallingNotes.noteHorizontalInset == Catch::Approx(0.04));
+  CHECK(settings.fallingNotes.blackNoteWidthScale == Catch::Approx(1.0));
+  CHECK(settings.fallingNotes.whiteNoteWidthScale == Catch::Approx(0.92));
   CHECK(settings.fallingNotes.outlineColor.r == Catch::Approx(1.0f));
   CHECK(settings.fallingNotes.outlineColor.g == Catch::Approx(1.0f));
   CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(1.0f));
@@ -51,6 +54,10 @@ TEST_CASE("AppSettings constraints expose editable setting ranges by group", "[a
   CHECK(constraints.fallingNotes.lookAheadSeconds.maximum == Catch::Approx(30.0));
   CHECK(constraints.fallingNotes.visiblePastSeconds.minimum == Catch::Approx(0.0));
   CHECK(constraints.fallingNotes.visiblePastSeconds.maximum == Catch::Approx(5.0));
+  CHECK(constraints.fallingNotes.noteHorizontalInset.minimum == Catch::Approx(0.0));
+  CHECK(constraints.fallingNotes.noteHorizontalInset.maximum == Catch::Approx(0.5));
+  CHECK(constraints.fallingNotes.noteWidthScale.minimum == Catch::Approx(0.05));
+  CHECK(constraints.fallingNotes.noteWidthScale.maximum == Catch::Approx(1.0));
   CHECK(constraints.fallingNotes.outlineThicknessPixels.minimum == Catch::Approx(0.0));
   CHECK(constraints.fallingNotes.outlineThicknessPixels.maximum == Catch::Approx(8.0));
 
@@ -78,6 +85,9 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   settings.fallingNotes.pitchRange = PitchRange{.minPitch = 108, .maxPitch = 21};
   settings.fallingNotes.lookAheadSeconds = -10.0;
   settings.fallingNotes.visiblePastSeconds = -0.5;
+  settings.fallingNotes.noteHorizontalInset = -0.1;
+  settings.fallingNotes.blackNoteWidthScale = 0.0;
+  settings.fallingNotes.whiteNoteWidthScale = 2.0;
   settings.fallingNotes.outlineThicknessPixels = -1.0;
   settings.keyboard.whiteKeyWidth = 0.0;
   settings.keyboard.whiteKeyHeight = -1.0;
@@ -96,6 +106,9 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   CHECK(sanitized.fallingNotes.pitchRange.maxPitch == 108);
   CHECK(sanitized.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));
   CHECK(sanitized.fallingNotes.visiblePastSeconds == Catch::Approx(0.0));
+  CHECK(sanitized.fallingNotes.noteHorizontalInset == Catch::Approx(0.04));
+  CHECK(sanitized.fallingNotes.blackNoteWidthScale == Catch::Approx(1.0));
+  CHECK(sanitized.fallingNotes.whiteNoteWidthScale == Catch::Approx(0.92));
   CHECK(sanitized.fallingNotes.outlineThicknessPixels == Catch::Approx(1.0));
   CHECK(sanitized.keyboard.whiteKeyWidth == Catch::Approx(1.0));
   CHECK(sanitized.keyboard.whiteKeyHeight == Catch::Approx(2.5));

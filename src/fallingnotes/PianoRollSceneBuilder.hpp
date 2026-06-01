@@ -14,6 +14,7 @@ struct PianoRollSceneConfig
   double visiblePastSeconds = 0.0;
   double displayHeight = 10.0;
   KeyboardLayoutConfig keyboardLayout;
+  FallingNotesLayoutStyle fallingNotesLayout;
   FallingNotesRenderStyle fallingNotesStyle;
   KeyboardRenderStyle keyboardStyle;
 };

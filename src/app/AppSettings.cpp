@@ -1,9 +1,9 @@
 #include "app/AppSettings.hpp"
 
-#include "app/AppSettingsConstraints.hpp"
-
 #include <algorithm>
 #include <cmath>
+
+#include "app/AppSettingsConstraints.hpp"
 
 namespace {
 
@@ -91,6 +91,15 @@ FallingNotesSettings sanitizeFallingNotesSettings(FallingNotesSettings settings)
   if (!isFiniteInRange(settings.visiblePastSeconds, constraints.visiblePastSeconds)) {
     settings.visiblePastSeconds = defaults.visiblePastSeconds;
   }
+  if (!isFiniteInRange(settings.noteHorizontalInset, constraints.noteHorizontalInset)) {
+    settings.noteHorizontalInset = defaults.noteHorizontalInset;
+  }
+  if (!isFiniteInRange(settings.blackNoteWidthScale, constraints.noteWidthScale)) {
+    settings.blackNoteWidthScale = defaults.blackNoteWidthScale;
+  }
+  if (!isFiniteInRange(settings.whiteNoteWidthScale, constraints.noteWidthScale)) {
+    settings.whiteNoteWidthScale = defaults.whiteNoteWidthScale;
+  }
   if (!isFiniteInRange(settings.outlineThicknessPixels, constraints.outlineThicknessPixels)) {
     settings.outlineThicknessPixels = defaults.outlineThicknessPixels;
   }
@@ -112,18 +121,18 @@ KeyboardSettings sanitizeKeyboardSettings(KeyboardSettings settings)
   if (!std::isfinite(settings.blackKeyWidth) ||
       settings.blackKeyWidth < constraints.blackKeyWidth.minimum ||
       settings.blackKeyWidth > settings.whiteKeyWidth) {
-    settings.blackKeyWidth = defaultWithinRange(
-      defaults.blackKeyWidth,
-      DoubleSettingRange{.minimum = constraints.blackKeyWidth.minimum,
-                         .maximum = settings.whiteKeyWidth});
+    settings.blackKeyWidth =
+      defaultWithinRange(defaults.blackKeyWidth,
+                         DoubleSettingRange{.minimum = constraints.blackKeyWidth.minimum,
+                                            .maximum = settings.whiteKeyWidth});
   }
   if (!std::isfinite(settings.blackKeyHeight) ||
       settings.blackKeyHeight < constraints.blackKeyHeight.minimum ||
       settings.blackKeyHeight > settings.whiteKeyHeight) {
-    settings.blackKeyHeight = defaultWithinRange(
-      defaults.blackKeyHeight,
-      DoubleSettingRange{.minimum = constraints.blackKeyHeight.minimum,
-                         .maximum = settings.whiteKeyHeight});
+    settings.blackKeyHeight =
+      defaultWithinRange(defaults.blackKeyHeight,
+                         DoubleSettingRange{.minimum = constraints.blackKeyHeight.minimum,
+                                            .maximum = settings.whiteKeyHeight});
   }
   if (!isNonNegativeFinite(settings.whiteKeyGap)) {
     settings.whiteKeyGap = defaults.whiteKeyGap;

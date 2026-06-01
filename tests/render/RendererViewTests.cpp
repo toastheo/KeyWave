@@ -71,8 +71,7 @@ TEST_CASE("lineToPixelAlignedRect keeps vertical lines at least one framebuffer 
   CHECK(rect.height == Catch::Approx(1.0));
 }
 
-TEST_CASE("lineToPixelAlignedRect extends square-capped lines along their length",
-          "[render][view]")
+TEST_CASE("lineToPixelAlignedRect extends square-capped lines along their length", "[render][view]")
 {
   constexpr RendererView view{
     .visibleWorldRect = WorldRect{.x = 0.0, .y = 0.0, .width = 100.0, .height = 50.0},

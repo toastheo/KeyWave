@@ -29,6 +29,9 @@ struct FallingNotesSettings
   PitchRange pitchRange{.minPitch = 21, .maxPitch = 108};
   double lookAheadSeconds = 10.0;
   double visiblePastSeconds = 0.0;
+  double noteHorizontalInset = 0.04;
+  double blackNoteWidthScale = 1.0;
+  double whiteNoteWidthScale = 0.92;
 
   Color noteColor{.r = 0.2f, .g = 0.7f, .b = 1.0f, .a = 1.0f};
   Color activeNoteColor{.r = 0.4f, .g = 1.0f, .b = 0.5f, .a = 1.0f};

@@ -146,6 +146,12 @@ TEST_CASE("PianoRollSceneBuilder uses falling note and keyboard settings", "[fal
         .blackKeyHeight = 0.75,
         .whiteKeyGap = 0.2,
       },
+    .fallingNotesLayout =
+      FallingNotesLayoutStyle{
+        .noteHorizontalInset = 0.1,
+        .blackNoteWidthScale = 1.0,
+        .whiteNoteWidthScale = 0.5,
+      },
     .fallingNotesStyle =
       FallingNotesRenderStyle{
         .noteColor = Color{.r = 0.7f, .g = 0.2f, .b = 0.1f, .a = 1.0f},
@@ -173,8 +179,8 @@ TEST_CASE("PianoRollSceneBuilder uses falling note and keyboard settings", "[fal
 
   REQUIRE_FALSE(rects.empty());
   checkColor(rects.front().color, config.fallingNotesStyle.activeNoteColor);
-  CHECK(rects.front().rect.x == Catch::Approx(0.1));
-  CHECK(rects.front().rect.width == Catch::Approx(1.8));
+  CHECK(rects.front().rect.x == Catch::Approx(0.6));
+  CHECK(rects.front().rect.width == Catch::Approx(0.8));
   CHECK(rects.back().rect.height == Catch::Approx(config.keyboardStyle.hitLineHeight));
   checkColor(rects.back().color, config.keyboardStyle.hitLineColor);
 }

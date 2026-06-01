@@ -21,6 +21,9 @@ TEST_CASE("Visualization settings adapters sanitize app settings into piano-roll
     .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 64},
     .lookAheadSeconds = 4.0,
     .visiblePastSeconds = 1.0,
+    .noteHorizontalInset = 0.08,
+    .blackNoteWidthScale = 0.75,
+    .whiteNoteWidthScale = 0.85,
     .noteColor = Color{.r = 0.7f, .g = 0.2f, .b = 0.1f, .a = 1.0f},
     .activeNoteColor = Color{.r = 0.1f, .g = 0.9f, .b = 0.2f, .a = 1.0f},
     .outlineColor = Color{.r = 0.8f, .g = 0.7f, .b = 0.6f, .a = 1.0f},
@@ -43,6 +46,9 @@ TEST_CASE("Visualization settings adapters sanitize app settings into piano-roll
   CHECK(config.pitchRange.maxPitch == 64);
   CHECK(config.lookAheadSeconds == Catch::Approx(4.0));
   CHECK(config.visiblePastSeconds == Catch::Approx(1.0));
+  CHECK(config.fallingNotesLayout.noteHorizontalInset == Catch::Approx(0.08));
+  CHECK(config.fallingNotesLayout.blackNoteWidthScale == Catch::Approx(0.75));
+  CHECK(config.fallingNotesLayout.whiteNoteWidthScale == Catch::Approx(0.85));
   CHECK(config.keyboardLayout.pitchRange.minPitch == 60);
   CHECK(config.keyboardLayout.pitchRange.maxPitch == 64);
   CHECK(config.keyboardLayout.whiteKeyWidth == Catch::Approx(2.0));
@@ -65,6 +71,9 @@ TEST_CASE("Visualization settings adapters fall back from invalid settings", "[a
   FallingNotesSettings fallingNotesSettings;
   fallingNotesSettings.pitchRange = PitchRange{.minPitch = 108, .maxPitch = 21};
   fallingNotesSettings.lookAheadSeconds = std::numeric_limits<double>::quiet_NaN();
+  fallingNotesSettings.noteHorizontalInset = std::numeric_limits<double>::quiet_NaN();
+  fallingNotesSettings.blackNoteWidthScale = 0.0;
+  fallingNotesSettings.whiteNoteWidthScale = std::numeric_limits<double>::infinity();
   fallingNotesSettings.outlineThicknessPixels = std::numeric_limits<double>::infinity();
 
   KeyboardSettings keyboardSettings;
@@ -75,6 +84,12 @@ TEST_CASE("Visualization settings adapters fall back from invalid settings", "[a
   CHECK(config.pitchRange.minPitch == FallingNotesSettings{}.pitchRange.minPitch);
   CHECK(config.pitchRange.maxPitch == FallingNotesSettings{}.pitchRange.maxPitch);
   CHECK(config.lookAheadSeconds == Catch::Approx(FallingNotesSettings{}.lookAheadSeconds));
+  CHECK(config.fallingNotesLayout.noteHorizontalInset ==
+        Catch::Approx(FallingNotesSettings{}.noteHorizontalInset));
+  CHECK(config.fallingNotesLayout.blackNoteWidthScale ==
+        Catch::Approx(FallingNotesSettings{}.blackNoteWidthScale));
+  CHECK(config.fallingNotesLayout.whiteNoteWidthScale ==
+        Catch::Approx(FallingNotesSettings{}.whiteNoteWidthScale));
   CHECK(config.fallingNotesStyle.outlineThicknessPixels ==
         Catch::Approx(FallingNotesSettings{}.outlineThicknessPixels));
   CHECK(config.keyboardLayout.whiteKeyWidth == Catch::Approx(KeyboardSettings{}.whiteKeyWidth));

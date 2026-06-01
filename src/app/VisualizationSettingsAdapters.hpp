@@ -7,6 +7,8 @@
 [[nodiscard]] KeyboardLayoutConfig keyboardLayoutConfigFromSettings(
   const KeyboardSettings& settings, const PitchRange& pitchRange);
 [[nodiscard]] KeyboardRenderStyle keyboardRenderStyleFromSettings(const KeyboardSettings& settings);
+[[nodiscard]] FallingNotesLayoutStyle fallingNotesLayoutStyleFromSettings(
+  const FallingNotesSettings& settings);
 [[nodiscard]] FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(
   const FallingNotesSettings& settings);
 [[nodiscard]] PianoRollSceneConfig pianoRollSceneConfigFromSettings(

@@ -1,9 +1,9 @@
 #include "app/AppSettingsSerializer.hpp"
 
-#include "app/AppSettingsConstraints.hpp"
-
 #include <algorithm>
 #include <cmath>
+
+#include "app/AppSettingsConstraints.hpp"
 
 namespace {
 
@@ -165,16 +165,16 @@ void deserializeFallingNotesSettings(const nlohmann::json& json, FallingNotesSet
     settings.pitchRange = pitchRangeFromJson(*iter, settings.pitchRange);
   }
   const auto constraints = appSettingsConstraints().fallingNotes;
-  settings.lookAheadSeconds =
-    numberInRangeOrFallback(json,
-                            "lookAheadSeconds",
-                            settings.lookAheadSeconds,
-                            constraints.lookAheadSeconds);
-  settings.visiblePastSeconds =
-    numberInRangeOrFallback(json,
-                            "visiblePastSeconds",
-                            settings.visiblePastSeconds,
-                            constraints.visiblePastSeconds);
+  settings.lookAheadSeconds = numberInRangeOrFallback(
+    json, "lookAheadSeconds", settings.lookAheadSeconds, constraints.lookAheadSeconds);
+  settings.visiblePastSeconds = numberInRangeOrFallback(
+    json, "visiblePastSeconds", settings.visiblePastSeconds, constraints.visiblePastSeconds);
+  settings.noteHorizontalInset = numberInRangeOrFallback(
+    json, "noteHorizontalInset", settings.noteHorizontalInset, constraints.noteHorizontalInset);
+  settings.blackNoteWidthScale = numberInRangeOrFallback(
+    json, "blackNoteWidthScale", settings.blackNoteWidthScale, constraints.noteWidthScale);
+  settings.whiteNoteWidthScale = numberInRangeOrFallback(
+    json, "whiteNoteWidthScale", settings.whiteNoteWidthScale, constraints.noteWidthScale);
   if (const auto iter = json.find("noteColor"); iter != json.end()) {
     settings.noteColor = colorFromJson(*iter, settings.noteColor);
   }
@@ -184,11 +184,10 @@ void deserializeFallingNotesSettings(const nlohmann::json& json, FallingNotesSet
   if (const auto iter = json.find("outlineColor"); iter != json.end()) {
     settings.outlineColor = colorFromJson(*iter, settings.outlineColor);
   }
-  settings.outlineThicknessPixels =
-    numberInRangeOrFallback(json,
-                            "outlineThicknessPixels",
-                            settings.outlineThicknessPixels,
-                            constraints.outlineThicknessPixels);
+  settings.outlineThicknessPixels = numberInRangeOrFallback(json,
+                                                            "outlineThicknessPixels",
+                                                            settings.outlineThicknessPixels,
+                                                            constraints.outlineThicknessPixels);
   settings.includeOutline = boolOrFallback(json, "includeOutline", settings.includeOutline);
 }
 
@@ -199,14 +198,12 @@ void deserializeKeyboardSettings(const nlohmann::json& json, KeyboardSettings& s
   }
 
   const auto constraints = appSettingsConstraints().keyboard;
-  settings.whiteKeyWidth =
-    numberInRangeOrFallback(json, "whiteKeyWidth", settings.whiteKeyWidth, constraints.whiteKeyWidth);
-  settings.whiteKeyHeight =
-    numberInRangeOrFallback(json, "whiteKeyHeight", settings.whiteKeyHeight, constraints.whiteKeyHeight);
-  settings.blackKeyWidth =
-    numberOrFallback(json, "blackKeyWidth", settings.blackKeyWidth, true);
-  settings.blackKeyHeight =
-    numberOrFallback(json, "blackKeyHeight", settings.blackKeyHeight, true);
+  settings.whiteKeyWidth = numberInRangeOrFallback(
+    json, "whiteKeyWidth", settings.whiteKeyWidth, constraints.whiteKeyWidth);
+  settings.whiteKeyHeight = numberInRangeOrFallback(
+    json, "whiteKeyHeight", settings.whiteKeyHeight, constraints.whiteKeyHeight);
+  settings.blackKeyWidth = numberOrFallback(json, "blackKeyWidth", settings.blackKeyWidth, true);
+  settings.blackKeyHeight = numberOrFallback(json, "blackKeyHeight", settings.blackKeyHeight, true);
   settings.whiteKeyGap = numberOrFallback(json, "whiteKeyGap", settings.whiteKeyGap, false);
 
   if (const auto iter = json.find("whiteKeyColor"); iter != json.end()) {
@@ -228,10 +225,10 @@ void deserializeKeyboardSettings(const nlohmann::json& json, KeyboardSettings& s
     settings.hitLineColor = colorFromJson(*iter, settings.hitLineColor);
   }
 
-  settings.separatorWidth =
-    numberInRangeOrFallback(json, "separatorWidth", settings.separatorWidth, constraints.separatorWidth);
-  settings.hitLineHeight =
-    numberInRangeOrFallback(json, "hitLineHeight", settings.hitLineHeight, constraints.hitLineHeight);
+  settings.separatorWidth = numberInRangeOrFallback(
+    json, "separatorWidth", settings.separatorWidth, constraints.separatorWidth);
+  settings.hitLineHeight = numberInRangeOrFallback(
+    json, "hitLineHeight", settings.hitLineHeight, constraints.hitLineHeight);
   settings.includeSeparators =
     boolOrFallback(json, "includeSeparators", settings.includeSeparators);
   settings.includeHitLine = boolOrFallback(json, "includeHitLine", settings.includeHitLine);
@@ -253,6 +250,9 @@ nlohmann::json AppSettingsSerializer::serialize(const AppSettings& settings)
      {{"pitchRange", pitchRangeToJson(settings.fallingNotes.pitchRange)},
       {"lookAheadSeconds", settings.fallingNotes.lookAheadSeconds},
       {"visiblePastSeconds", settings.fallingNotes.visiblePastSeconds},
+      {"noteHorizontalInset", settings.fallingNotes.noteHorizontalInset},
+      {"blackNoteWidthScale", settings.fallingNotes.blackNoteWidthScale},
+      {"whiteNoteWidthScale", settings.fallingNotes.whiteNoteWidthScale},
       {"noteColor", colorToJson(settings.fallingNotes.noteColor)},
       {"activeNoteColor", colorToJson(settings.fallingNotes.activeNoteColor)},
       {"outlineColor", colorToJson(settings.fallingNotes.outlineColor)},

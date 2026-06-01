@@ -85,7 +85,7 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
       std::min(m_config.whiteKeyGap, std::max(0.0, m_config.whiteKeyWidth - kMinimumPositiveWidth));
     const Rect noteRect{
       .x = x + noteGap * 0.5,
-      .y = 0.0, // (come from time layout later)
+      .y = 0.0,      // (come from time layout later)
       .width = std::max(kMinimumPositiveWidth, m_config.whiteKeyWidth - noteGap),
       .height = 0.0, // (come from time layout later)
     };

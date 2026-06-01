@@ -11,5 +11,6 @@ class FallingNotesLayout
 public:
   [[nodiscard]] static FallingNotesLayoutResult build(const std::vector<QueriedNote>& queriedNotes,
                                                       const FallingNotesViewport& viewport,
-                                                      const KeyboardGeometry& geometry);
+                                                      const KeyboardGeometry& geometry,
+                                                      const FallingNotesLayoutStyle& style = {});
 };

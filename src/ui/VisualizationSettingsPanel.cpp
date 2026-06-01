@@ -1,12 +1,11 @@
 #include "ui/VisualizationSettingsPanel.hpp"
 
-#include "app/AppSettingsConstraints.hpp"
-
-#include <imgui.h>
-
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <imgui.h>
+
+#include "app/AppSettingsConstraints.hpp"
 
 namespace {
 
@@ -23,8 +22,8 @@ double clampRange(const double value, const double minimum, const double maximum
 bool editDoubleSlider(const char* label, double& value, const double minimum, const double maximum)
 {
   auto editableValue = static_cast<float>(clampRange(value, minimum, maximum));
-  const auto changed =
-    ImGui::SliderFloat(label, &editableValue, static_cast<float>(minimum), static_cast<float>(maximum));
+  const auto changed = ImGui::SliderFloat(
+    label, &editableValue, static_cast<float>(minimum), static_cast<float>(maximum));
   value = clampRange(editableValue, minimum, maximum);
   return changed;
 }
@@ -78,8 +77,8 @@ void renderPlaybackSettings(AppSettings const& settings, PlaybackTransport& tran
   const auto minimumRate = playbackSettings.minPlaybackRate;
   const auto maximumRate = playbackSettings.maxPlaybackRate;
 
-  auto playbackRate = static_cast<float>(
-    clampRange(transport.playbackRate(), minimumRate, maximumRate));
+  auto playbackRate =
+    static_cast<float>(clampRange(transport.playbackRate(), minimumRate, maximumRate));
   if (ImGui::SliderFloat("Playback Speed",
                          &playbackRate,
                          static_cast<float>(minimumRate),
@@ -94,6 +93,13 @@ void renderFallingNotesSettings(FallingNotesSettings& settings)
   const auto constraints = appSettingsConstraints().fallingNotes;
   editDoubleSlider("Look Ahead", settings.lookAheadSeconds, constraints.lookAheadSeconds);
   editDoubleSlider("Visible Past", settings.visiblePastSeconds, constraints.visiblePastSeconds);
+
+  ImGui::SeparatorText("Dimensions");
+  editDoubleSlider("Horizontal Inset",
+                   settings.noteHorizontalInset,
+                   constraints.noteHorizontalInset);
+  editDoubleSlider("Black Note Width", settings.blackNoteWidthScale, constraints.noteWidthScale);
+  editDoubleSlider("White Note Width", settings.whiteNoteWidthScale, constraints.noteWidthScale);
 
   ImGui::SeparatorText("Colors");
   editColor("Note", settings.noteColor);

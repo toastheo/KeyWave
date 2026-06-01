@@ -168,6 +168,44 @@ TEST_CASE("FallingNotesLayout can use keyboard geometry for piano-aligned note w
   CHECK(result.notes[1].width == Catch::Approx(1.0));
 }
 
+TEST_CASE("FallingNotesLayout applies falling-note inset and width scales",
+          "[fallingnotes][layout]")
+{
+  const std::vector queriedNotes{
+    makeQueriedNote(60, 1.0, 1.0),
+    makeQueriedNote(61, 1.5, 1.0),
+  };
+  const KeyboardGeometry geometry(KeyboardLayoutConfig{
+    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
+    .whiteKeyWidth = 2.0,
+    .blackKeyWidth = 1.0,
+    .whiteKeyGap = 0.2,
+  });
+
+  const auto result =
+    FallingNotesLayout::build(queriedNotes,
+                              FallingNotesViewport{
+                                .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 62},
+                                .currentTimeSeconds = 0.0,
+                                .lookAheadSeconds = 4.0,
+                                .visiblePastSeconds = 0.0,
+                              },
+                              geometry,
+                              FallingNotesLayoutStyle{
+                                .noteHorizontalInset = 0.1,
+                                .blackNoteWidthScale = 0.75,
+                                .whiteNoteWidthScale = 0.5,
+                              });
+
+  REQUIRE(result.notes.size() == 2);
+  CHECK(result.notes[0].note.pitch == 60);
+  CHECK(result.notes[0].x == Catch::Approx(0.6));
+  CHECK(result.notes[0].width == Catch::Approx(0.8));
+  CHECK(result.notes[1].note.pitch == 61);
+  CHECK(result.notes[1].x == Catch::Approx(1.7));
+  CHECK(result.notes[1].width == Catch::Approx(0.6));
+}
+
 TEST_CASE("FallingNotesLayout returns empty results for invalid viewports",
           "[fallingnotes][layout]")
 {

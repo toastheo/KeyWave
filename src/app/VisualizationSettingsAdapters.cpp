@@ -31,6 +31,16 @@ KeyboardRenderStyle keyboardRenderStyleFromSettings(const KeyboardSettings& sett
   };
 }
 
+FallingNotesLayoutStyle fallingNotesLayoutStyleFromSettings(const FallingNotesSettings& settings)
+{
+  const auto sanitizedSettings = sanitizeFallingNotesSettings(settings);
+  return FallingNotesLayoutStyle{
+    .noteHorizontalInset = sanitizedSettings.noteHorizontalInset,
+    .blackNoteWidthScale = sanitizedSettings.blackNoteWidthScale,
+    .whiteNoteWidthScale = sanitizedSettings.whiteNoteWidthScale,
+  };
+}
+
 FallingNotesRenderStyle fallingNotesRenderStyleFromSettings(const FallingNotesSettings& settings)
 {
   const auto sanitizedSettings = sanitizeFallingNotesSettings(settings);
@@ -53,6 +63,7 @@ PianoRollSceneConfig pianoRollSceneConfigFromSettings(
     .visiblePastSeconds = sanitizedFallingNotesSettings.visiblePastSeconds,
     .keyboardLayout =
       keyboardLayoutConfigFromSettings(keyboardSettings, sanitizedFallingNotesSettings.pitchRange),
+    .fallingNotesLayout = fallingNotesLayoutStyleFromSettings(sanitizedFallingNotesSettings),
     .fallingNotesStyle = fallingNotesRenderStyleFromSettings(sanitizedFallingNotesSettings),
     .keyboardStyle = keyboardRenderStyleFromSettings(keyboardSettings),
   };
