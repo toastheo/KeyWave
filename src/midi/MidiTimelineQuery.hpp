@@ -45,5 +45,5 @@ public:
 
 private:
   const MidiTimeline& m_timeline;
-  DiagnosticSink* m_diagnostics = nullptr;
+  DiagnosticSink& m_diagnostics;
 };

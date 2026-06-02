@@ -6,14 +6,14 @@
 void NullDiagnosticSink::report(DiagnosticSeverity, std::string_view) {}
 
 OstreamDiagnosticSink::OstreamDiagnosticSink(const OstreamDiagnosticStreams streams)
-    : m_infoStream(&streams.info)
-    , m_warningErrorStream(&streams.warningError)
+    : m_infoStream(streams.info)
+    , m_warningErrorStream(streams.warningError)
 {}
 
 void OstreamDiagnosticSink::report(const DiagnosticSeverity severity,
                                    const std::string_view message)
 {
-  auto& stream = severity == DiagnosticSeverity::Info ? *m_infoStream : *m_warningErrorStream;
+  auto& stream = severity == DiagnosticSeverity::Info ? m_infoStream : m_warningErrorStream;
   stream << message;
   if (message.empty() || message.back() != '\n') {
     stream << '\n';

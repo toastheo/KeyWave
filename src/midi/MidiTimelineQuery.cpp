@@ -101,13 +101,13 @@ bool isActiveAt(const Note& note, const double timeSeconds)
 
 MidiTimelineQuery::MidiTimelineQuery(const MidiTimeline& timeline, DiagnosticSink& diagnostics)
     : m_timeline(timeline)
-    , m_diagnostics(&diagnostics)
+    , m_diagnostics(diagnostics)
 {}
 
 std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& viewport) const
 {
-  if (!isValidTimeRange(viewport.timeRange, *m_diagnostics) ||
-      !isValidPitchRange(viewport.pitchRange, *m_diagnostics)) {
+  if (!isValidTimeRange(viewport.timeRange, m_diagnostics) ||
+      !isValidPitchRange(viewport.pitchRange, m_diagnostics)) {
     return {};
   }
 
@@ -136,7 +136,7 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
 
 std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange& range) const
 {
-  if (!isValidTimeRange(range, *m_diagnostics)) {
+  if (!isValidTimeRange(range, m_diagnostics)) {
     return {};
   }
 
@@ -163,7 +163,7 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange
 
 std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRange& range) const
 {
-  if (!isValidPitchRange(range, *m_diagnostics)) {
+  if (!isValidPitchRange(range, m_diagnostics)) {
     return {};
   }
 

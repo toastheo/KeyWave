@@ -37,7 +37,7 @@ public:
   [[nodiscard]] RenderScene buildScene() const;
 
 private:
-  DiagnosticSink* m_diagnostics = nullptr;
+  DiagnosticSink& m_diagnostics;
   AppSettings m_settings;
   std::optional<MidiTimeline> m_timeline;
   PlaybackTransport m_playbackTransport;

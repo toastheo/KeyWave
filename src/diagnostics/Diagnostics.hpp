@@ -39,8 +39,8 @@ public:
   void report(DiagnosticSeverity severity, std::string_view message) override;
 
 private:
-  std::ostream* m_infoStream = nullptr;
-  std::ostream* m_warningErrorStream = nullptr;
+  std::ostream& m_infoStream;
+  std::ostream& m_warningErrorStream;
 };
 
 [[nodiscard]] DiagnosticSink& nullDiagnosticSink();

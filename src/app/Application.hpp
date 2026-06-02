@@ -26,7 +26,7 @@ public:
 
 private:
   AppConfig m_config;
-  DiagnosticSink* m_diagnostics = nullptr;
+  DiagnosticSink& m_diagnostics;
   SettingsStorage m_settingsStorage;
   VisualizerController m_visualizerController;
   Window m_window;

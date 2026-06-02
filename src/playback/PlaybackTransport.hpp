@@ -29,7 +29,7 @@ public:
   [[nodiscard]] double playbackRate() const;
 
 private:
-  DiagnosticSink* m_diagnostics = nullptr;
+  DiagnosticSink& m_diagnostics;
   double m_currentTimeSeconds = 0.0;
   double m_playbackRate = 1.0;
   PlaybackState m_state = PlaybackState::Stopped;

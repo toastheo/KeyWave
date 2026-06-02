@@ -20,7 +20,7 @@ VisualizerController::VisualizerController(AppSettings settings)
 {}
 
 VisualizerController::VisualizerController(AppSettings settings, DiagnosticSink& diagnostics)
-    : m_diagnostics(&diagnostics)
+    : m_diagnostics(diagnostics)
     , m_playbackTransport(diagnostics)
 {
   setSettings(std::move(settings));
@@ -86,7 +86,7 @@ void VisualizerController::handleInput(const std::span<const Key> pressedKeys,
 
     if (!imguiWantsKeyboardCapture) {
       applyPlaybackTransportControl(
-        key, m_playbackTransport, *m_diagnostics, m_settings.playbackControls);
+        key, m_playbackTransport, m_diagnostics, m_settings.playbackControls);
     }
   }
 }
@@ -106,5 +106,5 @@ RenderScene VisualizerController::buildScene() const
                                       m_playbackTransport.currentTimeSeconds(),
                                       pianoRollSceneConfigFromSettings(m_settings.fallingNotes,
                                                                        m_settings.keyboard),
-                                      *m_diagnostics);
+                                      m_diagnostics);
 }
