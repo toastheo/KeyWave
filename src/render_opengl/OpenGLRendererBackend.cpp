@@ -1,55 +1,17 @@
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
-#include <cstddef>
 #include <glad/glad.h>
 #include <sstream>
-#include <string_view>
 #include <variant>
-
-namespace {
-
-constexpr std::string_view kRectVertexShaderSource = R"(
-#version 330 core
-
-layout (location = 0) in vec2 inPosition;
-layout (location = 1) in vec4 inColor;
-
-out vec4 vertexColor;
-
-void main()
-{
-  vertexColor = inColor;
-  gl_Position = vec4(inPosition, 0.0, 1.0);
-}
-)";
-
-constexpr std::string_view kRectFragmentShaderSource = R"(
-#version 330 core
-
-in vec4 vertexColor;
-
-out vec4 outColor;
-
-void main()
-{
-  outColor = vertexColor;
-}
-)";
-
-bool isValidRect(const Rect& rect)
-{
-  return rect.width > 0.0 && rect.height > 0.0;
-}
-
-} // namespace
 
 OpenGLRendererBackend::OpenGLRendererBackend(const NativeProcAddressLoader procAddressLoader,
                                              const Color clearColor,
                                              DiagnosticSink& diagnostics)
     : m_procAddressLoader(procAddressLoader)
-    , m_diagnostics(&diagnostics)
+    , m_diagnostics(diagnostics)
     , m_clearColor(clearColor)
-    , m_rectShader(diagnostics)
+    , m_rectRenderer(diagnostics)
+    , m_styledRectRenderer(diagnostics)
 {}
 
 OpenGLRendererBackend::~OpenGLRendererBackend()
@@ -64,55 +26,29 @@ bool OpenGLRendererBackend::initialize()
   }
 
   if (m_procAddressLoader == nullptr) {
-    reportError(*m_diagnostics,
+    reportError(m_diagnostics,
                 "OpenGL renderer initialization failed: missing OpenGL procedure loader.");
     return false;
   }
 
   if (gladLoadGLLoader(m_procAddressLoader) == 0) {
-    reportError(*m_diagnostics,
+    reportError(m_diagnostics,
                 "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.");
     return false;
   }
 
-  if (!m_rectShader.create(OpenGLShaderSources{
-        .vertex = kRectVertexShaderSource,
-        .fragment = kRectFragmentShaderSource,
-      })) {
-    reportError(*m_diagnostics,
-                "OpenGL renderer initialization failed: rectangle shader could not be created.");
+  if (!m_rectRenderer.initialize()) {
     shutdown();
     return false;
   }
 
-  glGenVertexArrays(1, &m_rectVertexArray);
-  glGenBuffers(1, &m_rectVertexBuffer);
-
-  if (m_rectVertexArray == 0 || m_rectVertexBuffer == 0) {
-    reportError(*m_diagnostics,
-                "OpenGL renderer initialization failed: rectangle buffers could not be created.");
+  if (!m_styledRectRenderer.initialize()) {
     shutdown();
     return false;
   }
 
-  glBindVertexArray(m_rectVertexArray);
-  glBindBuffer(GL_ARRAY_BUFFER, m_rectVertexBuffer);
-  glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-
-  constexpr auto kColorAttributeOffset = offsetof(RectVertex, r);
-  // OpenGL 3.3 interprets this pointer parameter as a VBO byte offset.
-  // NOLINTNEXTLINE(performance-no-int-to-ptr)
-  const auto* colorAttributeOffset = reinterpret_cast<const void*>(kColorAttributeOffset);
-
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, static_cast<int>(sizeof(RectVertex)), nullptr);
-
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(
-    1, 4, GL_FLOAT, GL_FALSE, static_cast<int>(sizeof(RectVertex)), colorAttributeOffset);
-
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   m_initialized = true;
   if (isValid(m_framebufferSize)) {
@@ -124,19 +60,9 @@ bool OpenGLRendererBackend::initialize()
 
 void OpenGLRendererBackend::shutdown()
 {
-  m_rectVertices.clear();
-
-  if (m_rectVertexBuffer != 0) {
-    glDeleteBuffers(1, &m_rectVertexBuffer);
-    m_rectVertexBuffer = 0;
-  }
-
-  if (m_rectVertexArray != 0) {
-    glDeleteVertexArrays(1, &m_rectVertexArray);
-    m_rectVertexArray = 0;
-  }
-
-  m_rectShader.destroy();
+  m_vertexBatches.clear();
+  m_styledRectRenderer.shutdown();
+  m_rectRenderer.shutdown();
   m_initialized = false;
 }
 
@@ -169,59 +95,36 @@ void OpenGLRendererBackend::setView(const RendererView& view)
             << " (x=" << view.visibleWorldRect.x << ", y=" << view.visibleWorldRect.y
             << ", width=" << view.visibleWorldRect.width
             << ", height=" << view.visibleWorldRect.height << ").";
-    reportWarning(*m_diagnostics, message.str());
+    reportWarning(m_diagnostics, message.str());
     return;
   }
 
   m_view = view;
 }
 
-void OpenGLRendererBackend::appendRectVertices(const Rect& rect, const Color& color)
+void OpenGLRendererBackend::appendVertexBatch(const VertexBatchKind kind,
+                                              const std::size_t first,
+                                              const std::size_t count)
 {
-  if (!isValidRect(rect)) {
+  if (count == 0U) {
     return;
   }
 
-  const auto bottomLeftClip = worldToClip(Vec2{.x = rect.x, .y = rect.y}, m_view.visibleWorldRect);
-  const auto bottomRightClip =
-    worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y}, m_view.visibleWorldRect);
-  const auto topLeftClip =
-    worldToClip(Vec2{.x = rect.x, .y = rect.y + rect.height}, m_view.visibleWorldRect);
-  const auto topRightClip =
-    worldToClip(Vec2{.x = rect.x + rect.width, .y = rect.y + rect.height}, m_view.visibleWorldRect);
+  const auto firstVertex = static_cast<int>(first);
+  const auto vertexCount = static_cast<int>(count);
+  if (!m_vertexBatches.empty()) {
+    auto& previous = m_vertexBatches.back();
+    if (previous.kind == kind && previous.first + previous.count == firstVertex) {
+      previous.count += vertexCount;
+      return;
+    }
+  }
 
-  const auto bottomLeft = RectVertex{.x = static_cast<float>(bottomLeftClip.x),
-                                     .y = static_cast<float>(bottomLeftClip.y),
-                                     .r = color.r,
-                                     .g = color.g,
-                                     .b = color.b,
-                                     .a = color.a};
-  const auto bottomRight = RectVertex{.x = static_cast<float>(bottomRightClip.x),
-                                      .y = static_cast<float>(bottomRightClip.y),
-                                      .r = color.r,
-                                      .g = color.g,
-                                      .b = color.b,
-                                      .a = color.a};
-  const auto topLeft = RectVertex{.x = static_cast<float>(topLeftClip.x),
-                                  .y = static_cast<float>(topLeftClip.y),
-                                  .r = color.r,
-                                  .g = color.g,
-                                  .b = color.b,
-                                  .a = color.a};
-  const auto topRight = RectVertex{.x = static_cast<float>(topRightClip.x),
-                                   .y = static_cast<float>(topRightClip.y),
-                                   .r = color.r,
-                                   .g = color.g,
-                                   .b = color.b,
-                                   .a = color.a};
-
-  m_rectVertices.push_back(bottomLeft);
-  m_rectVertices.push_back(bottomRight);
-  m_rectVertices.push_back(topRight);
-
-  m_rectVertices.push_back(bottomLeft);
-  m_rectVertices.push_back(topRight);
-  m_rectVertices.push_back(topLeft);
+  m_vertexBatches.push_back(VertexBatch{
+    .kind = kind,
+    .first = firstVertex,
+    .count = vertexCount,
+  });
 }
 
 void OpenGLRendererBackend::beginFrame()
@@ -230,7 +133,9 @@ void OpenGLRendererBackend::beginFrame()
     return;
   }
 
-  m_rectVertices.clear();
+  m_rectRenderer.beginFrame();
+  m_styledRectRenderer.beginFrame();
+  m_vertexBatches.clear();
   glClearColor(m_clearColor.r, m_clearColor.g, m_clearColor.b, m_clearColor.a);
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -241,36 +146,57 @@ void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands)
     return;
   }
 
-  m_rectVertices.reserve(m_rectVertices.size() + commands.size() * 6U);
+  m_rectRenderer.reserve(m_rectRenderer.vertexCount() + commands.size() * 6U);
+  m_styledRectRenderer.reserve(m_styledRectRenderer.vertexCount() + commands.size() * 6U);
 
   for (const auto& command : commands) {
     if (std::holds_alternative<DrawRectCommand>(command)) {
       const auto& [rect, color] = std::get<DrawRectCommand>(command);
-      appendRectVertices(rect, color);
+      const auto first = m_rectRenderer.vertexCount();
+      m_rectRenderer.appendRect(rect, color, m_view);
+      appendVertexBatch(VertexBatchKind::Rect, first, m_rectRenderer.vertexCount() - first);
+      continue;
+    }
+
+    if (std::holds_alternative<DrawStyledRectCommand>(command)) {
+      const auto first = m_styledRectRenderer.vertexCount();
+      m_styledRectRenderer.appendRect(
+        std::get<DrawStyledRectCommand>(command), m_view, m_framebufferSize);
+      appendVertexBatch(
+        VertexBatchKind::StyledRect, first, m_styledRectRenderer.vertexCount() - first);
       continue;
     }
 
     if (std::holds_alternative<DrawLineCommand>(command)) {
       const auto& line = std::get<DrawLineCommand>(command);
-      appendRectVertices(lineToPixelAlignedRect(line, m_view, m_framebufferSize), line.color);
+      const auto first = m_rectRenderer.vertexCount();
+      m_rectRenderer.appendRect(
+        lineToPixelAlignedRect(line, m_view, m_framebufferSize), line.color, m_view);
+      appendVertexBatch(VertexBatchKind::Rect, first, m_rectRenderer.vertexCount() - first);
     }
   }
 }
 
 void OpenGLRendererBackend::endFrame()
 {
-  if (!m_initialized || m_rectVertices.empty() || !m_rectShader.valid()) {
+  if (!m_initialized || m_vertexBatches.empty()) {
     return;
   }
 
-  glUseProgram(m_rectShader.id());
-  glBindVertexArray(m_rectVertexArray);
-  glBindBuffer(GL_ARRAY_BUFFER, m_rectVertexBuffer);
-  glBufferData(GL_ARRAY_BUFFER,
-               static_cast<GLsizeiptr>(m_rectVertices.size() * sizeof(RectVertex)),
-               m_rectVertices.data(),
-               GL_DYNAMIC_DRAW);
-  glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(m_rectVertices.size()));
+  m_rectRenderer.upload();
+  m_styledRectRenderer.upload();
+
+  for (const auto& batch : m_vertexBatches) {
+    if (batch.kind == VertexBatchKind::Rect) {
+      m_rectRenderer.draw(batch.first, batch.count);
+      continue;
+    }
+
+    if (batch.kind == VertexBatchKind::StyledRect) {
+      m_styledRectRenderer.draw(batch.first, batch.count);
+    }
+  }
+
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
   glUseProgram(0);

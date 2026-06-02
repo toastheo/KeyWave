@@ -10,12 +10,12 @@
 
 namespace {
 
-std::vector<DrawRectCommand> rectsForScene(const RenderScene& scene)
+std::vector<DrawStyledRectCommand> styledRectsForScene(const RenderScene& scene)
 {
-  std::vector<DrawRectCommand> rects;
+  std::vector<DrawStyledRectCommand> rects;
   for (const auto& command : scene.commands) {
-    if (std::holds_alternative<DrawRectCommand>(command)) {
-      rects.push_back(std::get<DrawRectCommand>(command));
+    if (std::holds_alternative<DrawStyledRectCommand>(command)) {
+      rects.push_back(std::get<DrawStyledRectCommand>(command));
     }
   }
   return rects;
@@ -52,7 +52,7 @@ TEST_CASE("VisualizerController updates playback and builds the current scene", 
 
   controller.update(1.5);
   const auto scene = controller.buildScene();
-  const auto rects = rectsForScene(scene);
+  const auto rects = styledRectsForScene(scene);
 
   REQUIRE_FALSE(rects.empty());
   CHECK(rects.front().rect.y == Catch::Approx(0.5));

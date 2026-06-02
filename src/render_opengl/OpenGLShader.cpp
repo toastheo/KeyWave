@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include <cstddef>
+#include <fstream>
 #include <sstream>
 #include <string>
 
@@ -34,6 +35,19 @@ std::string programInfoLog(const unsigned int program)
   return log;
 }
 
+std::string readTextFile(const std::filesystem::path& path, DiagnosticSink& diagnostics)
+{
+  const auto file = std::ifstream(path);
+  if (!file) {
+    reportError(diagnostics, "OpenGL shader source file could not be opened: " + path.string());
+    return {};
+  }
+
+  std::ostringstream contents;
+  contents << file.rdbuf();
+  return contents.str();
+}
+
 unsigned int compileShader(const unsigned int shaderType,
                            const std::string_view source,
                            DiagnosticSink& diagnostics)
@@ -59,7 +73,7 @@ unsigned int compileShader(const unsigned int shaderType,
 } // namespace
 
 OpenGLShader::OpenGLShader(DiagnosticSink& diagnostics)
-    : m_diagnostics(&diagnostics)
+    : m_diagnostics(diagnostics)
 {}
 
 OpenGLShader::~OpenGLShader()
@@ -71,12 +85,12 @@ bool OpenGLShader::create(const OpenGLShaderSources& sources)
 {
   destroy();
 
-  const auto vertexShader = compileShader(GL_VERTEX_SHADER, sources.vertex, *m_diagnostics);
+  const auto vertexShader = compileShader(GL_VERTEX_SHADER, sources.vertex, m_diagnostics);
   if (vertexShader == 0) {
     return false;
   }
 
-  const auto fragmentShader = compileShader(GL_FRAGMENT_SHADER, sources.fragment, *m_diagnostics);
+  const auto fragmentShader = compileShader(GL_FRAGMENT_SHADER, sources.fragment, m_diagnostics);
   if (fragmentShader == 0) {
     glDeleteShader(vertexShader);
     return false;
@@ -95,13 +109,31 @@ bool OpenGLShader::create(const OpenGLShaderSources& sources)
   int linkStatus = GL_FALSE;
   glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
   if (linkStatus != GL_TRUE) {
-    reportError(*m_diagnostics, "OpenGL shader link failed:\n" + programInfoLog(program));
+    reportError(m_diagnostics, "OpenGL shader link failed:\n" + programInfoLog(program));
     glDeleteProgram(program);
     return false;
   }
 
   m_program = program;
   return true;
+}
+
+bool OpenGLShader::createFromFiles(const OpenGLShaderFilePaths& paths)
+{
+  const auto vertex = readTextFile(paths.vertex, m_diagnostics);
+  if (vertex.empty()) {
+    return false;
+  }
+
+  const auto fragment = readTextFile(paths.fragment, m_diagnostics);
+  if (fragment.empty()) {
+    return false;
+  }
+
+  return create(OpenGLShaderSources{
+    .vertex = vertex,
+    .fragment = fragment,
+  });
 }
 
 void OpenGLShader::destroy()

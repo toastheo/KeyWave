@@ -229,13 +229,26 @@ target_link_libraries(keywave_ui
 add_library(keywave_render_opengl STATIC
         render_opengl/OpenGLRendererBackend.hpp
         render_opengl/OpenGLRendererBackend.cpp
+        render_opengl/OpenGLRectRenderer.hpp
+        render_opengl/OpenGLRectRenderer.cpp
         render_opengl/OpenGLShader.hpp
         render_opengl/OpenGLShader.cpp
+        render_opengl/OpenGLStyledRectRenderer.hpp
+        render_opengl/OpenGLStyledRectRenderer.cpp
+        render_opengl/shaders/rect.frag.glsl
+        render_opengl/shaders/rect.vert.glsl
+        render_opengl/shaders/styled_rect.frag.glsl
+        render_opengl/shaders/styled_rect.vert.glsl
 )
 
 target_include_directories(keywave_render_opengl
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_compile_definitions(keywave_render_opengl
+        PRIVATE
+        KEYWAVE_SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/render_opengl/shaders"
 )
 
 target_link_libraries(keywave_render_opengl

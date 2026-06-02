@@ -21,6 +21,17 @@ std::vector<DrawRectCommand> rectsForScene(const RenderScene& scene)
   return rects;
 }
 
+std::vector<DrawStyledRectCommand> styledRectsForScene(const RenderScene& scene)
+{
+  std::vector<DrawStyledRectCommand> rects;
+  for (const auto& command : scene.commands) {
+    if (std::holds_alternative<DrawStyledRectCommand>(command)) {
+      rects.push_back(std::get<DrawStyledRectCommand>(command));
+    }
+  }
+  return rects;
+}
+
 bool sameColor(const Color& left, const Color& right)
 {
   return left.r == Catch::Approx(right.r) && left.g == Catch::Approx(right.g) &&
@@ -37,7 +48,7 @@ bool isKeyboardRect(const DrawRectCommand& command)
   return command.rect.y < 0.0;
 }
 
-bool hasFallingNoteRect(const std::vector<DrawRectCommand>& rects)
+bool hasFallingNoteRect(const std::vector<DrawStyledRectCommand>& rects)
 {
   for (const auto& rect : rects) {
     if (rect.rect.y > 0.0) {
@@ -63,10 +74,14 @@ TEST_CASE("PianoRollSceneBuilder rebuilds note positions for the current playbac
 
   const auto firstRects = rectsForScene(firstScene);
   const auto laterRects = rectsForScene(laterScene);
+  const auto firstStyledRects = styledRectsForScene(firstScene);
+  const auto laterStyledRects = styledRectsForScene(laterScene);
   REQUIRE_FALSE(firstRects.empty());
   REQUIRE_FALSE(laterRects.empty());
-  CHECK(firstRects.front().rect.y == Catch::Approx(2.0));
-  CHECK(laterRects.front().rect.y == Catch::Approx(0.5));
+  REQUIRE_FALSE(firstStyledRects.empty());
+  REQUIRE_FALSE(laterStyledRects.empty());
+  CHECK(firstStyledRects.front().rect.y == Catch::Approx(2.0));
+  CHECK(laterStyledRects.front().rect.y == Catch::Approx(0.5));
   CHECK(firstRects.back().rect.y == Catch::Approx(0.0));
   CHECK(firstRects.back().rect.width == Catch::Approx(52.0));
 }
@@ -80,7 +95,7 @@ TEST_CASE("PianoRollSceneBuilder falls back from zero lookahead", "[fallingnotes
   config.lookAheadSeconds = 0.0;
 
   const auto scene = PianoRollSceneBuilder::build(timeline, 0.0, config);
-  const auto rects = rectsForScene(scene);
+  const auto rects = styledRectsForScene(scene);
 
   CHECK(hasFallingNoteRect(rects));
 }
@@ -172,15 +187,17 @@ TEST_CASE("PianoRollSceneBuilder uses falling note and keyboard settings", "[fal
 
   const auto scene = PianoRollSceneBuilder::build(timeline, 10.0, config);
   const auto rects = rectsForScene(scene);
+  const auto styledRects = styledRectsForScene(scene);
 
   CHECK(scene.view.visibleWorldRect.y == Catch::Approx(-1.25));
   CHECK(scene.view.visibleWorldRect.width == Catch::Approx(6.0));
   CHECK(scene.view.visibleWorldRect.height == Catch::Approx(11.25));
 
   REQUIRE_FALSE(rects.empty());
-  checkColor(rects.front().color, config.fallingNotesStyle.activeNoteColor);
-  CHECK(rects.front().rect.x == Catch::Approx(0.6));
-  CHECK(rects.front().rect.width == Catch::Approx(0.8));
+  REQUIRE_FALSE(styledRects.empty());
+  checkColor(styledRects.front().topColor, config.fallingNotesStyle.activeNoteColor);
+  CHECK(styledRects.front().rect.x == Catch::Approx(0.6));
+  CHECK(styledRects.front().rect.width == Catch::Approx(0.8));
   CHECK(rects.back().rect.height == Catch::Approx(config.keyboardStyle.hitLineHeight));
   checkColor(rects.back().color, config.keyboardStyle.hitLineColor);
 }
@@ -204,7 +221,7 @@ TEST_CASE("PianoRollSceneBuilder keeps keyboard view size independent from looka
   CHECK(shortScene.view.visibleWorldRect.height ==
         Catch::Approx(longScene.view.visibleWorldRect.height));
 
-  const auto longRects = rectsForScene(longScene);
+  const auto longRects = styledRectsForScene(longScene);
   REQUIRE_FALSE(longRects.empty());
   CHECK(longRects.front().rect.y >= 0.0);
   CHECK(longRects.front().rect.y + longRects.front().rect.height <=

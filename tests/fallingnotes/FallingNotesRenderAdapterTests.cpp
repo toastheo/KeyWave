@@ -25,18 +25,12 @@ FallingNoteLayout makeNoteLayout(const double x,
   };
 }
 
-const DrawRectCommand& rectAt(const std::vector<RenderCommand>& commands, const std::size_t index)
+const DrawStyledRectCommand& styledRectAt(const std::vector<RenderCommand>& commands,
+                                          const std::size_t index)
 {
   REQUIRE(index < commands.size());
-  REQUIRE(std::holds_alternative<DrawRectCommand>(commands[index]));
-  return std::get<DrawRectCommand>(commands[index]);
-}
-
-const DrawLineCommand& lineAt(const std::vector<RenderCommand>& commands, const std::size_t index)
-{
-  REQUIRE(index < commands.size());
-  REQUIRE(std::holds_alternative<DrawLineCommand>(commands[index]));
-  return std::get<DrawLineCommand>(commands[index]);
+  REQUIRE(std::holds_alternative<DrawStyledRectCommand>(commands[index]));
+  return std::get<DrawStyledRectCommand>(commands[index]);
 }
 
 void checkColor(const Color& actual, const Color& expected)
@@ -47,7 +41,12 @@ void checkColor(const Color& actual, const Color& expected)
   CHECK(actual.a == Catch::Approx(expected.a));
 }
 
-TEST_CASE("FallingNotesRenderAdapter converts falling note layouts into draw rect commands",
+Color bottomGradientColorFor(const Color color)
+{
+  return Color{.r = color.r * 0.7f, .g = color.g * 0.7f, .b = color.b * 0.7f, .a = color.a};
+}
+
+TEST_CASE("FallingNotesRenderAdapter converts falling note layouts into styled rect commands",
           "[fallingnotes][render]")
 {
   const FallingNotesLayoutResult layout{
@@ -70,26 +69,32 @@ TEST_CASE("FallingNotesRenderAdapter converts falling note layouts into draw rec
 
   REQUIRE(commands.size() == 3);
 
-  const auto& normal = rectAt(commands, 0);
+  const auto& normal = styledRectAt(commands, 0);
   CHECK(normal.rect.x == Catch::Approx(0.0));
   CHECK(normal.rect.y == Catch::Approx(2.0));
   CHECK(normal.rect.width == Catch::Approx(0.9));
   CHECK(normal.rect.height == Catch::Approx(1.0));
-  checkColor(normal.color, style.noteColor);
+  checkColor(normal.topColor, style.noteColor);
+  checkColor(normal.bottomColor, bottomGradientColorFor(style.noteColor));
+  CHECK(normal.borderThicknessPixels == Catch::Approx(0.0));
 
-  const auto& active = rectAt(commands, 1);
+  const auto& active = styledRectAt(commands, 1);
   CHECK(active.rect.x == Catch::Approx(1.0));
   CHECK(active.rect.y == Catch::Approx(-0.5));
   CHECK(active.rect.width == Catch::Approx(0.9));
   CHECK(active.rect.height == Catch::Approx(1.0));
-  checkColor(active.color, style.activeNoteColor);
+  checkColor(active.topColor, style.activeNoteColor);
+  checkColor(active.bottomColor, bottomGradientColorFor(style.activeNoteColor));
+  CHECK(active.borderThicknessPixels == Catch::Approx(0.0));
 
-  const auto& clipped = rectAt(commands, 2);
+  const auto& clipped = styledRectAt(commands, 2);
   CHECK(clipped.rect.x == Catch::Approx(2.0));
   CHECK(clipped.rect.y == Catch::Approx(9.5));
   CHECK(clipped.rect.width == Catch::Approx(0.9));
   CHECK(clipped.rect.height == Catch::Approx(0.5));
-  checkColor(clipped.color, style.noteColor);
+  checkColor(clipped.topColor, style.noteColor);
+  checkColor(clipped.bottomColor, bottomGradientColorFor(style.noteColor));
+  CHECK(clipped.borderThicknessPixels == Catch::Approx(0.0));
 }
 
 TEST_CASE("FallingNotesRenderAdapter highlights notes intersecting the keyboard hit line",
@@ -111,11 +116,11 @@ TEST_CASE("FallingNotesRenderAdapter highlights notes intersecting the keyboard 
   const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
 
   REQUIRE(commands.size() == 2);
-  checkColor(rectAt(commands, 0).color, style.noteColor);
-  checkColor(rectAt(commands, 1).color, style.activeNoteColor);
+  checkColor(styledRectAt(commands, 0).topColor, style.noteColor);
+  checkColor(styledRectAt(commands, 1).topColor, style.activeNoteColor);
 }
 
-TEST_CASE("FallingNotesRenderAdapter adds note outline line commands when enabled",
+TEST_CASE("FallingNotesRenderAdapter adds note border styling when enabled",
           "[fallingnotes][render]")
 {
   const FallingNotesLayoutResult layout{
@@ -134,29 +139,11 @@ TEST_CASE("FallingNotesRenderAdapter adds note outline line commands when enable
 
   const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
 
-  REQUIRE(commands.size() == 5);
-  checkColor(rectAt(commands, 0).color, style.noteColor);
-
-  const auto& left = lineAt(commands, 1);
-  CHECK(left.from.x == Catch::Approx(1.0));
-  CHECK(left.from.y == Catch::Approx(2.0));
-  CHECK(left.to.x == Catch::Approx(1.0));
-  CHECK(left.to.y == Catch::Approx(6.0));
-  CHECK(left.thickness == Catch::Approx(2.0));
-  CHECK(left.cap == LineCap::Square);
-  checkColor(left.color, style.outlineColor);
-
-  const auto& right = lineAt(commands, 2);
-  CHECK(right.from.x == Catch::Approx(4.0));
-  CHECK(right.to.x == Catch::Approx(4.0));
-
-  const auto& bottom = lineAt(commands, 3);
-  CHECK(bottom.from.y == Catch::Approx(2.0));
-  CHECK(bottom.to.y == Catch::Approx(2.0));
-
-  const auto& top = lineAt(commands, 4);
-  CHECK(top.from.y == Catch::Approx(6.0));
-  CHECK(top.to.y == Catch::Approx(6.0));
+  REQUIRE(commands.size() == 1);
+  const auto& note = styledRectAt(commands, 0);
+  checkColor(note.topColor, style.noteColor);
+  checkColor(note.borderColor, style.outlineColor);
+  CHECK(note.borderThicknessPixels == Catch::Approx(2.0));
 }
 
 TEST_CASE("FallingNotesRenderAdapter skips note outlines when disabled or non-positive",
@@ -172,11 +159,15 @@ TEST_CASE("FallingNotesRenderAdapter skips note outlines when disabled or non-po
   FallingNotesRenderStyle style;
   style.includeOutline = false;
   style.outlineThicknessPixels = 2.0;
-  CHECK(FallingNotesRenderAdapter::buildCommands(layout, style).size() == 1);
+  auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
+  REQUIRE(commands.size() == 1);
+  CHECK(styledRectAt(commands, 0).borderThicknessPixels == Catch::Approx(0.0));
 
   style.includeOutline = true;
   style.outlineThicknessPixels = 0.0;
-  CHECK(FallingNotesRenderAdapter::buildCommands(layout, style).size() == 1);
+  commands = FallingNotesRenderAdapter::buildCommands(layout, style);
+  REQUIRE(commands.size() == 1);
+  CHECK(styledRectAt(commands, 0).borderThicknessPixels == Catch::Approx(0.0));
 }
 
 TEST_CASE("FallingNotesRenderAdapter skips invalid note rectangles", "[fallingnotes][render]")
@@ -196,7 +187,7 @@ TEST_CASE("FallingNotesRenderAdapter skips invalid note rectangles", "[fallingno
   const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
 
   REQUIRE(commands.size() == 1);
-  const auto& [rect, color] = rectAt(commands, 0);
+  const auto& rect = styledRectAt(commands, 0).rect;
   CHECK(rect.x == Catch::Approx(0.0));
   CHECK(rect.y == Catch::Approx(1.0));
   CHECK(rect.width == Catch::Approx(0.25));

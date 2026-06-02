@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "diagnostics/Diagnostics.hpp"
@@ -7,7 +9,8 @@
 #include "render/RenderTypes.hpp"
 #include "render/RendererBackend.hpp"
 #include "render/RendererView.hpp"
-#include "render_opengl/OpenGLShader.hpp"
+#include "render_opengl/OpenGLRectRenderer.hpp"
+#include "render_opengl/OpenGLStyledRectRenderer.hpp"
 
 class OpenGLRendererBackend final : public RendererBackend
 {
@@ -30,26 +33,28 @@ public:
   void endFrame() override;
 
 private:
-  struct RectVertex
+  enum class VertexBatchKind : std::uint8_t
   {
-    float x = 0.0f;
-    float y = 0.0f;
-    float r = 0.0f;
-    float g = 0.0f;
-    float b = 0.0f;
-    float a = 1.0f;
+    Rect,
+    StyledRect,
   };
 
-  void appendRectVertices(const Rect& rect, const Color& color);
+  struct VertexBatch
+  {
+    VertexBatchKind kind = VertexBatchKind::Rect;
+    int first = 0;
+    int count = 0;
+  };
+
+  void appendVertexBatch(VertexBatchKind kind, std::size_t first, std::size_t count);
 
   NativeProcAddressLoader m_procAddressLoader = nullptr;
-  DiagnosticSink* m_diagnostics = nullptr;
+  DiagnosticSink& m_diagnostics;
   Color m_clearColor;
   FramebufferSize m_framebufferSize;
   RendererView m_view;
-  OpenGLShader m_rectShader;
-  unsigned int m_rectVertexArray = 0;
-  unsigned int m_rectVertexBuffer = 0;
-  std::vector<RectVertex> m_rectVertices;
+  OpenGLRectRenderer m_rectRenderer;
+  OpenGLStyledRectRenderer m_styledRectRenderer;
+  std::vector<VertexBatch> m_vertexBatches;
   bool m_initialized = false;
 };

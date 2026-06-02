@@ -11,6 +11,15 @@ struct DrawRectCommand
   Color color;
 };
 
+struct DrawStyledRectCommand
+{
+  Rect rect;
+  Color topColor;
+  Color bottomColor;
+  Color borderColor;
+  double borderThicknessPixels = 0.0;
+};
+
 // Butt caps end at the line endpoints. Square caps extend by half the stroke
 // thickness, which lets adjacent outline segments overlap cleanly at corners.
 enum class LineCap : std::uint8_t
@@ -28,4 +37,4 @@ struct DrawLineCommand
   LineCap cap = LineCap::Butt;
 };
 
-using RenderCommand = std::variant<DrawRectCommand, DrawLineCommand>;
+using RenderCommand = std::variant<DrawRectCommand, DrawStyledRectCommand, DrawLineCommand>;
