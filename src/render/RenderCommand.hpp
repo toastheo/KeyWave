@@ -11,6 +11,14 @@ struct DrawRectCommand
   Color color;
 };
 
+struct CornerRadiiPixels
+{
+  double topLeft = 0.0;
+  double topRight = 0.0;
+  double bottomRight = 0.0;
+  double bottomLeft = 0.0;
+};
+
 struct DrawStyledRectCommand
 {
   Rect rect;
@@ -18,6 +26,7 @@ struct DrawStyledRectCommand
   Color bottomColor;
   Color borderColor;
   double borderThicknessPixels = 0.0;
+  CornerRadiiPixels cornerRadiiPixels;
 };
 
 // Butt caps end at the line endpoints. Square caps extend by half the stroke

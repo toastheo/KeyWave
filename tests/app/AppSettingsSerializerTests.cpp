@@ -16,6 +16,7 @@ TEST_CASE("AppSettingsSerializer serializes settings without removed color keys"
   settings.fallingNotes.whiteNoteWidthScale = 0.75;
   settings.fallingNotes.outlineColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 0.6f};
   settings.fallingNotes.outlineThicknessPixels = 3.0;
+  settings.fallingNotes.cornerRadiusPixels = 6.5;
   settings.fallingNotes.includeOutline = false;
   settings.keyboard.includeHitLine = false;
 
@@ -30,6 +31,7 @@ TEST_CASE("AppSettingsSerializer serializes settings without removed color keys"
   CHECK(json.at("fallingNotes").at("whiteNoteWidthScale") == Catch::Approx(0.75));
   CHECK(json.at("fallingNotes").at("outlineColor").at(0) == Catch::Approx(0.9));
   CHECK(json.at("fallingNotes").at("outlineThicknessPixels") == Catch::Approx(3.0));
+  CHECK(json.at("fallingNotes").at("cornerRadiusPixels") == Catch::Approx(6.5));
   CHECK(json.at("fallingNotes").at("includeOutline") == false);
   CHECK(json.at("keyboard").at("includeHitLine") == false);
   CHECK_FALSE(json.at("fallingNotes").contains("clippedNoteColor"));
@@ -86,6 +88,7 @@ TEST_CASE("AppSettingsSerializer falls back for invalid values and clamps colors
       {"blackNoteWidthScale", 0.0},
       {"whiteNoteWidthScale", 2.0},
       {"outlineThicknessPixels", -1.0},
+      {"cornerRadiusPixels", 25.0},
       {"noteColor", {0.1, 0.2}}}},
     {"keyboard",
      {{"blackKeyWidth", 0.0},
@@ -116,6 +119,8 @@ TEST_CASE("AppSettingsSerializer falls back for invalid values and clamps colors
         Catch::Approx(defaults.fallingNotes.whiteNoteWidthScale));
   CHECK(settings.fallingNotes.outlineThicknessPixels ==
         Catch::Approx(defaults.fallingNotes.outlineThicknessPixels));
+  CHECK(settings.fallingNotes.cornerRadiusPixels ==
+        Catch::Approx(defaults.fallingNotes.cornerRadiusPixels));
   CHECK(settings.fallingNotes.noteColor.r == Catch::Approx(defaults.fallingNotes.noteColor.r));
   CHECK(settings.keyboard.blackKeyWidth == Catch::Approx(0.6));
   CHECK(settings.keyboard.separatorWidth == Catch::Approx(0.015));
@@ -129,6 +134,7 @@ TEST_CASE("AppSettingsSerializer deserializes falling note outline settings", "[
     {"fallingNotes",
      {{"outlineColor", {0.6, 0.5, 0.4, 0.3}},
       {"outlineThicknessPixels", 4.0},
+      {"cornerRadiusPixels", 12.0},
       {"includeOutline", false}}},
   };
 
@@ -139,6 +145,7 @@ TEST_CASE("AppSettingsSerializer deserializes falling note outline settings", "[
   CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(0.4f));
   CHECK(settings.fallingNotes.outlineColor.a == Catch::Approx(0.3f));
   CHECK(settings.fallingNotes.outlineThicknessPixels == Catch::Approx(4.0));
+  CHECK(settings.fallingNotes.cornerRadiusPixels == Catch::Approx(12.0));
   CHECK_FALSE(settings.fallingNotes.includeOutline);
 }
 

@@ -188,6 +188,8 @@ void deserializeFallingNotesSettings(const nlohmann::json& json, FallingNotesSet
                                                             "outlineThicknessPixels",
                                                             settings.outlineThicknessPixels,
                                                             constraints.outlineThicknessPixels);
+  settings.cornerRadiusPixels = numberInRangeOrFallback(
+    json, "cornerRadiusPixels", settings.cornerRadiusPixels, constraints.cornerRadiusPixels);
   settings.includeOutline = boolOrFallback(json, "includeOutline", settings.includeOutline);
 }
 
@@ -257,6 +259,7 @@ nlohmann::json AppSettingsSerializer::serialize(const AppSettings& settings)
       {"activeNoteColor", colorToJson(settings.fallingNotes.activeNoteColor)},
       {"outlineColor", colorToJson(settings.fallingNotes.outlineColor)},
       {"outlineThicknessPixels", settings.fallingNotes.outlineThicknessPixels},
+      {"cornerRadiusPixels", settings.fallingNotes.cornerRadiusPixels},
       {"includeOutline", settings.fallingNotes.includeOutline}}},
     {"keyboard",
      {{"whiteKeyWidth", settings.keyboard.whiteKeyWidth},

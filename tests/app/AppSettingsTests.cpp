@@ -36,6 +36,7 @@ TEST_CASE("AppSettings defaults preserve the current runtime configuration", "[a
   CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(1.0f));
   CHECK(settings.fallingNotes.outlineColor.a == Catch::Approx(1.0f));
   CHECK(settings.fallingNotes.outlineThicknessPixels == Catch::Approx(1.0));
+  CHECK(settings.fallingNotes.cornerRadiusPixels == Catch::Approx(4.0));
   CHECK(settings.fallingNotes.includeOutline);
 
   CHECK(settings.keyboard.whiteKeyWidth == Catch::Approx(1.0));
@@ -60,6 +61,8 @@ TEST_CASE("AppSettings constraints expose editable setting ranges by group", "[a
   CHECK(constraints.fallingNotes.noteWidthScale.maximum == Catch::Approx(1.0));
   CHECK(constraints.fallingNotes.outlineThicknessPixels.minimum == Catch::Approx(0.0));
   CHECK(constraints.fallingNotes.outlineThicknessPixels.maximum == Catch::Approx(8.0));
+  CHECK(constraints.fallingNotes.cornerRadiusPixels.minimum == Catch::Approx(0.0));
+  CHECK(constraints.fallingNotes.cornerRadiusPixels.maximum == Catch::Approx(24.0));
 
   CHECK(constraints.keyboard.whiteKeyWidth.minimum == Catch::Approx(0.1));
   CHECK(constraints.keyboard.whiteKeyWidth.maximum == Catch::Approx(3.0));
@@ -89,6 +92,7 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   settings.fallingNotes.blackNoteWidthScale = 0.0;
   settings.fallingNotes.whiteNoteWidthScale = 2.0;
   settings.fallingNotes.outlineThicknessPixels = -1.0;
+  settings.fallingNotes.cornerRadiusPixels = 25.0;
   settings.keyboard.whiteKeyWidth = 0.0;
   settings.keyboard.whiteKeyHeight = -1.0;
   settings.keyboard.blackKeyWidth = 0.0;
@@ -110,6 +114,7 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   CHECK(sanitized.fallingNotes.blackNoteWidthScale == Catch::Approx(1.0));
   CHECK(sanitized.fallingNotes.whiteNoteWidthScale == Catch::Approx(0.92));
   CHECK(sanitized.fallingNotes.outlineThicknessPixels == Catch::Approx(1.0));
+  CHECK(sanitized.fallingNotes.cornerRadiusPixels == Catch::Approx(4.0));
   CHECK(sanitized.keyboard.whiteKeyWidth == Catch::Approx(1.0));
   CHECK(sanitized.keyboard.whiteKeyHeight == Catch::Approx(2.5));
   CHECK(sanitized.keyboard.blackKeyWidth == Catch::Approx(0.6));

@@ -160,18 +160,21 @@ void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands)
 
     if (std::holds_alternative<DrawStyledRectCommand>(command)) {
       const auto first = m_styledRectRenderer.vertexCount();
-      m_styledRectRenderer.appendRect(
-        std::get<DrawStyledRectCommand>(command), m_view, m_framebufferSize);
-      appendVertexBatch(
-        VertexBatchKind::StyledRect, first, m_styledRectRenderer.vertexCount() - first);
+      m_styledRectRenderer.appendRect(std::get<DrawStyledRectCommand>(command),
+                                      m_view,
+                                      m_framebufferSize);
+      appendVertexBatch(VertexBatchKind::StyledRect,
+                        first,
+                        m_styledRectRenderer.vertexCount() - first);
       continue;
     }
 
     if (std::holds_alternative<DrawLineCommand>(command)) {
       const auto& line = std::get<DrawLineCommand>(command);
       const auto first = m_rectRenderer.vertexCount();
-      m_rectRenderer.appendRect(
-        lineToPixelAlignedRect(line, m_view, m_framebufferSize), line.color, m_view);
+      m_rectRenderer.appendRect(lineToPixelAlignedRect(line, m_view, m_framebufferSize),
+                                line.color,
+                                m_view);
       appendVertexBatch(VertexBatchKind::Rect, first, m_rectRenderer.vertexCount() - first);
     }
   }

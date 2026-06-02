@@ -41,6 +41,14 @@ void checkColor(const Color& actual, const Color& expected)
   CHECK(actual.a == Catch::Approx(expected.a));
 }
 
+void checkCornerRadii(const DrawStyledRectCommand& command, const CornerRadiiPixels& expected)
+{
+  CHECK(command.cornerRadiiPixels.topLeft == Catch::Approx(expected.topLeft));
+  CHECK(command.cornerRadiiPixels.topRight == Catch::Approx(expected.topRight));
+  CHECK(command.cornerRadiiPixels.bottomRight == Catch::Approx(expected.bottomRight));
+  CHECK(command.cornerRadiiPixels.bottomLeft == Catch::Approx(expected.bottomLeft));
+}
+
 Color bottomGradientColorFor(const Color color)
 {
   return Color{.r = color.r * 0.7f, .g = color.g * 0.7f, .b = color.b * 0.7f, .a = color.a};
@@ -134,6 +142,7 @@ TEST_CASE("FallingNotesRenderAdapter adds note border styling when enabled",
     .activeNoteColor = Color{.r = 0.4f, .g = 0.5f, .b = 0.6f, .a = 1.0f},
     .outlineColor = Color{.r = 0.9f, .g = 0.8f, .b = 0.7f, .a = 1.0f},
     .outlineThicknessPixels = 2.0,
+    .cornerRadiusPixels = 7.0,
     .includeOutline = true,
   };
 
@@ -144,6 +153,53 @@ TEST_CASE("FallingNotesRenderAdapter adds note border styling when enabled",
   checkColor(note.topColor, style.noteColor);
   checkColor(note.borderColor, style.outlineColor);
   CHECK(note.borderThicknessPixels == Catch::Approx(2.0));
+  checkCornerRadii(note,
+                   CornerRadiiPixels{
+                     .topLeft = 7.0,
+                     .topRight = 7.0,
+                     .bottomRight = 7.0,
+                     .bottomLeft = 7.0,
+                   });
+}
+
+TEST_CASE("FallingNotesRenderAdapter squares clipped note edges", "[fallingnotes][render]")
+{
+  const FallingNotesLayoutResult layout{
+    .notes =
+      {
+        makeNoteLayout(1.0, 2.0, 3.0, 4.0),
+        makeNoteLayout(1.0, 8.0, 3.0, 2.0, false, true),
+        makeNoteLayout(1.0, 0.0, 3.0, 2.0, true, false),
+      },
+  };
+  constexpr FallingNotesRenderStyle style{
+    .cornerRadiusPixels = 7.0,
+  };
+
+  const auto commands = FallingNotesRenderAdapter::buildCommands(layout, style);
+
+  REQUIRE(commands.size() == 3);
+  checkCornerRadii(styledRectAt(commands, 0),
+                   CornerRadiiPixels{
+                     .topLeft = 7.0,
+                     .topRight = 7.0,
+                     .bottomRight = 7.0,
+                     .bottomLeft = 7.0,
+                   });
+  checkCornerRadii(styledRectAt(commands, 1),
+                   CornerRadiiPixels{
+                     .topLeft = 0.0,
+                     .topRight = 0.0,
+                     .bottomRight = 7.0,
+                     .bottomLeft = 7.0,
+                   });
+  checkCornerRadii(styledRectAt(commands, 2),
+                   CornerRadiiPixels{
+                     .topLeft = 7.0,
+                     .topRight = 7.0,
+                     .bottomRight = 0.0,
+                     .bottomLeft = 0.0,
+                   });
 }
 
 TEST_CASE("FallingNotesRenderAdapter skips note outlines when disabled or non-positive",

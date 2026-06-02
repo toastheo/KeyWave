@@ -90,6 +90,7 @@ bool OpenGLStyledRectRenderer::initialize()
   constexpr auto kBorderColorAttributeOffset = offsetof(Vertex, borderR);
   constexpr auto kBorderThicknessAttributeOffset = offsetof(Vertex, borderThicknessPixels);
   constexpr auto kRectSizeAttributeOffset = offsetof(Vertex, rectWidthPixels);
+  constexpr auto kCornerRadiiAttributeOffset = offsetof(Vertex, topLeftCornerRadiusPixels);
 
   // OpenGL 3.3 interprets pointer parameters below as VBO byte offsets.
   // NOLINTBEGIN(performance-no-int-to-ptr)
@@ -102,6 +103,8 @@ bool OpenGLStyledRectRenderer::initialize()
   const auto* borderThicknessAttributeOffset =
     reinterpret_cast<const void*>(kBorderThicknessAttributeOffset);
   const auto* rectSizeAttributeOffset = reinterpret_cast<const void*>(kRectSizeAttributeOffset);
+  const auto* cornerRadiiAttributeOffset =
+    reinterpret_cast<const void*>(kCornerRadiiAttributeOffset);
   // NOLINTEND(performance-no-int-to-ptr)
 
   glEnableVertexAttribArray(0);
@@ -130,6 +133,10 @@ bool OpenGLStyledRectRenderer::initialize()
   glEnableVertexAttribArray(6);
   glVertexAttribPointer(
     6, 2, GL_FLOAT, GL_FALSE, static_cast<int>(sizeof(Vertex)), rectSizeAttributeOffset);
+
+  glEnableVertexAttribArray(7);
+  glVertexAttribPointer(
+    7, 4, GL_FLOAT, GL_FALSE, static_cast<int>(sizeof(Vertex)), cornerRadiiAttributeOffset);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
@@ -185,16 +192,19 @@ void OpenGLStyledRectRenderer::appendRect(const DrawStyledRectCommand& command,
   const auto topLeftClip =
     worldToClip(Vec2{.x = command.rect.x, .y = command.rect.y + command.rect.height},
                 view.visibleWorldRect);
-  const auto topRightClip =
-    worldToClip(Vec2{.x = command.rect.x + command.rect.width,
-                     .y = command.rect.y + command.rect.height},
-                view.visibleWorldRect);
+  const auto topRightClip = worldToClip(Vec2{.x = command.rect.x + command.rect.width,
+                                             .y = command.rect.y + command.rect.height},
+                                        view.visibleWorldRect);
   const auto pixelSize = rectPixelSize(command.rect, view, framebufferSize);
   const auto borderThicknessPixels = positiveFiniteFloat(command.borderThicknessPixels);
+  const auto topLeftCornerRadiusPixels = positiveFiniteFloat(command.cornerRadiiPixels.topLeft);
+  const auto topRightCornerRadiusPixels = positiveFiniteFloat(command.cornerRadiiPixels.topRight);
+  const auto bottomRightCornerRadiusPixels =
+    positiveFiniteFloat(command.cornerRadiiPixels.bottomRight);
+  const auto bottomLeftCornerRadiusPixels =
+    positiveFiniteFloat(command.cornerRadiiPixels.bottomLeft);
 
-  const auto vertex = [&](const Vec2& clipPosition,
-                          const float localX,
-                          const float localY) {
+  const auto vertex = [&](const Vec2& clipPosition, const float localX, const float localY) {
     return Vertex{
       .x = static_cast<float>(clipPosition.x),
       .y = static_cast<float>(clipPosition.y),
@@ -215,6 +225,10 @@ void OpenGLStyledRectRenderer::appendRect(const DrawStyledRectCommand& command,
       .borderThicknessPixels = borderThicknessPixels,
       .rectWidthPixels = static_cast<float>(pixelSize.x),
       .rectHeightPixels = static_cast<float>(pixelSize.y),
+      .topLeftCornerRadiusPixels = topLeftCornerRadiusPixels,
+      .topRightCornerRadiusPixels = topRightCornerRadiusPixels,
+      .bottomRightCornerRadiusPixels = bottomRightCornerRadiusPixels,
+      .bottomLeftCornerRadiusPixels = bottomLeftCornerRadiusPixels,
     };
   };
 

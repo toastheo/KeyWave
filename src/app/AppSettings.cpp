@@ -103,6 +103,9 @@ FallingNotesSettings sanitizeFallingNotesSettings(FallingNotesSettings settings)
   if (!isFiniteInRange(settings.outlineThicknessPixels, constraints.outlineThicknessPixels)) {
     settings.outlineThicknessPixels = defaults.outlineThicknessPixels;
   }
+  if (!isFiniteInRange(settings.cornerRadiusPixels, constraints.cornerRadiusPixels)) {
+    settings.cornerRadiusPixels = defaults.cornerRadiusPixels;
+  }
 
   return settings;
 }

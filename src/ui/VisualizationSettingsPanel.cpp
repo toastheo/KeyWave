@@ -100,6 +100,7 @@ void renderFallingNotesSettings(FallingNotesSettings& settings)
                    constraints.noteHorizontalInset);
   editDoubleSlider("Black Note Width", settings.blackNoteWidthScale, constraints.noteWidthScale);
   editDoubleSlider("White Note Width", settings.whiteNoteWidthScale, constraints.noteWidthScale);
+  editDoubleSlider("Corner Radius", settings.cornerRadiusPixels, constraints.cornerRadiusPixels);
 
   ImGui::SeparatorText("Colors");
   editColor("Note", settings.noteColor);

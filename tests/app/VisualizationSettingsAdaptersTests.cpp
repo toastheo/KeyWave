@@ -28,6 +28,7 @@ TEST_CASE("Visualization settings adapters sanitize app settings into piano-roll
     .activeNoteColor = Color{.r = 0.1f, .g = 0.9f, .b = 0.2f, .a = 1.0f},
     .outlineColor = Color{.r = 0.8f, .g = 0.7f, .b = 0.6f, .a = 1.0f},
     .outlineThicknessPixels = 3.0,
+    .cornerRadiusPixels = 6.0,
     .includeOutline = true,
   };
   constexpr KeyboardSettings keyboardSettings{
@@ -61,6 +62,8 @@ TEST_CASE("Visualization settings adapters sanitize app settings into piano-roll
   checkColor(config.fallingNotesStyle.outlineColor, fallingNotesSettings.outlineColor);
   CHECK(config.fallingNotesStyle.outlineThicknessPixels ==
         Catch::Approx(fallingNotesSettings.outlineThicknessPixels));
+  CHECK(config.fallingNotesStyle.cornerRadiusPixels ==
+        Catch::Approx(fallingNotesSettings.cornerRadiusPixels));
   CHECK(config.fallingNotesStyle.includeOutline == fallingNotesSettings.includeOutline);
   CHECK(config.keyboardStyle.hitLineHeight == Catch::Approx(0.05));
   checkColor(config.keyboardStyle.hitLineColor, keyboardSettings.hitLineColor);
@@ -75,6 +78,7 @@ TEST_CASE("Visualization settings adapters fall back from invalid settings", "[a
   fallingNotesSettings.blackNoteWidthScale = 0.0;
   fallingNotesSettings.whiteNoteWidthScale = std::numeric_limits<double>::infinity();
   fallingNotesSettings.outlineThicknessPixels = std::numeric_limits<double>::infinity();
+  fallingNotesSettings.cornerRadiusPixels = -1.0;
 
   KeyboardSettings keyboardSettings;
   keyboardSettings.whiteKeyWidth = -1.0;
@@ -92,6 +96,8 @@ TEST_CASE("Visualization settings adapters fall back from invalid settings", "[a
         Catch::Approx(FallingNotesSettings{}.whiteNoteWidthScale));
   CHECK(config.fallingNotesStyle.outlineThicknessPixels ==
         Catch::Approx(FallingNotesSettings{}.outlineThicknessPixels));
+  CHECK(config.fallingNotesStyle.cornerRadiusPixels ==
+        Catch::Approx(FallingNotesSettings{}.cornerRadiusPixels));
   CHECK(config.keyboardLayout.whiteKeyWidth == Catch::Approx(KeyboardSettings{}.whiteKeyWidth));
 }
 

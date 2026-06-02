@@ -25,6 +25,7 @@ struct FallingNotesSettingsConstraints
   DoubleSettingRange noteHorizontalInset{.minimum = 0.0, .maximum = 0.5};
   DoubleSettingRange noteWidthScale{.minimum = 0.05, .maximum = 1.0};
   DoubleSettingRange outlineThicknessPixels{.minimum = 0.0, .maximum = 8.0};
+  DoubleSettingRange cornerRadiusPixels{.minimum = 0.0, .maximum = 24.0};
 };
 
 struct KeyboardSettingsConstraints

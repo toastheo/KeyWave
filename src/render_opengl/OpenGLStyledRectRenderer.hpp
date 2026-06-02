@@ -50,6 +50,10 @@ private:
     float borderThicknessPixels = 0.0f;
     float rectWidthPixels = 0.0f;
     float rectHeightPixels = 0.0f;
+    float topLeftCornerRadiusPixels = 0.0f;
+    float topRightCornerRadiusPixels = 0.0f;
+    float bottomRightCornerRadiusPixels = 0.0f;
+    float bottomLeftCornerRadiusPixels = 0.0f;
   };
 
   DiagnosticSink& m_diagnostics;
