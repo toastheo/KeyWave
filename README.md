@@ -51,7 +51,7 @@ Load a MIDI file at startup:
 Or windows:
 
 ```powershell
-.\build\Release\KeyWave.exe C:\Music\song.mid
+.\build\KeyWave.exe C:\Music\song.mid
 ```
 
 If the MIDI path is missing or invalid, KeyWave logs a warning and opens an
