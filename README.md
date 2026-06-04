@@ -4,6 +4,8 @@ KeyWave is a small work-in-progress desktop MIDI visualizer. It loads a MIDI fil
 turns note events into a piano-roll scene, and renders falling notes over a
 keyboard with OpenGL.
 
+<img width="1918" height="1008" alt="image" src="https://github.com/user-attachments/assets/a008dafa-709d-4c6a-a35d-aff2c075a11c" />
+
 ## Core Features
 
 - Load a midi file from the command line.
