@@ -77,10 +77,10 @@ The main test executable is `KeyWaveMidiTests`. Tests are discovered by Catch2.
 
 Vendored in `external/`:
 
-- [GLAD](https://github.com/dav1dde/glad)
-- [Dear ImGui](https://github.com/ocornut/imgui)
+- [GLAD 0.1.36](https://github.com/dav1dde/glad)
+- [Dear ImGui v1.92.8](https://github.com/ocornut/imgui)
 - [craigsapp/midifile](https://github.com/craigsapp/midifile)
-- [nlohmann/json](https://github.com/nlohmann/json)
+- [nlohmann/json 3.12.0](https://github.com/nlohmann/json)
 
 Fetched by CMake:
 
