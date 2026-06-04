@@ -85,7 +85,7 @@ Vendored in `external/`:
 Fetched by CMake:
 
 - [GLFW 3.4](https://github.com/glfw/glfw)
-- [Catch2 v3.11.0](https://github.com/catchorg/Catch2) for tests
+- [Catch2 v3.15.0](https://github.com/catchorg/Catch2) for tests
 
 ## License
 
