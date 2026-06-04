@@ -54,9 +54,6 @@ Or windows:
 .\build\KeyWave.exe C:\Music\song.mid
 ```
 
-If the MIDI path is missing or invalid, KeyWave logs a warning and opens an
-empty window.
-
 ## Controls
 
 | Input | Action |
@@ -80,15 +77,15 @@ The main test executable is `KeyWaveMidiTests`. Tests are discovered by Catch2.
 
 Vendored in `external/`:
 
-- GLAD
-- Dear ImGui
-- craigsapp/midifile
-- nlohmann/json
+- [GLAD](https://github.com/dav1dde/glad)
+- [Dear ImGui](https://github.com/ocornut/imgui)
+- [craigsapp/midifile](https://github.com/craigsapp/midifile)
+- [nlohmann/json](https://github.com/nlohmann/json)
 
 Fetched by CMake:
 
-- GLFW 3.4
-- Catch2 v3.11.0 for tests
+- [GLFW 3.4](https://github.com/glfw/glfw)
+- [Catch2 v3.11.0](https://github.com/catchorg/Catch2) for tests
 
 ## License
 
