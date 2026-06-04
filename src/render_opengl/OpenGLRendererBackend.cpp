@@ -1,8 +1,18 @@
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <sstream>
 #include <variant>
+
+namespace {
+
+GLADapiproc loadOpenGLProcAddress(void* userptr, const char* name)
+{
+  const auto loader = reinterpret_cast<NativeProcAddressLoader>(userptr);
+  return reinterpret_cast<GLADapiproc>(loader(name));
+}
+
+} // namespace
 
 OpenGLRendererBackend::OpenGLRendererBackend(const NativeProcAddressLoader procAddressLoader,
                                              const Color clearColor,
@@ -31,7 +41,8 @@ bool OpenGLRendererBackend::initialize()
     return false;
   }
 
-  if (gladLoadGLLoader(m_procAddressLoader) == 0) {
+  if (gladLoadGLUserPtr(loadOpenGLProcAddress,
+                        reinterpret_cast<void*>(m_procAddressLoader)) == 0) {
     reportError(m_diagnostics,
                 "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.");
     return false;

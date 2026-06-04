@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstddef>
 #include <filesystem>
-#include <glad/glad.h>
+#include <glad/gl.h>
 
 #ifndef KEYWAVE_SHADER_DIR
 #define KEYWAVE_SHADER_DIR "."

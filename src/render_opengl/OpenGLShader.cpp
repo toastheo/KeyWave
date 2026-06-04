@@ -1,6 +1,6 @@
 #include "render_opengl/OpenGLShader.hpp"
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 
 #include <cstddef>
 #include <fstream>

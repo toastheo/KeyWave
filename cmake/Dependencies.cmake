@@ -15,7 +15,7 @@ FetchContent_MakeAvailable(glfw)
 find_package(OpenGL REQUIRED)
 
 add_library(glad STATIC
-    ${PROJECT_SOURCE_DIR}/external/glad/src/glad.c
+    ${PROJECT_SOURCE_DIR}/external/glad/src/gl.c
 )
 
 target_include_directories(glad
