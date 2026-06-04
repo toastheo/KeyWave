@@ -3,3 +3,5 @@ imgui.ini
 
 assets/test-midi/**/*.mid
 assets/test-midi/**/*.midi
+
+build/
