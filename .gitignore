@@ -5,3 +5,6 @@ assets/test-midi/**/*.mid
 assets/test-midi/**/*.midi
 
 build/
+
+.superpowers/
+.worktrees/

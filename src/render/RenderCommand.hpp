@@ -11,6 +11,14 @@ struct DrawRectCommand
   Color color;
 };
 
+struct DrawTriangleCommand
+{
+  Vec2 a;
+  Vec2 b;
+  Vec2 c;
+  Color color;
+};
+
 struct CornerRadiiPixels
 {
   double topLeft = 0.0;
@@ -46,4 +54,5 @@ struct DrawLineCommand
   LineCap cap = LineCap::Butt;
 };
 
-using RenderCommand = std::variant<DrawRectCommand, DrawStyledRectCommand, DrawLineCommand>;
+using RenderCommand =
+  std::variant<DrawRectCommand, DrawStyledRectCommand, DrawLineCommand, DrawTriangleCommand>;

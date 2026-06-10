@@ -169,6 +169,14 @@ void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands)
       continue;
     }
 
+    if (std::holds_alternative<DrawTriangleCommand>(command)) {
+      const auto& triangle = std::get<DrawTriangleCommand>(command);
+      const auto first = m_rectRenderer.vertexCount();
+      m_rectRenderer.appendTriangle(triangle.a, triangle.b, triangle.c, triangle.color, m_view);
+      appendVertexBatch(VertexBatchKind::Rect, first, m_rectRenderer.vertexCount() - first);
+      continue;
+    }
+
     if (std::holds_alternative<DrawStyledRectCommand>(command)) {
       const auto first = m_styledRectRenderer.vertexCount();
       m_styledRectRenderer.appendRect(std::get<DrawStyledRectCommand>(command),

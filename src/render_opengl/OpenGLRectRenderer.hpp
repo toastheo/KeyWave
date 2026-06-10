@@ -23,6 +23,7 @@ public:
   void reserve(std::size_t vertexCount);
   [[nodiscard]] std::size_t vertexCount() const;
   void appendRect(const Rect& rect, const Color& color, const RendererView& view);
+  void appendTriangle(Vec2 a, Vec2 b, Vec2 c, const Color& color, const RendererView& view);
   void upload() const;
   void draw(int first, int count) const;
 

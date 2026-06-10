@@ -14,6 +14,14 @@ const DrawRectCommand& rectAt(const std::vector<RenderCommand>& commands, const 
   return std::get<DrawRectCommand>(commands[index]);
 }
 
+const DrawTriangleCommand& triangleAt(const std::vector<RenderCommand>& commands,
+                                      const std::size_t index)
+{
+  REQUIRE(index < commands.size());
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[index]));
+  return std::get<DrawTriangleCommand>(commands[index]);
+}
+
 void checkColor(const Color& actual, const Color& expected)
 {
   CHECK(actual.r == Catch::Approx(expected.r));
@@ -40,7 +48,7 @@ TEST_CASE("KeyboardRenderAdapter emits white keys, separators, black keys, then 
 
   const auto commands = KeyboardRenderAdapter::buildCommands(layout, style);
 
-  REQUIRE(commands.size() == 8);
+  REQUIRE(commands.size() == 14);
   checkColor(rectAt(commands, 0).color, style.whiteKeyColor);
   checkColor(rectAt(commands, 1).color, style.whiteKeyColor);
   checkColor(rectAt(commands, 2).color, style.whiteKeyColor);
@@ -55,13 +63,97 @@ TEST_CASE("KeyboardRenderAdapter emits white keys, separators, black keys, then 
   CHECK(firstSeparator.from.y == Catch::Approx(-layout.height));
   CHECK(firstSeparator.to.y == Catch::Approx(0.0));
   CHECK(firstSeparator.thickness == Catch::Approx(style.separatorThicknessPixels));
-  checkColor(rectAt(commands, 5).color, style.blackKeyColor);
-  checkColor(rectAt(commands, 6).color, style.blackKeyColor);
-  checkColor(rectAt(commands, 7).color, style.hitLineColor);
-  CHECK(rectAt(commands, 7).rect.x == Catch::Approx(0.0));
-  CHECK(rectAt(commands, 7).rect.y == Catch::Approx(0.0));
-  CHECK(rectAt(commands, 7).rect.width == Catch::Approx(layout.width));
-  CHECK(rectAt(commands, 7).rect.height == Catch::Approx(style.hitLineHeight));
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[5]));
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[6]));
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[7]));
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[8]));
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[9]));
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[10]));
+  checkColor(rectAt(commands, 11).color, style.blackKeyColor);
+  checkColor(rectAt(commands, 12).color, style.blackKeyColor);
+  checkColor(rectAt(commands, 13).color, style.hitLineColor);
+  CHECK(rectAt(commands, 13).rect.x == Catch::Approx(0.0));
+  CHECK(rectAt(commands, 13).rect.y == Catch::Approx(0.0));
+  CHECK(rectAt(commands, 13).rect.width == Catch::Approx(layout.width));
+  CHECK(rectAt(commands, 13).rect.height == Catch::Approx(style.hitLineHeight));
+}
+
+TEST_CASE("KeyboardRenderAdapter emits aligned black bottom cut masks for white keys",
+          "[keyboard][render]")
+{
+  KeyboardLayoutResult const layout{
+    .whiteKeys =
+      {
+        PianoKeyLayout{
+          .pitch = 60,
+          .kind = PianoKeyKind::White,
+          .rect = Rect{.x = 2.0, .y = -2.5, .width = 1.0, .height = 2.5},
+          .active = false,
+          .velocity = 0,
+        },
+      },
+    .blackKeys = {},
+    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
+    .width = 1.0,
+    .height = 2.5,
+  };
+  constexpr KeyboardRenderStyle style{
+    .includeSeparators = false,
+    .includeHitLine = false,
+  };
+
+  const auto commands = KeyboardRenderAdapter::buildCommands(layout, style);
+
+  REQUIRE(commands.size() == 3);
+  REQUIRE(std::holds_alternative<DrawRectCommand>(commands[0]));
+  const auto& leftCut = triangleAt(commands, 1);
+  const auto& rightCut = triangleAt(commands, 2);
+
+  checkColor(leftCut.color, Color{.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1.0f});
+  checkColor(rightCut.color, Color{.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1.0f});
+
+  CHECK(leftCut.a.x == Catch::Approx(2.0));
+  CHECK(leftCut.a.y == Catch::Approx(-2.5));
+  CHECK(leftCut.b.x == Catch::Approx(2.0));
+  CHECK(leftCut.b.y == Catch::Approx(-2.2));
+  CHECK(leftCut.c.x == Catch::Approx(2.12));
+  CHECK(leftCut.c.y == Catch::Approx(-2.5));
+
+  CHECK(rightCut.a.x == Catch::Approx(3.0));
+  CHECK(rightCut.a.y == Catch::Approx(-2.5));
+  CHECK(rightCut.b.x == Catch::Approx(3.0));
+  CHECK(rightCut.b.y == Catch::Approx(-2.2));
+  CHECK(rightCut.c.x == Catch::Approx(2.88));
+  CHECK(rightCut.c.y == Catch::Approx(-2.5));
+}
+
+TEST_CASE("KeyboardRenderAdapter skips bottom cut masks for invalid white key rectangles",
+          "[keyboard][render]")
+{
+  KeyboardLayoutResult const layout{
+    .whiteKeys =
+      {
+        PianoKeyLayout{
+          .pitch = 60,
+          .kind = PianoKeyKind::White,
+          .rect = Rect{.x = 2.0, .y = -2.5, .width = 0.0, .height = 2.5},
+          .active = false,
+          .velocity = 0,
+        },
+      },
+    .blackKeys = {},
+    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
+    .width = 1.0,
+    .height = 2.5,
+  };
+  constexpr KeyboardRenderStyle style{
+    .includeSeparators = false,
+    .includeHitLine = false,
+  };
+
+  const auto commands = KeyboardRenderAdapter::buildCommands(layout, style);
+
+  CHECK(commands.empty());
 }
 
 TEST_CASE("KeyboardRenderAdapter uses active colors for active keys", "[keyboard][render]")
@@ -102,9 +194,11 @@ TEST_CASE("KeyboardRenderAdapter uses active colors for active keys", "[keyboard
 
   const auto commands = KeyboardRenderAdapter::buildCommands(layout, style);
 
-  REQUIRE(commands.size() == 2);
+  REQUIRE(commands.size() == 4);
   checkColor(rectAt(commands, 0).color, style.activeWhiteKeyColor);
-  checkColor(rectAt(commands, 1).color, style.activeBlackKeyColor);
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[1]));
+  REQUIRE(std::holds_alternative<DrawTriangleCommand>(commands[2]));
+  checkColor(rectAt(commands, 3).color, style.activeBlackKeyColor);
 }
 
 } // namespace

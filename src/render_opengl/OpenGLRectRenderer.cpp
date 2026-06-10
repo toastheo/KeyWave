@@ -1,5 +1,6 @@
 #include "render_opengl/OpenGLRectRenderer.hpp"
 
+#include <cmath>
 #include <cstddef>
 #include <filesystem>
 #include <glad/gl.h>
@@ -13,6 +14,11 @@ namespace {
 bool isValidRect(const Rect& rect)
 {
   return rect.width > 0.0 && rect.height > 0.0;
+}
+
+bool isFinitePoint(const Vec2& point)
+{
+  return std::isfinite(point.x) && std::isfinite(point.y);
 }
 
 std::filesystem::path shaderPath(const char* filename)
@@ -154,6 +160,40 @@ void OpenGLRectRenderer::appendRect(const Rect& rect, const Color& color, const 
   m_vertices.push_back(bottomLeft);
   m_vertices.push_back(topRight);
   m_vertices.push_back(topLeft);
+}
+
+void OpenGLRectRenderer::appendTriangle(const Vec2 a,
+                                        const Vec2 b,
+                                        const Vec2 c,
+                                        const Color& color,
+                                        const RendererView& view)
+{
+  if (!isFinitePoint(a) || !isFinitePoint(b) || !isFinitePoint(c)) {
+    return;
+  }
+
+  const auto aClip = worldToClip(a, view.visibleWorldRect);
+  const auto bClip = worldToClip(b, view.visibleWorldRect);
+  const auto cClip = worldToClip(c, view.visibleWorldRect);
+
+  m_vertices.push_back(Vertex{.x = static_cast<float>(aClip.x),
+                              .y = static_cast<float>(aClip.y),
+                              .r = color.r,
+                              .g = color.g,
+                              .b = color.b,
+                              .a = color.a});
+  m_vertices.push_back(Vertex{.x = static_cast<float>(bClip.x),
+                              .y = static_cast<float>(bClip.y),
+                              .r = color.r,
+                              .g = color.g,
+                              .b = color.b,
+                              .a = color.a});
+  m_vertices.push_back(Vertex{.x = static_cast<float>(cClip.x),
+                              .y = static_cast<float>(cClip.y),
+                              .r = color.r,
+                              .g = color.g,
+                              .b = color.b,
+                              .a = color.a});
 }
 
 void OpenGLRectRenderer::upload() const
