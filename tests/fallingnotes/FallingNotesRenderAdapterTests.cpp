@@ -162,7 +162,8 @@ TEST_CASE("FallingNotesRenderAdapter adds note border styling when enabled",
                    });
 }
 
-TEST_CASE("FallingNotesRenderAdapter squares clipped note edges", "[fallingnotes][render]")
+TEST_CASE("FallingNotesRenderAdapter keeps clipped note corners rounded",
+          "[fallingnotes][render]")
 {
   const FallingNotesLayoutResult layout{
     .notes =
@@ -188,8 +189,8 @@ TEST_CASE("FallingNotesRenderAdapter squares clipped note edges", "[fallingnotes
                    });
   checkCornerRadii(styledRectAt(commands, 1),
                    CornerRadiiPixels{
-                     .topLeft = 0.0,
-                     .topRight = 0.0,
+                     .topLeft = 7.0,
+                     .topRight = 7.0,
                      .bottomRight = 7.0,
                      .bottomLeft = 7.0,
                    });
@@ -197,8 +198,8 @@ TEST_CASE("FallingNotesRenderAdapter squares clipped note edges", "[fallingnotes
                    CornerRadiiPixels{
                      .topLeft = 7.0,
                      .topRight = 7.0,
-                     .bottomRight = 0.0,
-                     .bottomLeft = 0.0,
+                     .bottomRight = 7.0,
+                     .bottomLeft = 7.0,
                    });
 }
 

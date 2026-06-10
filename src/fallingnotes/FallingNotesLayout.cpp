@@ -138,9 +138,9 @@ FallingNotesLayoutResult FallingNotesLayout::build(const std::vector<QueriedNote
     result.notes.push_back(FallingNoteLayout{
       .note = note,
       .x = noteRect.x,
-      .y = visibleStartOffset * secondsToWorldScale,
+      .y = noteStartOffset * secondsToWorldScale,
       .width = noteRect.width,
-      .height = visibleHeight * secondsToWorldScale,
+      .height = note.durationSeconds * secondsToWorldScale,
       .visibleStartOffsetSeconds = visibleStartOffset,
       .visibleEndOffsetSeconds = visibleEndOffset,
       .clippedBottom = (noteStartOffset < minY),

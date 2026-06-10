@@ -71,7 +71,7 @@ TEST_CASE("FallingNotesLayout maps keyboard pitch rectangles and time from the h
   CHECK(result.notes[1].visibleEndOffsetSeconds == Catch::Approx(4.0));
 }
 
-TEST_CASE("FallingNotesLayout clips notes against visible past and lookahead",
+TEST_CASE("FallingNotesLayout keeps full note geometry when notes overlap the viewport",
           "[fallingnotes][layout]")
 {
   const std::vector queriedNotes{
@@ -96,8 +96,8 @@ TEST_CASE("FallingNotesLayout clips notes against visible past and lookahead",
   REQUIRE(result.notes.size() == 2);
 
   CHECK(result.notes[0].note.pitch == 60);
-  CHECK(result.notes[0].y == Catch::Approx(-2.0));
-  CHECK(result.notes[0].height == Catch::Approx(3.0));
+  CHECK(result.notes[0].y == Catch::Approx(-3.0));
+  CHECK(result.notes[0].height == Catch::Approx(4.0));
   CHECK(result.notes[0].visibleStartOffsetSeconds == Catch::Approx(-2.0));
   CHECK(result.notes[0].visibleEndOffsetSeconds == Catch::Approx(1.0));
   CHECK(result.notes[0].clippedBottom);
@@ -105,7 +105,7 @@ TEST_CASE("FallingNotesLayout clips notes against visible past and lookahead",
 
   CHECK(result.notes[1].note.pitch == 61);
   CHECK(result.notes[1].y == Catch::Approx(8.0));
-  CHECK(result.notes[1].height == Catch::Approx(2.0));
+  CHECK(result.notes[1].height == Catch::Approx(5.0));
   CHECK_FALSE(result.notes[1].clippedBottom);
   CHECK(result.notes[1].clippedTop);
 }

@@ -60,17 +60,14 @@ double borderThicknessFor(const FallingNotesRenderStyle& style)
   return positiveOrZero(style.outlineThicknessPixels);
 }
 
-CornerRadiiPixels cornerRadiiForNote(const FallingNoteLayout& noteLayout,
-                                     const FallingNotesRenderStyle& style)
+CornerRadiiPixels cornerRadiiForNote(const FallingNoteLayout&, const FallingNotesRenderStyle& style)
 {
   const auto radius = positiveOrZero(style.cornerRadiusPixels);
-  const auto topRadius = noteLayout.clippedTop ? 0.0 : radius;
-  const auto bottomRadius = noteLayout.clippedBottom ? 0.0 : radius;
   return CornerRadiiPixels{
-    .topLeft = topRadius,
-    .topRight = topRadius,
-    .bottomRight = bottomRadius,
-    .bottomLeft = bottomRadius,
+    .topLeft = radius,
+    .topRight = radius,
+    .bottomRight = radius,
+    .bottomLeft = radius,
   };
 }
 
