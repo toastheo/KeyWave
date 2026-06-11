@@ -24,7 +24,7 @@ On Linux, install the development packages needed. The CI build
 uses:
 
 ```sh
-apt-get install -y libgl1-mesa-dev libwayland-dev libxkbcommon-dev xorg-dev
+apt-get install -y libgl1-mesa-dev libwayland-dev libxkbcommon-dev libgtk-3-dev xorg-dev
 ```
 
 ## Build
@@ -87,6 +87,7 @@ Vendored in `external/`:
 Fetched by CMake:
 
 - [GLFW 3.4](https://github.com/glfw/glfw)
+- [nativefiledialog-extended v1.3.0](https://github.com/btzy/nativefiledialog-extended/)
 - [Catch2 v3.15.0](https://github.com/catchorg/Catch2) for tests
 
 ## License

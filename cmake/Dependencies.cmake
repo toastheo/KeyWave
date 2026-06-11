@@ -12,6 +12,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
+set(NFD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(NFD_INSTALL OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    nativefiledialog-extended
+    GIT_REPOSITORY https://github.com/btzy/nativefiledialog-extended.git
+    GIT_TAG fc168e8605bfa51aaec22ab0c4e46b9de665a437 # v1.3.0
+    GIT_SHALLOW FALSE
+)
+FetchContent_MakeAvailable(nativefiledialog-extended)
+
 find_package(OpenGL REQUIRED)
 
 add_library(glad STATIC

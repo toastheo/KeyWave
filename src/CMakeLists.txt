@@ -163,6 +163,7 @@ target_link_libraries(keywave_platform
         keywave_render
         PRIVATE
         glfw
+        nfd
 )
 
 add_library(keywave_app_core STATIC
