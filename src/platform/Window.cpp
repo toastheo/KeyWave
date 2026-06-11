@@ -26,6 +26,30 @@ void* loadOpenGLProcAddress(const char* name)
   return reinterpret_cast<void*>(glfwGetProcAddress(name));
 }
 
+GLFWmonitor* primaryMonitor(DiagnosticSink& diagnostics)
+{
+  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+  if (monitor == nullptr) {
+    reportError(diagnostics, "Failed to apply fullscreen mode: no primary monitor.");
+  }
+  return monitor;
+}
+
+const GLFWvidmode* currentVideoMode(GLFWmonitor* monitor, DiagnosticSink& diagnostics)
+{
+  const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+  if (mode == nullptr) {
+    reportError(diagnostics, "Failed to apply fullscreen mode: no primary monitor video mode.");
+  }
+  return mode;
+}
+
+void applyWindowedMode(GLFWwindow* window, const int x, const int y, const int width, const int height)
+{
+  glfwSetWindowAttrib(window, GLFW_DECORATED, GLFW_TRUE);
+  glfwSetWindowMonitor(window, nullptr, x, y, width, height, GLFW_DONT_CARE);
+}
+
 std::optional<Key> keyFromGlfwKey(const int key)
 {
   switch (key) {
@@ -85,6 +109,11 @@ bool Window::initialize(const WindowConfig& config, DiagnosticSink& diagnostics)
   }
 
   m_handle = window;
+  m_displayMode = PlatformWindowDisplayMode::Windowed;
+  m_windowedWidth = config.width;
+  m_windowedHeight = config.height;
+  glfwGetWindowPos(window, &m_windowedX, &m_windowedY);
+  glfwGetWindowSize(window, &m_windowedWidth, &m_windowedHeight);
   glfwSetWindowUserPointer(window, this);
   glfwSetKeyCallback(window,
                      [](GLFWwindow* callbackWindow, const int key, int, const int action, int) {
@@ -103,7 +132,7 @@ bool Window::initialize(const WindowConfig& config, DiagnosticSink& diagnostics)
                      });
 
   glfwMakeContextCurrent(window);
-  glfwSwapInterval(1);
+  glfwSwapInterval(config.vsyncEnabled ? 1 : 0);
 
   return true;
 }
@@ -165,4 +194,111 @@ void* Window::nativeHandle() const
 NativeProcAddressLoader Window::nativeProcAddressLoader()
 {
   return loadOpenGLProcAddress;
+}
+
+bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
+                            const int windowedWidth,
+                            const int windowedHeight,
+                            DiagnosticSink& diagnostics)
+{
+  if (m_handle == nullptr) {
+    return false;
+  }
+
+  auto* window = static_cast<GLFWwindow*>(m_handle);
+  const bool wasWindowed = m_displayMode == PlatformWindowDisplayMode::Windowed;
+  if (wasWindowed) {
+    glfwGetWindowPos(window, &m_windowedX, &m_windowedY);
+    glfwGetWindowSize(window, &m_windowedWidth, &m_windowedHeight);
+  }
+
+  if (mode == PlatformWindowDisplayMode::Windowed || !wasWindowed) {
+    m_windowedWidth = windowedWidth;
+    m_windowedHeight = windowedHeight;
+  }
+
+  switch (mode) {
+    case PlatformWindowDisplayMode::Windowed:
+      applyWindowedMode(window, m_windowedX, m_windowedY, m_windowedWidth, m_windowedHeight);
+      m_displayMode = mode;
+      return true;
+
+    case PlatformWindowDisplayMode::BorderlessFullscreen: {
+      GLFWmonitor* monitor = primaryMonitor(diagnostics);
+      if (monitor == nullptr) {
+        applyWindowedMode(window, m_windowedX, m_windowedY, m_windowedWidth, m_windowedHeight);
+        m_displayMode = PlatformWindowDisplayMode::Windowed;
+        return false;
+      }
+      const GLFWvidmode* modeInfo = currentVideoMode(monitor, diagnostics);
+      if (modeInfo == nullptr) {
+        applyWindowedMode(window, m_windowedX, m_windowedY, m_windowedWidth, m_windowedHeight);
+        m_displayMode = PlatformWindowDisplayMode::Windowed;
+        return false;
+      }
+      int monitorX = 0;
+      int monitorY = 0;
+      glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+      glfwSetWindowAttrib(window, GLFW_DECORATED, GLFW_FALSE);
+      glfwSetWindowMonitor(window,
+                           nullptr,
+                           monitorX,
+                           monitorY,
+                           modeInfo->width,
+                           modeInfo->height,
+                           modeInfo->refreshRate);
+      m_displayMode = mode;
+      return true;
+    }
+
+    case PlatformWindowDisplayMode::ExclusiveFullscreen: {
+      GLFWmonitor* monitor = primaryMonitor(diagnostics);
+      if (monitor == nullptr) {
+        applyWindowedMode(window, m_windowedX, m_windowedY, m_windowedWidth, m_windowedHeight);
+        m_displayMode = PlatformWindowDisplayMode::Windowed;
+        return false;
+      }
+      const GLFWvidmode* modeInfo = currentVideoMode(monitor, diagnostics);
+      if (modeInfo == nullptr) {
+        applyWindowedMode(window, m_windowedX, m_windowedY, m_windowedWidth, m_windowedHeight);
+        m_displayMode = PlatformWindowDisplayMode::Windowed;
+        return false;
+      }
+      glfwSetWindowAttrib(window, GLFW_DECORATED, GLFW_TRUE);
+      glfwSetWindowMonitor(window,
+                           monitor,
+                           0,
+                           0,
+                           modeInfo->width,
+                           modeInfo->height,
+                           modeInfo->refreshRate);
+      m_displayMode = mode;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void Window::setWindowedSize(const int width, const int height)
+{
+  m_windowedWidth = width;
+  m_windowedHeight = height;
+  if (m_handle == nullptr) {
+    return;
+  }
+
+  auto* window = static_cast<GLFWwindow*>(m_handle);
+  if (m_displayMode == PlatformWindowDisplayMode::Windowed) {
+    glfwSetWindowSize(window, width, height);
+  }
+}
+
+void Window::setVsyncEnabled(const bool enabled)
+{
+  if (m_handle != nullptr) {
+    auto* window = static_cast<GLFWwindow*>(m_handle);
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(enabled ? 1 : 0);
+  }
 }

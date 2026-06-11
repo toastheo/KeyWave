@@ -1,7 +1,10 @@
 #include "app/AppSettings.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <span>
+#include <string_view>
 
 #include "app/AppSettingsConstraints.hpp"
 
@@ -10,6 +13,34 @@ namespace {
 template <typename Settings> Settings defaultsFor()
 {
   return Settings{};
+}
+
+constexpr auto windowResolutions = std::array{
+  WindowResolutionPreset{.width = 1280, .height = 720, .label = "1280 x 720 (16:9)"},
+  WindowResolutionPreset{.width = 1600, .height = 900, .label = "1600 x 900 (16:9)"},
+  WindowResolutionPreset{.width = 1920, .height = 1080, .label = "1920 x 1080 (16:9)"},
+  WindowResolutionPreset{.width = 1920, .height = 1200, .label = "1920 x 1200 (16:10)"},
+};
+
+constexpr auto windowFpsLimits = std::array{
+  WindowFpsLimitPreset{.fpsLimit = unlimitedFpsLimit, .label = "Unlimited"},
+  WindowFpsLimitPreset{.fpsLimit = 30, .label = "30"},
+  WindowFpsLimitPreset{.fpsLimit = 60, .label = "60"},
+  WindowFpsLimitPreset{.fpsLimit = 120, .label = "120"},
+  WindowFpsLimitPreset{.fpsLimit = 144, .label = "144"},
+  WindowFpsLimitPreset{.fpsLimit = 240, .label = "240"},
+  WindowFpsLimitPreset{.fpsLimit = 360, .label = "360"},
+};
+
+bool isKnownDisplayMode(const WindowDisplayMode displayMode)
+{
+  switch (displayMode) {
+    case WindowDisplayMode::Windowed:
+    case WindowDisplayMode::BorderlessFullscreen:
+    case WindowDisplayMode::ExclusiveFullscreen:
+      return true;
+  }
+  return false;
 }
 
 bool isPositiveFinite(const double value)
@@ -41,6 +72,73 @@ bool isValidPitchRange(const PitchRange& range)
 
 } // namespace
 
+std::span<const WindowResolutionPreset> windowResolutionPresets()
+{
+  return windowResolutions;
+}
+
+std::span<const WindowFpsLimitPreset> windowFpsLimitPresets()
+{
+  return windowFpsLimits;
+}
+
+const char* windowDisplayModeLabel(const WindowDisplayMode displayMode)
+{
+  switch (displayMode) {
+    case WindowDisplayMode::Windowed:
+      return "Windowed";
+    case WindowDisplayMode::BorderlessFullscreen:
+      return "Borderless Fullscreen";
+    case WindowDisplayMode::ExclusiveFullscreen:
+      return "Exclusive Fullscreen";
+  }
+  return "Windowed";
+}
+
+const char* windowDisplayModeSettingValue(const WindowDisplayMode displayMode)
+{
+  switch (displayMode) {
+    case WindowDisplayMode::Windowed:
+      return "windowed";
+    case WindowDisplayMode::BorderlessFullscreen:
+      return "borderless_fullscreen";
+    case WindowDisplayMode::ExclusiveFullscreen:
+      return "exclusive_fullscreen";
+  }
+  return "windowed";
+}
+
+WindowDisplayMode windowDisplayModeFromSettingValue(const std::string_view value,
+                                                    const WindowDisplayMode fallback)
+{
+  if (value == "windowed") {
+    return WindowDisplayMode::Windowed;
+  }
+  if (value == "borderless_fullscreen") {
+    return WindowDisplayMode::BorderlessFullscreen;
+  }
+  if (value == "exclusive_fullscreen") {
+    return WindowDisplayMode::ExclusiveFullscreen;
+  }
+  return fallback;
+}
+
+bool isSupportedWindowResolution(const int width, const int height)
+{
+  return std::ranges::any_of(windowResolutions,
+                     [width, height](const WindowResolutionPreset& preset) {
+                       return preset.width == width && preset.height == height;
+                     });
+}
+
+bool isSupportedWindowFpsLimit(const int fpsLimit)
+{
+  return std::ranges::any_of(windowFpsLimits,
+                     [fpsLimit](const WindowFpsLimitPreset& preset) {
+                       return preset.fpsLimit == fpsLimit;
+                     });
+}
+
 WindowSettings sanitizeWindowSettings(WindowSettings settings)
 {
   const auto defaults = defaultsFor<WindowSettings>();
@@ -48,11 +146,15 @@ WindowSettings sanitizeWindowSettings(WindowSettings settings)
   if (settings.title.empty()) {
     settings.title = defaults.title;
   }
-  if (settings.width <= 0) {
-    settings.width = defaults.width;
+  if (!isKnownDisplayMode(settings.displayMode)) {
+    settings.displayMode = defaults.displayMode;
   }
-  if (settings.height <= 0) {
+  if (!isSupportedWindowResolution(settings.width, settings.height)) {
+    settings.width = defaults.width;
     settings.height = defaults.height;
+  }
+  if (!isSupportedWindowFpsLimit(settings.fpsLimit)) {
+    settings.fpsLimit = defaults.fpsLimit;
   }
 
   return settings;

@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <memory>
+#include <thread>
 #include <utility>
 
 #include "app/StartupDataLoader.hpp"
@@ -9,6 +10,23 @@
 #include "render_opengl/OpenGLRendererBackend.hpp"
 #include "ui/TransportControls.hpp"
 #include "ui/VisualizationSettingsPanel.hpp"
+
+namespace {
+
+PlatformWindowDisplayMode platformDisplayMode(const WindowDisplayMode displayMode)
+{
+  switch (displayMode) {
+    case WindowDisplayMode::Windowed:
+      return PlatformWindowDisplayMode::Windowed;
+    case WindowDisplayMode::BorderlessFullscreen:
+      return PlatformWindowDisplayMode::BorderlessFullscreen;
+    case WindowDisplayMode::ExclusiveFullscreen:
+      return PlatformWindowDisplayMode::ExclusiveFullscreen;
+  }
+  return PlatformWindowDisplayMode::Windowed;
+}
+
+} // namespace
 
 Application::Application(AppConfig config)
     : Application(std::move(config), consoleDiagnosticSink())
@@ -42,6 +60,7 @@ bool Application::initialize()
     .title = settings.window.title,
     .width = settings.window.width,
     .height = settings.window.height,
+    .vsyncEnabled = settings.window.vsyncEnabled,
   };
 
   if (!m_window.initialize(windowConfig, m_diagnostics)) {
@@ -71,6 +90,10 @@ bool Application::initialize()
     return false;
   }
 
+  m_appliedWindowSettings = settings.window;
+  m_appliedWindowSettings.displayMode = WindowDisplayMode::Windowed;
+  applyWindowSettings();
+
   if (m_visualizerController.hasTimeline()) {
     m_visualizerController.playbackTransport().play();
     reportInfo(m_diagnostics, "Playback started.");
@@ -78,6 +101,53 @@ bool Application::initialize()
 
   m_initialized = true;
   return true;
+}
+
+void Application::applyWindowSettings()
+{
+  auto& settings = m_visualizerController.settings();
+  const auto sanitizedWindow = sanitizeWindowSettings(settings.window);
+  settings.window = sanitizedWindow;
+
+  if (sanitizedWindow.displayMode != m_appliedWindowSettings.displayMode ||
+      sanitizedWindow.width != m_appliedWindowSettings.width ||
+      sanitizedWindow.height != m_appliedWindowSettings.height) {
+    const auto requestedMode = sanitizedWindow.displayMode;
+    const bool applied = m_window.setDisplayMode(platformDisplayMode(requestedMode),
+                                                 sanitizedWindow.width,
+                                                 sanitizedWindow.height,
+                                                 m_diagnostics);
+    if (!applied && requestedMode != WindowDisplayMode::Windowed) {
+      settings.window.displayMode = WindowDisplayMode::Windowed;
+    }
+  }
+
+  if (sanitizedWindow.displayMode == WindowDisplayMode::Windowed &&
+      (sanitizedWindow.width != m_appliedWindowSettings.width ||
+       sanitizedWindow.height != m_appliedWindowSettings.height)) {
+    m_window.setWindowedSize(sanitizedWindow.width, sanitizedWindow.height);
+  }
+
+  if (sanitizedWindow.vsyncEnabled != m_appliedWindowSettings.vsyncEnabled) {
+    m_window.setVsyncEnabled(sanitizedWindow.vsyncEnabled);
+  }
+
+  m_appliedWindowSettings = settings.window;
+}
+
+void Application::paceFrame(const std::chrono::steady_clock::time_point frameStart)
+{
+  const auto& windowSettings = m_visualizerController.settings().window;
+  if (windowSettings.vsyncEnabled || windowSettings.fpsLimit == unlimitedFpsLimit) {
+    return;
+  }
+
+  const auto targetFrameDuration =
+    std::chrono::duration<double>(1.0 / static_cast<double>(windowSettings.fpsLimit));
+  const auto elapsed = std::chrono::steady_clock::now() - frameStart;
+  if (elapsed < targetFrameDuration) {
+    std::this_thread::sleep_for(targetFrameDuration - elapsed);
+  }
 }
 
 void Application::run()
@@ -89,9 +159,9 @@ void Application::run()
   auto previousFrameTime = std::chrono::steady_clock::now();
 
   while (!m_window.shouldClose()) {
-    const auto currentFrameTime = std::chrono::steady_clock::now();
-    const std::chrono::duration<double> elapsed = currentFrameTime - previousFrameTime;
-    previousFrameTime = currentFrameTime;
+    const auto frameStartTime = std::chrono::steady_clock::now();
+    const std::chrono::duration<double> elapsed = frameStartTime - previousFrameTime;
+    previousFrameTime = frameStartTime;
 
     Window::pollEvents();
     const auto pressedKeys = m_window.consumePressedKeys();
@@ -109,6 +179,7 @@ void Application::run()
       VisualizationSettingsPanel::render(m_visualizerController.settings(),
                                          m_visualizerController.playbackTransport());
     }
+    applyWindowSettings();
     m_renderer->setClearColor(m_visualizerController.settings().renderer.clearColor);
 
     const auto scene = m_visualizerController.buildScene();
@@ -119,6 +190,7 @@ void Application::run()
     m_renderer->endFrame();
     m_imguiLayer.endFrame();
     m_window.swapBuffers();
+    paceFrame(frameStartTime);
   }
 }
 

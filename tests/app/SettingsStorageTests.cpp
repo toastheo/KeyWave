@@ -32,6 +32,11 @@ TEST_CASE("SettingsStorage saves settings and creates parent directories", "[app
 
   AppSettings settings;
   settings.renderer.clearColor = Color{.r = 0.7f, .g = 0.6f, .b = 0.5f, .a = 1.0f};
+  settings.window.displayMode = WindowDisplayMode::BorderlessFullscreen;
+  settings.window.width = 1920;
+  settings.window.height = 1080;
+  settings.window.vsyncEnabled = false;
+  settings.window.fpsLimit = 144;
 
   CHECK(storage.save(settings, path));
   CHECK(std::filesystem::exists(path));
@@ -41,6 +46,11 @@ TEST_CASE("SettingsStorage saves settings and creates parent directories", "[app
   CHECK(loaded->renderer.clearColor.r == Catch::Approx(0.7f));
   CHECK(loaded->renderer.clearColor.g == Catch::Approx(0.6f));
   CHECK(loaded->renderer.clearColor.b == Catch::Approx(0.5f));
+  CHECK(loaded->window.displayMode == WindowDisplayMode::BorderlessFullscreen);
+  CHECK(loaded->window.width == 1920);
+  CHECK(loaded->window.height == 1080);
+  CHECK_FALSE(loaded->window.vsyncEnabled);
+  CHECK(loaded->window.fpsLimit == 144);
 }
 
 TEST_CASE("SettingsStorage saves over existing settings", "[app][settings]")

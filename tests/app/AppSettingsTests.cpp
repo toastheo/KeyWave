@@ -1,6 +1,9 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <string_view>
+#include <array>
+
 #include "app/AppSettings.hpp"
 #include "app/AppSettingsConstraints.hpp"
 
@@ -10,39 +13,57 @@ TEST_CASE("AppSettings defaults preserve the current runtime configuration", "[a
 {
   const AppSettings settings;
 
-  CHECK(settings.window.title == "KeyWave");
-  CHECK(settings.window.width == 1280);
-  CHECK(settings.window.height == 720);
+  SECTION("window defaults")
+  {
+    CHECK(settings.window.title == "KeyWave");
+    CHECK(settings.window.width == 1280);
+    CHECK(settings.window.height == 720);
+    CHECK(settings.window.displayMode == WindowDisplayMode::Windowed);
+    CHECK(settings.window.vsyncEnabled);
+    CHECK(settings.window.fpsLimit == 60);
+  }
 
-  CHECK(settings.renderer.clearColor.r == Catch::Approx(0.025f));
-  CHECK(settings.renderer.clearColor.g == Catch::Approx(0.03f));
-  CHECK(settings.renderer.clearColor.b == Catch::Approx(0.04f));
-  CHECK(settings.renderer.clearColor.a == Catch::Approx(1.0f));
+  SECTION("renderer defaults")
+  {
+    CHECK(settings.renderer.clearColor.r == Catch::Approx(0.025f));
+    CHECK(settings.renderer.clearColor.g == Catch::Approx(0.03f));
+    CHECK(settings.renderer.clearColor.b == Catch::Approx(0.04f));
+    CHECK(settings.renderer.clearColor.a == Catch::Approx(1.0f));
+  }
 
-  CHECK(settings.playbackControls.seekStepSeconds == Catch::Approx(5.0));
-  CHECK(settings.playbackControls.minPlaybackRate == Catch::Approx(0.25));
-  CHECK(settings.playbackControls.maxPlaybackRate == Catch::Approx(4.0));
-  CHECK(settings.playbackControls.playbackRateStep == Catch::Approx(0.25));
+  SECTION("playback control defaults")
+  {
+    CHECK(settings.playbackControls.seekStepSeconds == Catch::Approx(5.0));
+    CHECK(settings.playbackControls.minPlaybackRate == Catch::Approx(0.25));
+    CHECK(settings.playbackControls.maxPlaybackRate == Catch::Approx(4.0));
+    CHECK(settings.playbackControls.playbackRateStep == Catch::Approx(0.25));
+  }
 
-  CHECK(settings.fallingNotes.pitchRange.minPitch == 21);
-  CHECK(settings.fallingNotes.pitchRange.maxPitch == 108);
-  CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));
-  CHECK(settings.fallingNotes.visiblePastSeconds == Catch::Approx(0.0));
-  CHECK(settings.fallingNotes.noteHorizontalInset == Catch::Approx(0.04));
-  CHECK(settings.fallingNotes.blackNoteWidthScale == Catch::Approx(1.0));
-  CHECK(settings.fallingNotes.whiteNoteWidthScale == Catch::Approx(0.92));
-  CHECK(settings.fallingNotes.outlineColor.r == Catch::Approx(1.0f));
-  CHECK(settings.fallingNotes.outlineColor.g == Catch::Approx(1.0f));
-  CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(1.0f));
-  CHECK(settings.fallingNotes.outlineColor.a == Catch::Approx(1.0f));
-  CHECK(settings.fallingNotes.outlineThicknessPixels == Catch::Approx(1.0));
-  CHECK(settings.fallingNotes.cornerRadiusPixels == Catch::Approx(4.0));
-  CHECK(settings.fallingNotes.includeOutline);
+  SECTION("falling notes defaults")
+  {
+    CHECK(settings.fallingNotes.pitchRange.minPitch == 21);
+    CHECK(settings.fallingNotes.pitchRange.maxPitch == 108);
+    CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));
+    CHECK(settings.fallingNotes.visiblePastSeconds == Catch::Approx(0.0));
+    CHECK(settings.fallingNotes.noteHorizontalInset == Catch::Approx(0.04));
+    CHECK(settings.fallingNotes.blackNoteWidthScale == Catch::Approx(1.0));
+    CHECK(settings.fallingNotes.whiteNoteWidthScale == Catch::Approx(0.92));
+    CHECK(settings.fallingNotes.outlineColor.r == Catch::Approx(1.0f));
+    CHECK(settings.fallingNotes.outlineColor.g == Catch::Approx(1.0f));
+    CHECK(settings.fallingNotes.outlineColor.b == Catch::Approx(1.0f));
+    CHECK(settings.fallingNotes.outlineColor.a == Catch::Approx(1.0f));
+    CHECK(settings.fallingNotes.outlineThicknessPixels == Catch::Approx(1.0));
+    CHECK(settings.fallingNotes.cornerRadiusPixels == Catch::Approx(4.0));
+    CHECK(settings.fallingNotes.includeOutline);
+  }
 
-  CHECK(settings.keyboard.whiteKeyWidth == Catch::Approx(1.0));
-  CHECK(settings.keyboard.whiteKeyHeight == Catch::Approx(2.5));
-  CHECK(settings.keyboard.blackKeyWidth == Catch::Approx(0.6));
-  CHECK(settings.keyboard.blackKeyHeight == Catch::Approx(1.55));
+  SECTION("keyboard defaults")
+  {
+    CHECK(settings.keyboard.whiteKeyWidth == Catch::Approx(1.0));
+    CHECK(settings.keyboard.whiteKeyHeight == Catch::Approx(2.5));
+    CHECK(settings.keyboard.blackKeyWidth == Catch::Approx(0.6));
+    CHECK(settings.keyboard.blackKeyHeight == Catch::Approx(1.55));
+  }
 }
 
 TEST_CASE("AppSettings constraints expose editable setting ranges by group", "[app][settings]")
@@ -74,6 +95,64 @@ TEST_CASE("AppSettings constraints expose editable setting ranges by group", "[a
   CHECK(constraints.keyboard.separatorWidth.maximum == Catch::Approx(8.0));
   CHECK(constraints.keyboard.hitLineHeight.minimum == Catch::Approx(0.005));
   CHECK(constraints.keyboard.hitLineHeight.maximum == Catch::Approx(0.25));
+}
+
+TEST_CASE("Window setting presets expose resolution and frame limit options", "[app][settings]")
+{
+  const auto resolutions = windowResolutionPresets();
+  REQUIRE(resolutions.size() == 4);
+  CHECK(resolutions[0].width == 1280);
+  CHECK(resolutions[0].height == 720);
+  CHECK(std::string_view{resolutions[0].label} == "1280 x 720 (16:9)");
+  CHECK(resolutions[3].width == 1920);
+  CHECK(resolutions[3].height == 1200);
+  CHECK(std::string_view{resolutions[3].label} == "1920 x 1200 (16:10)");
+
+  const auto fpsLimits = windowFpsLimitPresets();
+  REQUIRE(fpsLimits.size() == 7);
+  CHECK(fpsLimits[0].fpsLimit == unlimitedFpsLimit);
+  CHECK(std::string_view{fpsLimits[0].label} == "Unlimited");
+  CHECK(fpsLimits[2].fpsLimit == 60);
+  CHECK(fpsLimits[6].fpsLimit == 360);
+}
+
+TEST_CASE("Window display mode helpers expose labels and setting values", "[app][settings]")
+{
+  struct DisplayModeTestCase
+  {
+    WindowDisplayMode mode;
+    const char* label;
+    const char* settingValue;
+  };
+
+  constexpr std::array displayModes{
+    DisplayModeTestCase{
+      .mode = WindowDisplayMode::Windowed,
+      .label = "Windowed",
+      .settingValue = "windowed",
+    },
+    DisplayModeTestCase{
+      .mode = WindowDisplayMode::BorderlessFullscreen,
+      .label = "Borderless Fullscreen",
+      .settingValue = "borderless_fullscreen",
+    },
+    DisplayModeTestCase{
+      .mode = WindowDisplayMode::ExclusiveFullscreen,
+      .label = "Exclusive Fullscreen",
+      .settingValue = "exclusive_fullscreen",
+    },
+  };
+
+  for (const auto& displayMode : displayModes) {
+    CHECK(std::string_view{windowDisplayModeLabel(displayMode.mode)} == displayMode.label);
+    CHECK(std::string_view{windowDisplayModeSettingValue(displayMode.mode)} ==
+          displayMode.settingValue);
+    CHECK(windowDisplayModeFromSettingValue(displayMode.settingValue) == displayMode.mode);
+  }
+
+  CHECK(windowDisplayModeFromSettingValue("unsupported",
+                                          WindowDisplayMode::ExclusiveFullscreen) ==
+        WindowDisplayMode::ExclusiveFullscreen);
 }
 
 TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][settings]")
@@ -119,6 +198,44 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   CHECK(sanitized.keyboard.whiteKeyHeight == Catch::Approx(2.5));
   CHECK(sanitized.keyboard.blackKeyWidth == Catch::Approx(0.6));
   CHECK(sanitized.keyboard.blackKeyHeight == Catch::Approx(1.55));
+}
+
+TEST_CASE("sanitizeAppSettings clamps invalid window settings", "[app][settings]")
+{
+  AppSettings settings;
+  settings.window.title.clear();
+  settings.window.displayMode = static_cast<WindowDisplayMode>(999);
+  settings.window.width = 1234;
+  settings.window.height = 567;
+  settings.window.fpsLimit = 75;
+  settings.window.vsyncEnabled = false;
+
+  const auto sanitized = sanitizeAppSettings(settings);
+
+  CHECK(sanitized.window.title == "KeyWave");
+  CHECK(sanitized.window.displayMode == WindowDisplayMode::Windowed);
+  CHECK(sanitized.window.width == 1280);
+  CHECK(sanitized.window.height == 720);
+  CHECK_FALSE(sanitized.window.vsyncEnabled);
+  CHECK(sanitized.window.fpsLimit == 60);
+}
+
+TEST_CASE("sanitizeAppSettings preserves valid non-default window settings", "[app][settings]")
+{
+  AppSettings settings;
+  settings.window.displayMode = WindowDisplayMode::BorderlessFullscreen;
+  settings.window.width = 1920;
+  settings.window.height = 1200;
+  settings.window.vsyncEnabled = false;
+  settings.window.fpsLimit = 144;
+
+  const auto sanitized = sanitizeAppSettings(settings);
+
+  CHECK(sanitized.window.displayMode == WindowDisplayMode::BorderlessFullscreen);
+  CHECK(sanitized.window.width == 1920);
+  CHECK(sanitized.window.height == 1200);
+  CHECK_FALSE(sanitized.window.vsyncEnabled);
+  CHECK(sanitized.window.fpsLimit == 144);
 }
 
 TEST_CASE(

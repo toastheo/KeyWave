@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 
 #include "app/AppConfig.hpp"
@@ -25,6 +26,9 @@ public:
   void shutdown();
 
 private:
+  void applyWindowSettings();
+  void paceFrame(std::chrono::steady_clock::time_point frameStart);
+
   AppConfig m_config;
   DiagnosticSink& m_diagnostics;
   SettingsStorage m_settingsStorage;
@@ -32,6 +36,7 @@ private:
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
   ImGuiLayer m_imguiLayer;
+  WindowSettings m_appliedWindowSettings;
   bool m_initialized = false;
   bool m_settingsSaved = false;
 };

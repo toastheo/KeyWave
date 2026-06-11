@@ -71,6 +71,17 @@ bool editColor(const char* label, Color& color)
   return true;
 }
 
+template <typename Body> void disabledIf(const bool disabled, Body body)
+{
+  if (disabled) {
+    ImGui::BeginDisabled();
+  }
+  body();
+  if (disabled) {
+    ImGui::EndDisabled();
+  }
+}
+
 void renderPlaybackSettings(AppSettings const& settings, PlaybackTransport& transport)
 {
   const auto playbackSettings = sanitizePlaybackControlSettings(settings.playbackControls);
@@ -167,6 +178,78 @@ void renderRendererSettings(RendererSettings& settings)
   editColor("Clear Color", settings.clearColor);
 }
 
+void renderWindowSettings(WindowSettings& settings)
+{
+  const auto displayMode = settings.displayMode;
+  if (const char* displayModeLabel = windowDisplayModeLabel(displayMode);
+      ImGui::BeginCombo("Display Mode", displayModeLabel)) {
+    for (const auto mode : {WindowDisplayMode::Windowed,
+                            WindowDisplayMode::BorderlessFullscreen,
+                            WindowDisplayMode::ExclusiveFullscreen}) {
+      const bool selected = mode == displayMode;
+      if (ImGui::Selectable(windowDisplayModeLabel(mode), selected)) {
+        settings.displayMode = mode;
+      }
+      if (selected) {
+        ImGui::SetItemDefaultFocus();
+      }
+    }
+    ImGui::EndCombo();
+  }
+
+  const auto resolutions = windowResolutionPresets();
+  const auto currentResolution =
+    std::ranges::find_if(resolutions,
+                 [&settings](const WindowResolutionPreset& preset) {
+                   return preset.width == settings.width && preset.height == settings.height;
+                 });
+  const char* resolutionLabel =
+    currentResolution != resolutions.end() ? currentResolution->label : "1280 x 720 (16:9)";
+
+  disabledIf(settings.displayMode != WindowDisplayMode::Windowed,
+             [&settings, resolutions, resolutionLabel] {
+               if (ImGui::BeginCombo("Resolution", resolutionLabel)) {
+                 for (const auto& preset : resolutions) {
+                   const bool selected =
+                     settings.width == preset.width && settings.height == preset.height;
+                   if (ImGui::Selectable(preset.label, selected)) {
+                     settings.width = preset.width;
+                     settings.height = preset.height;
+                   }
+                   if (selected) {
+                     ImGui::SetItemDefaultFocus();
+                   }
+                 }
+                 ImGui::EndCombo();
+               }
+             });
+
+  ImGui::Checkbox("Vsync", &settings.vsyncEnabled);
+
+  const auto fpsLimits = windowFpsLimitPresets();
+  const auto currentLimit =
+    std::ranges::find_if(fpsLimits,
+                 [&settings](const WindowFpsLimitPreset& preset) {
+                   return preset.fpsLimit == settings.fpsLimit;
+                 });
+  const char* fpsLimitLabel = currentLimit != fpsLimits.end() ? currentLimit->label : "60";
+
+  disabledIf(settings.vsyncEnabled, [&settings, fpsLimits, fpsLimitLabel] {
+    if (ImGui::BeginCombo("FPS Limit", fpsLimitLabel)) {
+      for (const auto& preset : fpsLimits) {
+        const bool selected = settings.fpsLimit == preset.fpsLimit;
+        if (ImGui::Selectable(preset.label, selected)) {
+          settings.fpsLimit = preset.fpsLimit;
+        }
+        if (selected) {
+          ImGui::SetItemDefaultFocus();
+        }
+      }
+      ImGui::EndCombo();
+    }
+  });
+}
+
 } // namespace
 
 void VisualizationSettingsPanel::render(AppSettings& settings, PlaybackTransport& transport)
@@ -178,6 +261,10 @@ void VisualizationSettingsPanel::render(AppSettings& settings, PlaybackTransport
 
   if (ImGui::Button("Reset Settings")) {
     resetAppSettingsToDefaults(settings);
+  }
+
+  if (ImGui::CollapsingHeader("Window", ImGuiTreeNodeFlags_DefaultOpen)) {
+    renderWindowSettings(settings.window);
   }
 
   if (ImGui::CollapsingHeader("Playback", ImGuiTreeNodeFlags_DefaultOpen)) {

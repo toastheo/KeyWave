@@ -121,6 +121,31 @@ bool boolOrFallback(const nlohmann::json& object, const char* key, const bool fa
   return iter->get<bool>();
 }
 
+void deserializeWindowSettings(const nlohmann::json& json, WindowSettings& settings)
+{
+  if (!json.is_object()) {
+    return;
+  }
+
+  if (const auto iter = json.find("title"); iter != json.end() && iter->is_string()) {
+    settings.title = iter->get<std::string>();
+  }
+  if (const auto iter = json.find("displayMode"); iter != json.end() && iter->is_string()) {
+    settings.displayMode =
+      windowDisplayModeFromSettingValue(iter->get<std::string>(), settings.displayMode);
+  }
+  if (const auto iter = json.find("width"); iter != json.end() && iter->is_number_integer()) {
+    settings.width = iter->get<int>();
+  }
+  if (const auto iter = json.find("height"); iter != json.end() && iter->is_number_integer()) {
+    settings.height = iter->get<int>();
+  }
+  settings.vsyncEnabled = boolOrFallback(json, "vsyncEnabled", settings.vsyncEnabled);
+  if (const auto iter = json.find("fpsLimit"); iter != json.end() && iter->is_number_integer()) {
+    settings.fpsLimit = iter->get<int>();
+  }
+}
+
 void deserializeRendererSettings(const nlohmann::json& json, RendererSettings& settings)
 {
   if (!json.is_object()) {
@@ -242,6 +267,13 @@ nlohmann::json AppSettingsSerializer::serialize(const AppSettings& settings)
 {
   return nlohmann::json{
     {"version", settingsSchemaVersion},
+    {"window",
+     {{"title", settings.window.title},
+      {"displayMode", windowDisplayModeSettingValue(settings.window.displayMode)},
+      {"width", settings.window.width},
+      {"height", settings.window.height},
+      {"vsyncEnabled", settings.window.vsyncEnabled},
+      {"fpsLimit", settings.window.fpsLimit}}},
     {"renderer", {{"clearColor", colorToJson(settings.renderer.clearColor)}}},
     {"playbackControls",
      {{"seekStepSeconds", settings.playbackControls.seekStepSeconds},
@@ -288,6 +320,9 @@ AppSettings AppSettingsSerializer::deserialize(const nlohmann::json& json,
     return sanitizeAppSettings(settings);
   }
 
+  if (const auto iter = json.find("window"); iter != json.end()) {
+    deserializeWindowSettings(*iter, settings.window);
+  }
   if (const auto iter = json.find("renderer"); iter != json.end()) {
     deserializeRendererSettings(*iter, settings.renderer);
   }

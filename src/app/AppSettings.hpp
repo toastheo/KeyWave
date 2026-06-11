@@ -1,14 +1,42 @@
 #pragma once
 
+#include <cstdint>
+#include <span>
 #include <string>
+#include <string_view>
 
 #include "core/CoreTypes.hpp"
+
+enum class WindowDisplayMode : std::uint8_t
+{
+  Windowed,
+  BorderlessFullscreen,
+  ExclusiveFullscreen,
+};
+
+struct WindowResolutionPreset
+{
+  int width = 0;
+  int height = 0;
+  const char* label = "";
+};
+
+struct WindowFpsLimitPreset
+{
+  int fpsLimit = 0;
+  const char* label = "";
+};
+
+inline constexpr int unlimitedFpsLimit = 0;
 
 struct WindowSettings
 {
   std::string title = "KeyWave";
+  WindowDisplayMode displayMode = WindowDisplayMode::Windowed;
   int width = 1280;
   int height = 720;
+  bool vsyncEnabled = true;
+  int fpsLimit = 60;
 };
 
 struct RendererSettings
@@ -73,6 +101,15 @@ struct AppSettings
 };
 
 [[nodiscard]] WindowSettings sanitizeWindowSettings(WindowSettings settings);
+[[nodiscard]] std::span<const WindowResolutionPreset> windowResolutionPresets();
+[[nodiscard]] std::span<const WindowFpsLimitPreset> windowFpsLimitPresets();
+[[nodiscard]] const char* windowDisplayModeLabel(WindowDisplayMode displayMode);
+[[nodiscard]] const char* windowDisplayModeSettingValue(WindowDisplayMode displayMode);
+[[nodiscard]] WindowDisplayMode windowDisplayModeFromSettingValue(
+  std::string_view value,
+  WindowDisplayMode fallback = WindowDisplayMode::Windowed);
+[[nodiscard]] bool isSupportedWindowResolution(int width, int height);
+[[nodiscard]] bool isSupportedWindowFpsLimit(int fpsLimit);
 [[nodiscard]] PlaybackControlSettings sanitizePlaybackControlSettings(
   PlaybackControlSettings settings);
 [[nodiscard]] FallingNotesSettings sanitizeFallingNotesSettings(FallingNotesSettings settings);
