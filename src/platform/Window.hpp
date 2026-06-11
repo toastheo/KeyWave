@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -13,6 +14,12 @@ enum class PlatformWindowDisplayMode : std::uint8_t
   BorderlessFullscreen,
   ExclusiveFullscreen,
 };
+
+[[nodiscard]] constexpr bool shouldRestoreNativeWindowBeforeChangingDisplayMode(
+  const PlatformWindowDisplayMode currentMode, const bool nativeWindowMaximized)
+{
+  return currentMode == PlatformWindowDisplayMode::Windowed && nativeWindowMaximized;
+}
 
 struct WindowConfig
 {
@@ -49,7 +56,7 @@ public:
                                     int windowedHeight,
                                     DiagnosticSink& diagnostics = nullDiagnosticSink());
   void setWindowedSize(int width, int height);
-  void setVsyncEnabled(bool enabled);
+  void setVsyncEnabled(bool enabled) const;
 
 private:
   void* m_handle = nullptr;

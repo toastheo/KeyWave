@@ -51,6 +51,20 @@ void applyWindowedMode(
   glfwSetWindowMonitor(window, nullptr, x, y, width, height, GLFW_DONT_CARE);
 }
 
+bool isNativeWindowMaximized(GLFWwindow* window)
+{
+  return glfwGetWindowAttrib(window, GLFW_MAXIMIZED) == GLFW_TRUE;
+}
+
+void restoreNativeWindowBeforeChangingDisplayModeIfNeeded(
+  GLFWwindow* window, const PlatformWindowDisplayMode currentMode)
+{
+  if (shouldRestoreNativeWindowBeforeChangingDisplayMode(currentMode,
+                                                         isNativeWindowMaximized(window))) {
+    glfwRestoreWindow(window);
+  }
+}
+
 std::optional<Key> keyFromGlfwKey(const int key)
 {
   switch (key) {
@@ -208,6 +222,7 @@ bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
 
   auto* window = static_cast<GLFWwindow*>(m_handle);
   const bool wasWindowed = m_displayMode == PlatformWindowDisplayMode::Windowed;
+  restoreNativeWindowBeforeChangingDisplayModeIfNeeded(window, m_displayMode);
   if (wasWindowed) {
     glfwGetWindowPos(window, &m_windowedX, &m_windowedY);
     glfwGetWindowSize(window, &m_windowedWidth, &m_windowedHeight);
@@ -286,11 +301,12 @@ void Window::setWindowedSize(const int width, const int height)
 
   auto* window = static_cast<GLFWwindow*>(m_handle);
   if (m_displayMode == PlatformWindowDisplayMode::Windowed) {
+    restoreNativeWindowBeforeChangingDisplayModeIfNeeded(window, m_displayMode);
     glfwSetWindowSize(window, width, height);
   }
 }
 
-void Window::setVsyncEnabled(const bool enabled)
+void Window::setVsyncEnabled(const bool enabled) const
 {
   if (m_handle != nullptr) {
     auto* window = static_cast<GLFWwindow*>(m_handle);

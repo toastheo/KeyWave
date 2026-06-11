@@ -40,6 +40,7 @@ add_executable(KeyWaveMidiTests
         fallingnotes/FallingNotesRenderAdapterTests.cpp
         fallingnotes/PianoRollSceneBuilderTests.cpp
         playback/PlaybackTransportTests.cpp
+        platform/WindowStateTests.cpp
         render/RendererViewTests.cpp
 )
 
