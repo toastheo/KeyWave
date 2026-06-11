@@ -46,6 +46,16 @@ void VisualizerController::setTimeline(std::optional<MidiTimeline> timeline)
   m_timeline = std::move(timeline);
 }
 
+void VisualizerController::replaceTimelineAndPlayFromStart(std::optional<MidiTimeline> timeline)
+{
+  setTimeline(std::move(timeline));
+  m_playbackTransport.seek(0.0);
+  if (m_timeline.has_value()) {
+    m_playbackTransport.play();
+    m_skipNextUpdateAfterTimelineReplacement = true;
+  }
+}
+
 bool VisualizerController::hasTimeline() const
 {
   return m_timeline.has_value();
@@ -93,6 +103,12 @@ void VisualizerController::handleInput(const std::span<const Key> pressedKeys,
 
 void VisualizerController::update(const double elapsedSeconds)
 {
+  if (m_skipNextUpdateAfterTimelineReplacement) {
+    m_skipNextUpdateAfterTimelineReplacement = false;
+    m_playbackTransport.seek(0.0);
+    return;
+  }
+
   m_playbackTransport.update(elapsedSeconds);
 }
 

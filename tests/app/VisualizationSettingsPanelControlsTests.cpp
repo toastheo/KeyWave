@@ -2,6 +2,7 @@
 
 #include "app/VisualizationSettingsPanelControls.hpp"
 #include "input/Key.hpp"
+#include "ui/VisualizationSettingsPanel.hpp"
 
 namespace {
 
@@ -25,6 +26,13 @@ TEST_CASE("Visualization settings panel controls ignore other keys",
   applyVisualizationSettingsPanelControl(Key::Space, visible);
 
   CHECK(visible);
+}
+
+TEST_CASE("Visualization settings panel actions default to none",
+          "[app][visualization-settings]")
+{
+  CHECK(VisualizationSettingsPanelAction::None !=
+        VisualizationSettingsPanelAction::LoadMidiFile);
 }
 
 } // namespace

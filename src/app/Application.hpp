@@ -11,6 +11,8 @@
 #include "render/RendererBackend.hpp"
 #include "ui/ImGuiLayer.hpp"
 
+enum class VisualizationSettingsPanelAction;
+
 class Application
 {
 public:
@@ -27,6 +29,7 @@ public:
 
 private:
   void applyWindowSettings();
+  void handleVisualizationSettingsPanelAction(VisualizationSettingsPanelAction action);
   void paceFrame(std::chrono::steady_clock::time_point frameStart);
 
   AppConfig m_config;

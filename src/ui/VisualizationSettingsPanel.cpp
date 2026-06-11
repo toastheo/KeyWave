@@ -254,12 +254,15 @@ void renderWindowSettings(WindowSettings& settings)
 
 } // namespace
 
-void VisualizationSettingsPanel::render(AppSettings& settings, PlaybackTransport& transport)
+VisualizationSettingsPanelAction VisualizationSettingsPanel::render(AppSettings& settings,
+                                                                     PlaybackTransport& transport)
 {
   if (!ImGui::Begin("Visualization Settings")) {
     ImGui::End();
-    return;
+    return VisualizationSettingsPanelAction::None;
   }
+
+  auto action = VisualizationSettingsPanelAction::None;
 
   if (ImGui::Button("Reset Settings")) {
     resetAppSettingsToDefaults(settings);
@@ -271,6 +274,9 @@ void VisualizationSettingsPanel::render(AppSettings& settings, PlaybackTransport
 
   if (ImGui::CollapsingHeader("Playback", ImGuiTreeNodeFlags_DefaultOpen)) {
     renderPlaybackSettings(settings, transport);
+    if (ImGui::Button("Load MIDI...")) {
+      action = VisualizationSettingsPanelAction::LoadMidiFile;
+    }
   }
 
   if (ImGui::CollapsingHeader("Falling Notes", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -286,4 +292,5 @@ void VisualizationSettingsPanel::render(AppSettings& settings, PlaybackTransport
   }
 
   ImGui::End();
+  return action;
 }

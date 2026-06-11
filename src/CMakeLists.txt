@@ -148,6 +148,8 @@ target_link_libraries(keywave_playback
 
 add_library(keywave_platform STATIC
         input/Key.hpp
+        platform/MidiFileDialog.hpp
+        platform/MidiFileDialog.cpp
         platform/Window.hpp
         platform/Window.cpp
 )

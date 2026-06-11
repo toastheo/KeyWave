@@ -2,8 +2,25 @@
 
 #include <MidiFile.h>
 
+#include <array>
 #include <filesystem>
+#include <fstream>
 #include <sstream>
+
+namespace {
+
+bool hasStandardMidiHeader(const std::filesystem::path& path)
+{
+  std::ifstream input(path, std::ios::binary);
+  std::array<char, 4> header{};
+  if (!input.read(header.data(), header.size())) {
+    return false;
+  }
+
+  return header == std::array{'M', 'T', 'h', 'd'};
+}
+
+} // namespace
 
 std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::path& path,
                                                          DiagnosticSink& diagnostics) {
@@ -19,6 +36,14 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
 
   if (!std::filesystem::is_regular_file(path)) {
     reportError(diagnostics, "MIDI load failed: path is not a regular file: " + path.string());
+    return std::nullopt;
+  }
+
+  // MIDI files always start with a "MThd" header.
+  // We check this header to reject obvious non-midi files before we
+  // perform any operations on this file.
+  if (!hasStandardMidiHeader(path)) {
+    reportError(diagnostics, "MIDI load failed: could not parse file: " + path.string());
     return std::nullopt;
   }
 

@@ -66,4 +66,33 @@ TEST_CASE("VisualizerController builds an empty scene without a timeline", "[app
   CHECK(controller.buildScene().empty());
 }
 
+TEST_CASE("VisualizerController replaces the timeline and starts playback from the beginning",
+          "[app][visualizer]")
+{
+  MidiTimeline original;
+  original.addNote(
+    Note{.pitch = 60, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 8.0});
+
+  MidiTimeline replacement;
+  replacement.addNote(
+    Note{.pitch = 72, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 2.0});
+
+  VisualizerController controller;
+  controller.setTimeline(std::move(original));
+  controller.playbackTransport().play();
+  controller.update(3.0);
+
+  controller.replaceTimelineAndPlayFromStart(std::move(replacement));
+
+  CHECK(controller.durationSeconds() == Catch::Approx(2.0));
+  CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(0.0));
+  CHECK(controller.playbackTransport().state() == PlaybackState::Playing);
+
+  controller.update(3.0);
+  CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(0.0));
+
+  controller.update(0.25);
+  CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(0.25));
+}
+
 } // namespace

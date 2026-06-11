@@ -4,11 +4,24 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <chrono>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include "diagnostics/RecordingDiagnosticSink.hpp"
 
 namespace {
 
 constexpr double kTimeTolerance = 0.0001;
+
+std::filesystem::path nextUnsupportedFilePath()
+{
+  const auto now = std::chrono::steady_clock::now().time_since_epoch().count();
+  return std::filesystem::temp_directory_path() /
+         ("keywave-unsupported-midi-test-" + std::to_string(now) + ".png");
+}
 
 TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]") {
   auto fixture = midi_fixtures::tempoChangeMidi();
@@ -76,6 +89,30 @@ TEST_CASE("MidiFileLoader returns nullopt for missing files", "[midi]") {
   const auto timeline = MidiFileLoader::loadFromFile(missingPath);
 
   CHECK(!timeline.has_value());
+}
+
+TEST_CASE("MidiFileLoader returns nullopt and reports an error for unsupported file contents",
+          "[midi]")
+{
+  const auto unsupportedPath = nextUnsupportedFilePath();
+  {
+    std::ofstream output(unsupportedPath, std::ios::binary);
+    output << "not a midi file";
+  }
+
+  RecordingDiagnosticSink diagnostics;
+  std::ostringstream capturedStderr;
+  auto* const originalStderr = std::cerr.rdbuf(capturedStderr.rdbuf());
+  const auto timeline = MidiFileLoader::loadFromFile(unsupportedPath, diagnostics);
+  std::cerr.rdbuf(originalStderr);
+
+  CHECK(!timeline.has_value());
+  CHECK(capturedStderr.str().empty());
+  REQUIRE_FALSE(diagnostics.messages.empty());
+  CHECK(diagnostics.messages.back().severity == DiagnosticSeverity::Error);
+  CHECK(diagnostics.messages.back().message.find("could not parse file") != std::string::npos);
+
+  std::filesystem::remove(unsupportedPath);
 }
 
 } // namespace

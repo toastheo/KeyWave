@@ -23,6 +23,7 @@ public:
   [[nodiscard]] const AppSettings& settings() const;
 
   void setTimeline(std::optional<MidiTimeline> timeline);
+  void replaceTimelineAndPlayFromStart(std::optional<MidiTimeline> timeline);
   [[nodiscard]] bool hasTimeline() const;
   [[nodiscard]] double durationSeconds() const;
 
@@ -42,4 +43,5 @@ private:
   std::optional<MidiTimeline> m_timeline;
   PlaybackTransport m_playbackTransport;
   bool m_visualizationSettingsPanelVisible = true;
+  bool m_skipNextUpdateAfterTimelineReplacement = false;
 };

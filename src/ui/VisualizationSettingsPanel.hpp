@@ -3,8 +3,15 @@
 #include "app/AppSettings.hpp"
 #include "playback/PlaybackTransport.hpp"
 
+enum class VisualizationSettingsPanelAction
+{
+  None,
+  LoadMidiFile,
+};
+
 class VisualizationSettingsPanel
 {
 public:
-  static void render(AppSettings& settings, PlaybackTransport& transport);
+  static VisualizationSettingsPanelAction render(AppSettings& settings,
+                                                 PlaybackTransport& transport);
 };

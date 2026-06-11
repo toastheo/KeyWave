@@ -2,10 +2,13 @@
 
 #include <chrono>
 #include <memory>
+#include <sstream>
 #include <thread>
 #include <utility>
 
 #include "app/StartupDataLoader.hpp"
+#include "midi/MidiFileLoader.hpp"
+#include "platform/MidiFileDialog.hpp"
 #include "render/RenderScene.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 #include "ui/TransportControls.hpp"
@@ -135,6 +138,33 @@ void Application::applyWindowSettings()
   m_appliedWindowSettings = settings.window;
 }
 
+void Application::handleVisualizationSettingsPanelAction(
+  const VisualizationSettingsPanelAction action)
+{
+  if (action != VisualizationSettingsPanelAction::LoadMidiFile) {
+    return;
+  }
+
+  const auto midiPath = MidiFileDialog::open(m_diagnostics);
+  if (!midiPath.has_value()) {
+    return;
+  }
+
+  reportInfo(m_diagnostics, "Loading MIDI file: " + midiPath->string());
+  auto timeline = MidiFileLoader::loadFromFile(*midiPath, m_diagnostics);
+  if (!timeline.has_value()) {
+    reportWarning(m_diagnostics,
+                  "Warning: MIDI loading failed. Keeping the current MIDI file.");
+    return;
+  }
+
+  std::ostringstream message;
+  message << "Loaded MIDI file with " << timeline->notes().size()
+          << " note(s), length=" << timeline->lengthSeconds() << "s.";
+  reportInfo(m_diagnostics, message.str());
+  m_visualizerController.replaceTimelineAndPlayFromStart(std::move(timeline));
+}
+
 void Application::paceFrame(const std::chrono::steady_clock::time_point frameStart)
 {
   const auto& windowSettings = m_visualizerController.settings().window;
@@ -176,8 +206,10 @@ void Application::run()
                               m_visualizerController.durationSeconds(),
                               m_visualizerController.settings().playbackControls);
     if (m_visualizerController.visualizationSettingsPanelVisible()) {
-      VisualizationSettingsPanel::render(m_visualizerController.settings(),
-                                         m_visualizerController.playbackTransport());
+      const auto settingsAction =
+        VisualizationSettingsPanel::render(m_visualizerController.settings(),
+                                           m_visualizerController.playbackTransport());
+      handleVisualizationSettingsPanelAction(settingsAction);
     }
     applyWindowSettings();
     m_renderer->setClearColor(m_visualizerController.settings().renderer.clearColor);
