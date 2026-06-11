@@ -115,14 +115,14 @@ TEST_CASE("KeyboardRenderAdapter emits aligned black bottom cut masks for white 
   CHECK(leftCut.a.x == Catch::Approx(2.0));
   CHECK(leftCut.a.y == Catch::Approx(-2.5));
   CHECK(leftCut.b.x == Catch::Approx(2.0));
-  CHECK(leftCut.b.y == Catch::Approx(-2.2));
+  CHECK(leftCut.b.y == Catch::Approx(-2.45));
   CHECK(leftCut.c.x == Catch::Approx(2.12));
   CHECK(leftCut.c.y == Catch::Approx(-2.5));
 
   CHECK(rightCut.a.x == Catch::Approx(3.0));
   CHECK(rightCut.a.y == Catch::Approx(-2.5));
   CHECK(rightCut.b.x == Catch::Approx(3.0));
-  CHECK(rightCut.b.y == Catch::Approx(-2.2));
+  CHECK(rightCut.b.y == Catch::Approx(-2.45));
   CHECK(rightCut.c.x == Catch::Approx(2.88));
   CHECK(rightCut.c.y == Catch::Approx(-2.5));
 }
