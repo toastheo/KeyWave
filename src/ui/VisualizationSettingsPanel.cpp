@@ -255,7 +255,7 @@ void renderWindowSettings(WindowSettings& settings)
 } // namespace
 
 VisualizationSettingsPanelAction VisualizationSettingsPanel::render(AppSettings& settings,
-                                                                     PlaybackTransport& transport)
+                                                                    PlaybackTransport& transport)
 {
   if (!ImGui::Begin("Visualization Settings")) {
     ImGui::End();

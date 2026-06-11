@@ -153,8 +153,7 @@ void Application::handleVisualizationSettingsPanelAction(
   reportInfo(m_diagnostics, "Loading MIDI file: " + midiPath->string());
   auto timeline = MidiFileLoader::loadFromFile(*midiPath, m_diagnostics);
   if (!timeline.has_value()) {
-    reportWarning(m_diagnostics,
-                  "Warning: MIDI loading failed. Keeping the current MIDI file.");
+    reportWarning(m_diagnostics, "Warning: MIDI loading failed. Keeping the current MIDI file.");
     return;
   }
 

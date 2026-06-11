@@ -70,8 +70,7 @@ TEST_CASE("VisualizerController replaces the timeline and starts playback from t
           "[app][visualizer]")
 {
   MidiTimeline original;
-  original.addNote(
-    Note{.pitch = 60, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 8.0});
+  original.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 8.0});
 
   MidiTimeline replacement;
   replacement.addNote(
