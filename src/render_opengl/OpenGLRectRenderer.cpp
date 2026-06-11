@@ -162,11 +162,8 @@ void OpenGLRectRenderer::appendRect(const Rect& rect, const Color& color, const 
   m_vertices.push_back(topLeft);
 }
 
-void OpenGLRectRenderer::appendTriangle(const Vec2 a,
-                                        const Vec2 b,
-                                        const Vec2 c,
-                                        const Color& color,
-                                        const RendererView& view)
+void OpenGLRectRenderer::appendTriangle(
+  const Vec2 a, const Vec2 b, const Vec2 c, const Color& color, const RendererView& view)
 {
   if (!isFinitePoint(a) || !isFinitePoint(b) || !isFinitePoint(c)) {
     return;

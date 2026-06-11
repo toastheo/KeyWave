@@ -161,8 +161,7 @@ TEST_CASE("AppSettingsSerializer deserializes window settings", "[app][settings]
   CHECK(settings.window.fpsLimit == unlimitedFpsLimit);
 }
 
-TEST_CASE("AppSettingsSerializer falls back for invalid window settings",
-          "[app][settings]")
+TEST_CASE("AppSettingsSerializer falls back for invalid window settings", "[app][settings]")
 {
   const nlohmann::json json = {
     {"window",

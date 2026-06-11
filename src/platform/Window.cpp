@@ -44,7 +44,8 @@ const GLFWvidmode* currentVideoMode(GLFWmonitor* monitor, DiagnosticSink& diagno
   return mode;
 }
 
-void applyWindowedMode(GLFWwindow* window, const int x, const int y, const int width, const int height)
+void applyWindowedMode(
+  GLFWwindow* window, const int x, const int y, const int width, const int height)
 {
   glfwSetWindowAttrib(window, GLFW_DECORATED, GLFW_TRUE);
   glfwSetWindowMonitor(window, nullptr, x, y, width, height, GLFW_DONT_CARE);
@@ -265,13 +266,8 @@ bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
         return false;
       }
       glfwSetWindowAttrib(window, GLFW_DECORATED, GLFW_TRUE);
-      glfwSetWindowMonitor(window,
-                           monitor,
-                           0,
-                           0,
-                           modeInfo->width,
-                           modeInfo->height,
-                           modeInfo->refreshRate);
+      glfwSetWindowMonitor(
+        window, monitor, 0, 0, modeInfo->width, modeInfo->height, modeInfo->refreshRate);
       m_displayMode = mode;
       return true;
     }

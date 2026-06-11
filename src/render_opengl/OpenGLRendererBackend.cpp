@@ -41,8 +41,7 @@ bool OpenGLRendererBackend::initialize()
     return false;
   }
 
-  if (gladLoadGLUserPtr(loadOpenGLProcAddress,
-                        reinterpret_cast<void*>(m_procAddressLoader)) == 0) {
+  if (gladLoadGLUserPtr(loadOpenGLProcAddress, reinterpret_cast<void*>(m_procAddressLoader)) == 0) {
     reportError(m_diagnostics,
                 "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.");
     return false;

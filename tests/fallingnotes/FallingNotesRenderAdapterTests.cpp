@@ -162,8 +162,7 @@ TEST_CASE("FallingNotesRenderAdapter adds note border styling when enabled",
                    });
 }
 
-TEST_CASE("FallingNotesRenderAdapter keeps clipped note corners rounded",
-          "[fallingnotes][render]")
+TEST_CASE("FallingNotesRenderAdapter keeps clipped note corners rounded", "[fallingnotes][render]")
 {
   const FallingNotesLayoutResult layout{
     .notes =

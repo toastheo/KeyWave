@@ -106,8 +106,7 @@ struct AppSettings
 [[nodiscard]] const char* windowDisplayModeLabel(WindowDisplayMode displayMode);
 [[nodiscard]] const char* windowDisplayModeSettingValue(WindowDisplayMode displayMode);
 [[nodiscard]] WindowDisplayMode windowDisplayModeFromSettingValue(
-  std::string_view value,
-  WindowDisplayMode fallback = WindowDisplayMode::Windowed);
+  std::string_view value, WindowDisplayMode fallback = WindowDisplayMode::Windowed);
 [[nodiscard]] bool isSupportedWindowResolution(int width, int height);
 [[nodiscard]] bool isSupportedWindowFpsLimit(int fpsLimit);
 [[nodiscard]] PlaybackControlSettings sanitizePlaybackControlSettings(

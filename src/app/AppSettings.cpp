@@ -126,17 +126,16 @@ WindowDisplayMode windowDisplayModeFromSettingValue(const std::string_view value
 bool isSupportedWindowResolution(const int width, const int height)
 {
   return std::ranges::any_of(windowResolutions,
-                     [width, height](const WindowResolutionPreset& preset) {
-                       return preset.width == width && preset.height == height;
-                     });
+                             [width, height](const WindowResolutionPreset& preset) {
+                               return preset.width == width && preset.height == height;
+                             });
 }
 
 bool isSupportedWindowFpsLimit(const int fpsLimit)
 {
-  return std::ranges::any_of(windowFpsLimits,
-                     [fpsLimit](const WindowFpsLimitPreset& preset) {
-                       return preset.fpsLimit == fpsLimit;
-                     });
+  return std::ranges::any_of(windowFpsLimits, [fpsLimit](const WindowFpsLimitPreset& preset) {
+    return preset.fpsLimit == fpsLimit;
+  });
 }
 
 WindowSettings sanitizeWindowSettings(WindowSettings settings)

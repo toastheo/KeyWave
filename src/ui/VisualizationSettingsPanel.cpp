@@ -199,19 +199,18 @@ void renderWindowSettings(WindowSettings& settings)
 
   const auto resolutions = windowResolutionPresets();
   const auto currentResolution =
-    std::ranges::find_if(resolutions,
-                 [&settings](const WindowResolutionPreset& preset) {
-                   return preset.width == settings.width && preset.height == settings.height;
-                 });
-  const char* resolutionLabel =
-    currentResolution != resolutions.end() ? currentResolution->label : "1280 x 720 (16:9)";
+    std::ranges::find_if(resolutions, [&settings](const WindowResolutionPreset& preset) {
+      return preset.width == settings.width && preset.height == settings.height;
+    });
+  const char* resolutionLabel = currentResolution != resolutions.end() ? currentResolution->label
+                                                                       : "1280 x 720 (16:9)";
 
   disabledIf(settings.displayMode != WindowDisplayMode::Windowed,
              [&settings, resolutions, resolutionLabel] {
                if (ImGui::BeginCombo("Resolution", resolutionLabel)) {
                  for (const auto& preset : resolutions) {
-                   const bool selected =
-                     settings.width == preset.width && settings.height == preset.height;
+                   const bool selected = settings.width == preset.width &&
+                                         settings.height == preset.height;
                    if (ImGui::Selectable(preset.label, selected)) {
                      settings.width = preset.width;
                      settings.height = preset.height;
@@ -228,10 +227,9 @@ void renderWindowSettings(WindowSettings& settings)
 
   const auto fpsLimits = windowFpsLimitPresets();
   const auto currentLimit =
-    std::ranges::find_if(fpsLimits,
-                 [&settings](const WindowFpsLimitPreset& preset) {
-                   return preset.fpsLimit == settings.fpsLimit;
-                 });
+    std::ranges::find_if(fpsLimits, [&settings](const WindowFpsLimitPreset& preset) {
+      return preset.fpsLimit == settings.fpsLimit;
+    });
   const char* fpsLimitLabel = currentLimit != fpsLimits.end() ? currentLimit->label : "60";
 
   disabledIf(settings.vsyncEnabled, [&settings, fpsLimits, fpsLimitLabel] {

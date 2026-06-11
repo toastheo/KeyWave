@@ -38,8 +38,8 @@ void appendTriangle(std::vector<RenderCommand>& commands,
                     const Vec2 c,
                     const Color& color)
 {
-  if (!std::isfinite(a.x) || !std::isfinite(a.y) || !std::isfinite(b.x) ||
-      !std::isfinite(b.y) || !std::isfinite(c.x) || !std::isfinite(c.y)) {
+  if (!std::isfinite(a.x) || !std::isfinite(a.y) || !std::isfinite(b.x) || !std::isfinite(b.y) ||
+      !std::isfinite(c.x) || !std::isfinite(c.y)) {
     return;
   }
 
