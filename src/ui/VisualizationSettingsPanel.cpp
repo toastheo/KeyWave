@@ -180,6 +180,9 @@ void renderRendererSettings(RendererSettings& settings)
 
 void renderWindowSettings(WindowSettings& settings)
 {
+  // TODO: Fix switching display modes at runtime on linux.
+  //       This is bugged for some reason.
+#if !defined(__linux__)
   const auto displayMode = settings.displayMode;
   if (const char* displayModeLabel = windowDisplayModeLabel(displayMode);
       ImGui::BeginCombo("Display Mode", displayModeLabel)) {
@@ -196,6 +199,7 @@ void renderWindowSettings(WindowSettings& settings)
     }
     ImGui::EndCombo();
   }
+#endif
 
   const auto resolutions = windowResolutionPresets();
   const auto currentResolution =
