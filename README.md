@@ -11,7 +11,7 @@ keyboard with OpenGL.
 - Load a midi file from the command line.
 - Render a falling-notes piano-roll view.
 - Playback controls.
-- Ajust visualization.
+- Adjust visualization.
 
 ## Requirements
 
