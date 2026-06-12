@@ -21,9 +21,9 @@ void reportGlfwError(const char* fallbackMessage, DiagnosticSink& diagnostics)
   }
 }
 
-void* loadOpenGLProcAddress(const char* name)
+NativeProcAddress loadOpenGLProcAddress(const char* name)
 {
-  return reinterpret_cast<void*>(glfwGetProcAddress(name));
+  return glfwGetProcAddress(name);
 }
 
 GLFWmonitor* primaryMonitor(DiagnosticSink& diagnostics)

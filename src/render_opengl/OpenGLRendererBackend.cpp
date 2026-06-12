@@ -9,7 +9,7 @@ namespace {
 GLADapiproc loadOpenGLProcAddress(void* userptr, const char* name)
 {
   const auto* loader = static_cast<NativeProcAddressLoader*>(userptr);
-  return reinterpret_cast<GLADapiproc>((*loader)(name));
+  return (*loader)(name);
 }
 
 } // namespace
