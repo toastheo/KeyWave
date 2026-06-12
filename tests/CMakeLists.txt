@@ -20,6 +20,7 @@ target_include_directories(keywave_test_support
 
 add_executable(KeyWaveMidiTests
         architecture/LayeringTests.cpp
+        architecture/SpanApiTests.cpp
         app/AppConfigTests.cpp
         app/AppSettingsTests.cpp
         app/AppSettingsSerializerTests.cpp

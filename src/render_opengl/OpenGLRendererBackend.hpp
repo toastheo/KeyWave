@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <vector>
 
 #include "diagnostics/Diagnostics.hpp"
@@ -29,7 +30,7 @@ public:
   void setClearColor(Color color) override;
   void setView(const RendererView& view) override;
   void beginFrame() override;
-  void submit(const std::vector<RenderCommand>& commands) override;
+  void submit(std::span<const RenderCommand> commands) override;
   void endFrame() override;
 
 private:

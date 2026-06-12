@@ -39,7 +39,7 @@ bool KeyboardState::empty() const
   return m_activeKeys.empty();
 }
 
-KeyboardState KeyboardStateBuilder::build(const std::vector<Note>& activeNotes)
+KeyboardState KeyboardStateBuilder::build(const std::span<const Note> activeNotes)
 {
   std::vector<ActiveKey> activeKeys;
   activeKeys.reserve(activeNotes.size());

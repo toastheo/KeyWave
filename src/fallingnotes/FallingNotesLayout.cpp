@@ -74,7 +74,7 @@ bool FallingNotesLayoutResult::empty() const
   return notes.empty();
 }
 
-FallingNotesLayoutResult FallingNotesLayout::build(const std::vector<QueriedNote>& queriedNotes,
+FallingNotesLayoutResult FallingNotesLayout::build(const std::span<const QueriedNote> queriedNotes,
                                                    const FallingNotesViewport& viewport,
                                                    const KeyboardGeometry& geometry,
                                                    const FallingNotesLayoutStyle& style)

@@ -150,7 +150,7 @@ void OpenGLRendererBackend::beginFrame()
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void OpenGLRendererBackend::submit(const std::vector<RenderCommand>& commands)
+void OpenGLRendererBackend::submit(const std::span<const RenderCommand> commands)
 {
   if (!m_initialized) {
     return;

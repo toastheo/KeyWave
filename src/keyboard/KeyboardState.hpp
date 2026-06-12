@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <span>
 #include <vector>
 
 #include "midi/MidiTypes.hpp"
@@ -31,5 +32,5 @@ private:
 class KeyboardStateBuilder
 {
 public:
-  [[nodiscard]] static KeyboardState build(const std::vector<Note>& activeNotes);
+  [[nodiscard]] static KeyboardState build(std::span<const Note> activeNotes);
 };
