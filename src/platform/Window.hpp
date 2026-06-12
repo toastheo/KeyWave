@@ -1,12 +1,14 @@
 #pragma once
 
-#include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "diagnostics/Diagnostics.hpp"
 #include "input/Key.hpp"
 #include "render/RenderTypes.hpp"
+
+struct GLFWwindow;
 
 enum class PlatformWindowDisplayMode : std::uint8_t
 {
@@ -37,6 +39,11 @@ struct WindowedSize
 
 using NativeProcAddressLoader = void* (*)(const char* name);
 
+struct GlfwWindowDeleter
+{
+  void operator()(GLFWwindow* window) const;
+};
+
 class Window
 {
 public:
@@ -55,7 +62,7 @@ public:
   [[nodiscard]] std::vector<Key> consumePressedKeys();
   void swapBuffers() const;
   [[nodiscard]] FramebufferSize framebufferSize() const;
-  [[nodiscard]] void* nativeHandle() const;
+  [[nodiscard]] GLFWwindow* nativeHandle() const;
   [[nodiscard]] static NativeProcAddressLoader nativeProcAddressLoader();
   [[nodiscard]] bool setDisplayMode(PlatformWindowDisplayMode mode,
                                     WindowedSize windowedSize,
@@ -64,7 +71,7 @@ public:
   void setVsyncEnabled(bool enabled) const;
 
 private:
-  void* m_handle = nullptr;
+  std::unique_ptr<GLFWwindow, GlfwWindowDeleter> m_handle;
   std::vector<Key> m_pressedKeys;
   bool m_ownsGlfw = false;
   PlatformWindowDisplayMode m_displayMode = PlatformWindowDisplayMode::Windowed;

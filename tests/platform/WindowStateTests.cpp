@@ -2,7 +2,13 @@
 
 #include "platform/Window.hpp"
 
+#include <type_traits>
+#include <utility>
+
 namespace {
+
+static_assert(
+  std::is_same_v<decltype(std::declval<const Window&>().nativeHandle()), GLFWwindow*>);
 
 TEST_CASE("Maximized native window is restored before windowed size changes", "[platform][window]")
 {

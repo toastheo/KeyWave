@@ -2,10 +2,13 @@
 
 #include "diagnostics/Diagnostics.hpp"
 
+struct GLFWwindow;
+
 class ImGuiLayer
 {
 public:
-  bool initialize(void* nativeWindowHandle, DiagnosticSink& diagnostics = nullDiagnosticSink());
+  bool initialize(GLFWwindow* nativeWindowHandle,
+                  DiagnosticSink& diagnostics = nullDiagnosticSink());
   void shutdown();
 
   void beginFrame() const;

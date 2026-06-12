@@ -90,6 +90,13 @@ std::optional<Key> keyFromGlfwKey(const int key)
 }
 } // namespace
 
+void GlfwWindowDeleter::operator()(GLFWwindow* window) const
+{
+  if (window != nullptr) {
+    glfwDestroyWindow(window);
+  }
+}
+
 Window::~Window()
 {
   shutdown();
@@ -123,7 +130,7 @@ bool Window::initialize(const WindowConfig& config, DiagnosticSink& diagnostics)
     return false;
   }
 
-  m_handle = window;
+  m_handle.reset(window);
   m_displayMode = PlatformWindowDisplayMode::Windowed;
   m_windowedWidth = config.width;
   m_windowedHeight = config.height;
@@ -154,10 +161,7 @@ bool Window::initialize(const WindowConfig& config, DiagnosticSink& diagnostics)
 
 void Window::shutdown()
 {
-  if (m_handle != nullptr) {
-    glfwDestroyWindow(static_cast<GLFWwindow*>(m_handle));
-    m_handle = nullptr;
-  }
+  m_handle.reset();
 
   if (m_ownsGlfw) {
     glfwTerminate();
@@ -167,8 +171,7 @@ void Window::shutdown()
 
 bool Window::shouldClose() const
 {
-  return m_handle == nullptr ||
-         glfwWindowShouldClose(static_cast<GLFWwindow*>(m_handle)) == GLFW_TRUE;
+  return m_handle == nullptr || glfwWindowShouldClose(m_handle.get()) == GLFW_TRUE;
 }
 
 void Window::pollEvents()
@@ -186,7 +189,7 @@ std::vector<Key> Window::consumePressedKeys()
 void Window::swapBuffers() const
 {
   if (m_handle != nullptr) {
-    glfwSwapBuffers(static_cast<GLFWwindow*>(m_handle));
+    glfwSwapBuffers(m_handle.get());
   }
 }
 
@@ -197,13 +200,13 @@ FramebufferSize Window::framebufferSize() const
   }
 
   FramebufferSize size;
-  glfwGetFramebufferSize(static_cast<GLFWwindow*>(m_handle), &size.width, &size.height);
+  glfwGetFramebufferSize(m_handle.get(), &size.width, &size.height);
   return size;
 }
 
-void* Window::nativeHandle() const
+GLFWwindow* Window::nativeHandle() const
 {
-  return m_handle;
+  return m_handle.get();
 }
 
 NativeProcAddressLoader Window::nativeProcAddressLoader()
@@ -219,7 +222,7 @@ bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
     return false;
   }
 
-  auto* window = static_cast<GLFWwindow*>(m_handle);
+  auto* window = m_handle.get();
   const bool wasWindowed = m_displayMode == PlatformWindowDisplayMode::Windowed;
   restoreNativeWindowBeforeChangingDisplayModeIfNeeded(window, m_displayMode);
   if (wasWindowed) {
@@ -298,7 +301,7 @@ void Window::setWindowedSize(const WindowedSize size)
     return;
   }
 
-  auto* window = static_cast<GLFWwindow*>(m_handle);
+  auto* window = m_handle.get();
   if (m_displayMode == PlatformWindowDisplayMode::Windowed) {
     restoreNativeWindowBeforeChangingDisplayModeIfNeeded(window, m_displayMode);
     glfwSetWindowSize(window, size.width, size.height);
@@ -308,7 +311,7 @@ void Window::setWindowedSize(const WindowedSize size)
 void Window::setVsyncEnabled(const bool enabled) const
 {
   if (m_handle != nullptr) {
-    auto* window = static_cast<GLFWwindow*>(m_handle);
+    auto* window = m_handle.get();
     glfwMakeContextCurrent(window);
     glfwSwapInterval(enabled ? 1 : 0);
   }

@@ -6,7 +6,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-bool ImGuiLayer::initialize(void* nativeWindowHandle, DiagnosticSink& diagnostics)
+bool ImGuiLayer::initialize(GLFWwindow* nativeWindowHandle, DiagnosticSink& diagnostics)
 {
   if (m_initialized) {
     return true;
@@ -25,8 +25,7 @@ bool ImGuiLayer::initialize(void* nativeWindowHandle, DiagnosticSink& diagnostic
 
   ImGui::StyleColorsDark();
 
-  auto* window = static_cast<GLFWwindow*>(nativeWindowHandle);
-  if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) {
+  if (!ImGui_ImplGlfw_InitForOpenGL(nativeWindowHandle, true)) {
     reportError(diagnostics, "ImGui initialization failed: GLFW backend could not initialize.");
     shutdown();
     return false;
