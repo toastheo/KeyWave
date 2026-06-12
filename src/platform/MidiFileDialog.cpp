@@ -1,10 +1,11 @@
 #include "platform/MidiFileDialog.hpp"
 
+#include <array>
 #include <filesystem>
+#include <memory>
+#include <nfd.h>
 #include <sstream>
 #include <string>
-
-#include <nfd.h>
 
 namespace {
 
@@ -31,15 +32,20 @@ std::optional<std::filesystem::path> MidiFileDialog::open(DiagnosticSink& diagno
 
   struct NfdSession
   {
-    ~NfdSession() { NFD_Quit(); }
-  } session;
+    ~NfdSession()
+    {
+      NFD_Quit();
+    }
+  } const session;
 
-  constexpr nfdfilteritem_t filters[] = {
+  constexpr std::array<nfdfilteritem_t, 1> filters{
     {"MIDI files", "mid,midi,kar"}, // .kar = Karaoke MIDI file (MIDI with lyrics embedded)
   };
 
   nfdchar_t* selectedPath = nullptr;
-  const nfdresult_t result = NFD_OpenDialog(&selectedPath, filters, 1, nullptr);
+  const nfdresult_t result = NFD_OpenDialog(&selectedPath, filters.data(), filters.size(), nullptr);
+  std::unique_ptr<nfdchar_t, decltype(&NFD_FreePath)> const selectedPathGuard{selectedPath,
+                                                                              NFD_FreePath};
   if (result == NFD_CANCEL) {
     return std::nullopt;
   }
@@ -49,8 +55,7 @@ std::optional<std::filesystem::path> MidiFileDialog::open(DiagnosticSink& diagno
     return std::nullopt;
   }
 
-  const auto* selectedPathBytes = reinterpret_cast<const char8_t*>(selectedPath);
+  const auto* selectedPathBytes = reinterpret_cast<const char8_t*>(selectedPathGuard.get());
   std::filesystem::path path{std::u8string(selectedPathBytes)};
-  NFD_FreePath(selectedPath);
   return path;
 }
