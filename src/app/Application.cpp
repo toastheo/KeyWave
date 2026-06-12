@@ -146,6 +146,8 @@ void Application::handleVisualizationSettingsPanelAction(
     return;
   }
 
+  m_visualizerController.suppressNextPlaybackUpdate();
+
   const auto midiPath = MidiFileDialog::open(m_diagnostics);
   if (!midiPath.has_value()) {
     return;

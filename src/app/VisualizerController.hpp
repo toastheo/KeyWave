@@ -35,6 +35,7 @@ public:
 
   void handleInput(std::span<const Key> pressedKeys, bool imguiWantsKeyboardCapture);
   void update(double elapsedSeconds);
+  void suppressNextPlaybackUpdate();
   [[nodiscard]] RenderScene buildScene() const;
 
 private:
@@ -43,5 +44,5 @@ private:
   std::optional<MidiTimeline> m_timeline;
   PlaybackTransport m_playbackTransport;
   bool m_visualizationSettingsPanelVisible = true;
-  bool m_skipNextUpdateAfterTimelineReplacement = false;
+  bool m_skipNextPlaybackUpdate = false;
 };
