@@ -117,8 +117,8 @@ void Application::applyWindowSettings()
       sanitizedWindow.height != m_appliedWindowSettings.height) {
     const auto requestedMode = sanitizedWindow.displayMode;
     const bool applied = m_window.setDisplayMode(platformDisplayMode(requestedMode),
-                                                 sanitizedWindow.width,
-                                                 sanitizedWindow.height,
+                                                 WindowedSize{.width = sanitizedWindow.width,
+                                                              .height = sanitizedWindow.height},
                                                  m_diagnostics);
     if (!applied && requestedMode != WindowDisplayMode::Windowed) {
       settings.window.displayMode = WindowDisplayMode::Windowed;
@@ -128,7 +128,8 @@ void Application::applyWindowSettings()
   if (sanitizedWindow.displayMode == WindowDisplayMode::Windowed &&
       (sanitizedWindow.width != m_appliedWindowSettings.width ||
        sanitizedWindow.height != m_appliedWindowSettings.height)) {
-    m_window.setWindowedSize(sanitizedWindow.width, sanitizedWindow.height);
+    m_window.setWindowedSize(
+      WindowedSize{.width = sanitizedWindow.width, .height = sanitizedWindow.height});
   }
 
   if (sanitizedWindow.vsyncEnabled != m_appliedWindowSettings.vsyncEnabled) {

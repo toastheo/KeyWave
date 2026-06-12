@@ -3,7 +3,7 @@
 #include "app/AppSettings.hpp"
 #include "playback/PlaybackTransport.hpp"
 
-enum class VisualizationSettingsPanelAction
+enum class VisualizationSettingsPanelAction : std::uint8_t
 {
   None,
   LoadMidiFile,

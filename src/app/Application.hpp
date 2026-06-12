@@ -11,7 +11,7 @@
 #include "render/RendererBackend.hpp"
 #include "ui/ImGuiLayer.hpp"
 
-enum class VisualizationSettingsPanelAction;
+enum class VisualizationSettingsPanelAction : std::uint8_t;
 
 class Application
 {

@@ -29,6 +29,12 @@ struct WindowConfig
   bool vsyncEnabled = true;
 };
 
+struct WindowedSize
+{
+  int width = 1280;
+  int height = 720;
+};
+
 using NativeProcAddressLoader = void* (*)(const char* name);
 
 class Window
@@ -52,10 +58,9 @@ public:
   [[nodiscard]] void* nativeHandle() const;
   [[nodiscard]] static NativeProcAddressLoader nativeProcAddressLoader();
   [[nodiscard]] bool setDisplayMode(PlatformWindowDisplayMode mode,
-                                    int windowedWidth,
-                                    int windowedHeight,
+                                    WindowedSize windowedSize,
                                     DiagnosticSink& diagnostics = nullDiagnosticSink());
-  void setWindowedSize(int width, int height);
+  void setWindowedSize(WindowedSize size);
   void setVsyncEnabled(bool enabled) const;
 
 private:

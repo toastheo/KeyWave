@@ -212,8 +212,7 @@ NativeProcAddressLoader Window::nativeProcAddressLoader()
 }
 
 bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
-                            const int windowedWidth,
-                            const int windowedHeight,
+                            const WindowedSize windowedSize,
                             DiagnosticSink& diagnostics)
 {
   if (m_handle == nullptr) {
@@ -229,8 +228,8 @@ bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
   }
 
   if (mode == PlatformWindowDisplayMode::Windowed || !wasWindowed) {
-    m_windowedWidth = windowedWidth;
-    m_windowedHeight = windowedHeight;
+    m_windowedWidth = windowedSize.width;
+    m_windowedHeight = windowedSize.height;
   }
 
   switch (mode) {
@@ -291,10 +290,10 @@ bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
   return false;
 }
 
-void Window::setWindowedSize(const int width, const int height)
+void Window::setWindowedSize(const WindowedSize size)
 {
-  m_windowedWidth = width;
-  m_windowedHeight = height;
+  m_windowedWidth = size.width;
+  m_windowedHeight = size.height;
   if (m_handle == nullptr) {
     return;
   }
@@ -302,7 +301,7 @@ void Window::setWindowedSize(const int width, const int height)
   auto* window = static_cast<GLFWwindow*>(m_handle);
   if (m_displayMode == PlatformWindowDisplayMode::Windowed) {
     restoreNativeWindowBeforeChangingDisplayModeIfNeeded(window, m_displayMode);
-    glfwSetWindowSize(window, width, height);
+    glfwSetWindowSize(window, size.width, size.height);
   }
 }
 
