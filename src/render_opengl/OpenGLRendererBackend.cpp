@@ -8,8 +8,8 @@ namespace {
 
 GLADapiproc loadOpenGLProcAddress(void* userptr, const char* name)
 {
-  const auto loader = reinterpret_cast<NativeProcAddressLoader>(userptr);
-  return reinterpret_cast<GLADapiproc>(loader(name));
+  const auto* loader = static_cast<NativeProcAddressLoader*>(userptr);
+  return reinterpret_cast<GLADapiproc>((*loader)(name));
 }
 
 } // namespace
@@ -41,7 +41,7 @@ bool OpenGLRendererBackend::initialize()
     return false;
   }
 
-  if (gladLoadGLUserPtr(loadOpenGLProcAddress, reinterpret_cast<void*>(m_procAddressLoader)) == 0) {
+  if (gladLoadGLUserPtr(loadOpenGLProcAddress, static_cast<void*>(&m_procAddressLoader)) == 0) {
     reportError(m_diagnostics,
                 "OpenGL renderer initialization failed: GLAD could not load OpenGL functions.");
     return false;
