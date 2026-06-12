@@ -7,6 +7,14 @@ struct GLFWwindow;
 class ImGuiLayer
 {
 public:
+  ImGuiLayer() = default;
+  ~ImGuiLayer();
+
+  ImGuiLayer(const ImGuiLayer&) = delete;
+  ImGuiLayer& operator=(const ImGuiLayer&) = delete;
+  ImGuiLayer(ImGuiLayer&&) = delete;
+  ImGuiLayer& operator=(ImGuiLayer&&) = delete;
+
   bool initialize(GLFWwindow* nativeWindowHandle,
                   DiagnosticSink& diagnostics = nullDiagnosticSink());
   void shutdown();

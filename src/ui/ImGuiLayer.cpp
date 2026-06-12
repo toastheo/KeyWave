@@ -6,6 +6,11 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+ImGuiLayer::~ImGuiLayer()
+{
+  shutdown();
+}
+
 bool ImGuiLayer::initialize(GLFWwindow* nativeWindowHandle, DiagnosticSink& diagnostics)
 {
   if (m_initialized) {
