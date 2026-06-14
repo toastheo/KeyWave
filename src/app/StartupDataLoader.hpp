@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 
 #include "app/AppConfig.hpp"
 #include "app/MidiLibraryStore.hpp"
@@ -10,6 +11,7 @@
 struct StartupData
 {
   std::optional<MidiTimeline> timeline;
+  std::optional<std::string> importedMidiId;
 };
 
 class StartupDataLoader

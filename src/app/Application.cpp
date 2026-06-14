@@ -1,8 +1,10 @@
 #include "app/Application.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
 #include <sstream>
+#include <string_view>
 #include <thread>
 #include <utility>
 
@@ -57,6 +59,8 @@ bool Application::initialize()
 
   auto startupData = StartupDataLoader::load(m_config, m_midiLibraryStore, m_diagnostics);
   m_visualizerController.setTimeline(std::move(startupData.timeline));
+  m_activeImportedMidiId = std::move(startupData.importedMidiId);
+  refreshImportedMidiFiles();
   const auto& settings = m_visualizerController.settings();
 
   const WindowConfig windowConfig{
@@ -139,10 +143,61 @@ void Application::applyWindowSettings()
   m_appliedWindowSettings = settings.window;
 }
 
-void Application::handleVisualizationSettingsPanelAction(
-  const VisualizationSettingsPanelAction action)
+void Application::refreshImportedMidiFiles()
 {
-  if (action != VisualizationSettingsPanelAction::LoadMidiFile) {
+  m_importedMidiFiles = m_midiLibraryStore.listImportedFiles(m_diagnostics);
+  std::ranges::sort(m_importedMidiFiles,
+                    [](const ImportedMidiFile& left, const ImportedMidiFile& right) {
+                      if (left.lastOpenedAt != right.lastOpenedAt) {
+                        return left.lastOpenedAt > right.lastOpenedAt;
+                      }
+                      if (left.importedAt != right.importedAt) {
+                        return left.importedAt > right.importedAt;
+                      }
+                      return left.displayName < right.displayName;
+                    });
+}
+
+bool Application::loadImportedMidiFile(std::string_view id)
+{
+  const auto storedMidiPath = m_midiLibraryStore.importedFilePath(id, m_diagnostics);
+  if (!storedMidiPath.has_value()) {
+    reportWarning(m_diagnostics,
+                  "Warning: imported MIDI file is unavailable. Keeping the current MIDI file.");
+    return false;
+  }
+
+  reportInfo(m_diagnostics, "Loading MIDI file: " + storedMidiPath->string());
+  auto timeline = MidiFileLoader::loadFromFile(*storedMidiPath, m_diagnostics);
+  if (!timeline.has_value()) {
+    reportWarning(m_diagnostics, "Warning: MIDI loading failed. Keeping the current MIDI file.");
+    return false;
+  }
+
+  if (!m_midiLibraryStore.setLastActiveMidiId(id, m_diagnostics)) {
+    reportWarning(m_diagnostics, "Warning: could not mark imported MIDI file as last active");
+  }
+
+  std::ostringstream message;
+  message << "Loaded MIDI file with " << timeline->notes().size()
+          << " note(s), length=" << timeline->lengthSeconds() << "s.";
+  reportInfo(m_diagnostics, message.str());
+
+  m_activeImportedMidiId = std::string(id);
+  refreshImportedMidiFiles();
+  m_visualizerController.replaceTimelineAndPlayFromStart(std::move(timeline));
+  return true;
+}
+
+void Application::handleVisualizationSettingsPanelAction(
+  const VisualizationSettingsPanelResult& result)
+{
+  if (result.action == VisualizationSettingsPanelAction::LoadImportedMidiFile) {
+    loadImportedMidiFile(result.selectedImportedMidiId);
+    return;
+  }
+
+  if (result.action != VisualizationSettingsPanelAction::LoadMidiFile) {
     return;
   }
 
@@ -159,34 +214,15 @@ void Application::handleVisualizationSettingsPanelAction(
     return;
   }
 
-  const auto storedMidiPath = m_midiLibraryStore.importedFilePath(importedMidi->file.id, m_diagnostics);
-  if (!storedMidiPath.has_value()) {
-    reportWarning(m_diagnostics, "Warning: imported MIDI file is unavailable. Keeping the current MIDI file.");
-    return;
-  }
-
   if (importedMidi->alreadyImported) {
-    reportInfo(m_diagnostics, "Selected already imported MIDI file: " + importedMidi->file.displayName);
-  } else {
+    reportInfo(m_diagnostics,
+               "Selected already imported MIDI file: " + importedMidi->file.displayName);
+  }
+  else {
     reportInfo(m_diagnostics, "Imported MIDI file: " + importedMidi->file.displayName);
   }
 
-  reportInfo(m_diagnostics, "Loading MIDI file: " + storedMidiPath->string());
-  auto timeline = MidiFileLoader::loadFromFile(*storedMidiPath, m_diagnostics);
-  if (!timeline.has_value()) {
-    reportWarning(m_diagnostics, "Warning: MIDI loading failed. Keeping the current MIDI file.");
-    return;
-  }
-
-  if (!m_midiLibraryStore.setLastActiveMidiId(importedMidi->file.id, m_diagnostics)) {
-    reportWarning(m_diagnostics, "Warning: could not mark imported MIDI file as last active");
-  }
-
-  std::ostringstream message;
-  message << "Loaded MIDI file with " << timeline->notes().size()
-          << " note(s), length=" << timeline->lengthSeconds() << "s.";
-  reportInfo(m_diagnostics, message.str());
-  m_visualizerController.replaceTimelineAndPlayFromStart(std::move(timeline));
+  loadImportedMidiFile(importedMidi->file.id);
 }
 
 void Application::paceFrame(const std::chrono::steady_clock::time_point frameStart)
@@ -232,7 +268,9 @@ void Application::run()
     if (m_visualizerController.visualizationSettingsPanelVisible()) {
       const auto settingsAction =
         VisualizationSettingsPanel::render(m_visualizerController.settings(),
-                                           m_visualizerController.playbackTransport());
+                                           m_visualizerController.playbackTransport(),
+                                           m_importedMidiFiles,
+                                           m_activeImportedMidiId.value_or(""));
       handleVisualizationSettingsPanelAction(settingsAction);
     }
     applyWindowSettings();

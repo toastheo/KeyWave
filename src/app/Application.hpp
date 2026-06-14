@@ -2,6 +2,10 @@
 
 #include <chrono>
 #include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include "app/AppConfig.hpp"
 #include "app/MidiLibraryStore.hpp"
@@ -13,6 +17,7 @@
 #include "ui/ImGuiLayer.hpp"
 
 enum class VisualizationSettingsPanelAction : std::uint8_t;
+struct VisualizationSettingsPanelResult;
 
 class Application
 {
@@ -30,13 +35,17 @@ public:
 
 private:
   void applyWindowSettings();
-  void handleVisualizationSettingsPanelAction(VisualizationSettingsPanelAction action);
+  void refreshImportedMidiFiles();
+  bool loadImportedMidiFile(std::string_view id);
+  void handleVisualizationSettingsPanelAction(const VisualizationSettingsPanelResult& result);
   void paceFrame(std::chrono::steady_clock::time_point frameStart);
 
   AppConfig m_config;
   DiagnosticSink& m_diagnostics;
   SettingsStorage m_settingsStorage;
   MidiLibraryStore m_midiLibraryStore;
+  std::vector<ImportedMidiFile> m_importedMidiFiles;
+  std::optional<std::string> m_activeImportedMidiId;
   VisualizerController m_visualizerController;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;

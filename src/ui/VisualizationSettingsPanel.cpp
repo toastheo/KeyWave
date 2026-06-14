@@ -4,8 +4,11 @@
 #include <array>
 #include <cmath>
 #include <imgui.h>
+#include <span>
+#include <string_view>
 
 #include "app/AppSettingsConstraints.hpp"
+#include "imgui_internal.h"
 
 namespace {
 
@@ -97,6 +100,33 @@ void renderPlaybackSettings(AppSettings const& settings, PlaybackTransport& tran
                          "%.2fx")) {
     transport.setPlaybackRate(clampRange(playbackRate, minimumRate, maximumRate));
   }
+}
+
+VisualizationSettingsPanelResult renderImportedMidiList(
+  std::span<const ImportedMidiFile> importedMidiFiles, const std::string_view activeImportedMidiId)
+{
+  VisualizationSettingsPanelResult result;
+
+  ImGui::SeparatorText("Imported MIDI");
+  if (importedMidiFiles.empty()) {
+    ImGui::TextUnformatted("No imported MIDI files.");
+    return result;
+  }
+
+  for (const auto& file : importedMidiFiles) {
+    ImGui::PushID(file.id.c_str());
+    const bool selected = file.id == activeImportedMidiId;
+    if (ImGui::Selectable(file.displayName.c_str(), selected)) {
+      result.action = VisualizationSettingsPanelAction::LoadImportedMidiFile;
+      result.selectedImportedMidiId = file.id;
+    }
+    if (selected) {
+      ImGui::SetItemDefaultFocus();
+    }
+    ImGui::PopID();
+  }
+
+  return result;
 }
 
 void renderFallingNotesSettings(FallingNotesSettings& settings)
@@ -254,15 +284,18 @@ void renderWindowSettings(WindowSettings& settings)
 
 } // namespace
 
-VisualizationSettingsPanelAction VisualizationSettingsPanel::render(AppSettings& settings,
-                                                                    PlaybackTransport& transport)
+VisualizationSettingsPanelResult VisualizationSettingsPanel::render(
+  AppSettings& settings,
+  PlaybackTransport& transport,
+  const std::span<const ImportedMidiFile> importedMidiFiles,
+  const std::string_view activeImportedMidiId)
 {
   if (!ImGui::Begin("Visualization Settings")) {
     ImGui::End();
-    return VisualizationSettingsPanelAction::None;
+    return {};
   }
 
-  auto action = VisualizationSettingsPanelAction::None;
+  VisualizationSettingsPanelResult result;
 
   if (ImGui::Button("Reset Settings")) {
     resetAppSettingsToDefaults(settings);
@@ -275,7 +308,11 @@ VisualizationSettingsPanelAction VisualizationSettingsPanel::render(AppSettings&
   if (ImGui::CollapsingHeader("Playback", ImGuiTreeNodeFlags_DefaultOpen)) {
     renderPlaybackSettings(settings, transport);
     if (ImGui::Button("Load MIDI...")) {
-      action = VisualizationSettingsPanelAction::LoadMidiFile;
+      result.action = VisualizationSettingsPanelAction::LoadMidiFile;
+    }
+    if (const auto listResult = renderImportedMidiList(importedMidiFiles, activeImportedMidiId);
+        listResult.action != VisualizationSettingsPanelAction::None) {
+      result = listResult;
     }
   }
 
@@ -292,5 +329,5 @@ VisualizationSettingsPanelAction VisualizationSettingsPanel::render(AppSettings&
   }
 
   ImGui::End();
-  return action;
+  return result;
 }

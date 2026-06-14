@@ -31,6 +31,8 @@ TEST_CASE("Visualization settings panel controls ignore other keys",
 TEST_CASE("Visualization settings panel actions default to none", "[app][visualization-settings]")
 {
   CHECK(VisualizationSettingsPanelAction::None != VisualizationSettingsPanelAction::LoadMidiFile);
+  CHECK(VisualizationSettingsPanelAction::None !=
+        VisualizationSettingsPanelAction::LoadImportedMidiFile);
 }
 
 } // namespace
