@@ -90,7 +90,11 @@ StartupData loadLastActiveImportedMidi(const MidiLibraryStore& midiLibraryStore,
   }
 
   reportInfo(diagnostics, "Loading last active imported MIDI file: " + *lastActiveId);
-  return loadMidiFromPath(*midiPath, ". Opening an empty window.", diagnostics);
+  auto startupData = loadMidiFromPath(*midiPath, ". Opening an empty window.", diagnostics);
+  if (startupData.timeline.has_value()) {
+    startupData.importedMidiId = *lastActiveId;
+  }
+  return startupData;
 }
 
 StartupData loadStartupMidiIfPresent(const AppConfig& config,

@@ -31,6 +31,8 @@ TEST_CASE("StartupDataLoader loads the last active imported MIDI when no CLI pat
 
   REQUIRE(startupData.timeline.has_value());
   CHECK(startupData.timeline->notes().size() == 2);
+  REQUIRE(startupData.importedMidiId.has_value());
+  CHECK(*startupData.importedMidiId == imported->file.id);
 }
 
 TEST_CASE("StartupDataLoader keeps CLI MIDI path precedence over imported MIDI restore",
@@ -47,6 +49,7 @@ TEST_CASE("StartupDataLoader keeps CLI MIDI path precedence over imported MIDI r
   const auto startupData = StartupDataLoader::load(config, store);
 
   CHECK_FALSE(startupData.timeline.has_value());
+  CHECK_FALSE(startupData.importedMidiId.has_value());
 }
 
 TEST_CASE("StartupDataLoader starts empty when the last active imported copy is unavailable",
@@ -64,6 +67,7 @@ TEST_CASE("StartupDataLoader starts empty when the last active imported copy is 
   const auto startupData = StartupDataLoader::load(AppConfig{}, store);
 
   CHECK_FALSE(startupData.timeline.has_value());
+  CHECK_FALSE(startupData.importedMidiId.has_value());
 }
 
 } // namespace
