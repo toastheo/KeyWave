@@ -106,11 +106,6 @@ StartupData loadStartupMidiIfPresent(const AppConfig& config,
 
 } // namespace
 
-StartupData StartupDataLoader::load(const AppConfig& config, DiagnosticSink& diagnostics)
-{
-  return load(config, MidiLibraryStore{}, diagnostics);
-}
-
 StartupData StartupDataLoader::load(const AppConfig& config,
                                     const MidiLibraryStore& midiLibraryStore,
                                     DiagnosticSink& diagnostics)

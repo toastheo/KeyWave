@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "app/AppConfig.hpp"
+#include "app/MidiLibraryStore.hpp"
 #include "app/SettingsStorage.hpp"
 #include "app/VisualizerController.hpp"
 #include "diagnostics/Diagnostics.hpp"
@@ -35,6 +36,7 @@ private:
   AppConfig m_config;
   DiagnosticSink& m_diagnostics;
   SettingsStorage m_settingsStorage;
+  MidiLibraryStore m_midiLibraryStore;
   VisualizerController m_visualizerController;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
