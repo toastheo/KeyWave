@@ -175,6 +175,8 @@ add_library(keywave_app_core STATIC
         app/PlaybackTransportAction.cpp
         app/PlaybackTransportControls.hpp
         app/PlaybackTransportControls.cpp
+        app/MidiLibraryStore.hpp
+        app/MidiLibraryStore.cpp
         app/VisualizationSettingsPanelControls.hpp
         app/VisualizationSettingsPanelControls.cpp
         app/VisualizationSettingsAdapters.hpp

@@ -24,6 +24,7 @@ add_executable(KeyWaveMidiTests
         app/AppConfigTests.cpp
         app/AppSettingsTests.cpp
         app/AppSettingsSerializerTests.cpp
+        app/MidiLibraryStoreTests.cpp
         app/PlaybackTransportControlsTests.cpp
         app/SettingsStorageTests.cpp
         app/VisualizerControllerTests.cpp
