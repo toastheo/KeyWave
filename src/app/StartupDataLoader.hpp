@@ -16,8 +16,6 @@ class StartupDataLoader
 {
 public:
   [[nodiscard]] static StartupData load(const AppConfig& config,
-                                        DiagnosticSink& diagnostics = nullDiagnosticSink());
-  [[nodiscard]] static StartupData load(const AppConfig& config,
                                         const MidiLibraryStore& midiLibraryStore,
                                         DiagnosticSink& diagnostics = nullDiagnosticSink());
 };

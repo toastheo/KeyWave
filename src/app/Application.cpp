@@ -55,7 +55,7 @@ bool Application::initialize()
   }
   reportInfo(m_diagnostics, "Settings will be saved on exit.");
 
-  auto startupData = StartupDataLoader::load(m_config, m_diagnostics);
+  auto startupData = StartupDataLoader::load(m_config, m_midiLibraryStore, m_diagnostics);
   m_visualizerController.setTimeline(std::move(startupData.timeline));
   const auto& settings = m_visualizerController.settings();
 
@@ -153,11 +153,33 @@ void Application::handleVisualizationSettingsPanelAction(
     return;
   }
 
-  reportInfo(m_diagnostics, "Loading MIDI file: " + midiPath->string());
-  auto timeline = MidiFileLoader::loadFromFile(*midiPath, m_diagnostics);
+  auto importedMidi = m_midiLibraryStore.importFile(*midiPath, m_diagnostics);
+  if (!importedMidi.has_value()) {
+    reportWarning(m_diagnostics, "Warning: MIDI import failed. Keeping the current MIDI file.");
+    return;
+  }
+
+  const auto storedMidiPath = m_midiLibraryStore.importedFilePath(importedMidi->file.id, m_diagnostics);
+  if (!storedMidiPath.has_value()) {
+    reportWarning(m_diagnostics, "Warning: imported MIDI file is unavailable. Keeping the current MIDI file.");
+    return;
+  }
+
+  if (importedMidi->alreadyImported) {
+    reportInfo(m_diagnostics, "Selected already imported MIDI file: " + importedMidi->file.displayName);
+  } else {
+    reportInfo(m_diagnostics, "Imported MIDI file: " + importedMidi->file.displayName);
+  }
+
+  reportInfo(m_diagnostics, "Loading MIDI file: " + storedMidiPath->string());
+  auto timeline = MidiFileLoader::loadFromFile(*storedMidiPath, m_diagnostics);
   if (!timeline.has_value()) {
     reportWarning(m_diagnostics, "Warning: MIDI loading failed. Keeping the current MIDI file.");
     return;
+  }
+
+  if (!m_midiLibraryStore.setLastActiveMidiId(importedMidi->file.id, m_diagnostics)) {
+    reportWarning(m_diagnostics, "Warning: could not mark imported MIDI file as last active");
   }
 
   std::ostringstream message;
