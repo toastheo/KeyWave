@@ -42,6 +42,10 @@ public:
     std::string_view id, DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
   [[nodiscard]] std::optional<ImportedMidiFile> findById(
     std::string_view id, DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
+  [[nodiscard]] std::optional<std::string> lastActiveMidiId(
+    DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
+  [[nodiscard]] bool setLastActiveMidiId(std::string_view id,
+                                         DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
 
 private:
   [[nodiscard]] std::filesystem::path metadataPath() const;

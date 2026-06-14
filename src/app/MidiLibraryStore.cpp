@@ -34,6 +34,12 @@ struct FileComparisonPaths
   std::filesystem::path importedCopy;
 };
 
+struct MidiLibraryState
+{
+  std::vector<ImportedMidiFile> files;
+  std::optional<std::string> lastActiveMidiId;
+};
+
 std::string lowercaseHex(const std::uint64_t value)
 {
   std::ostringstream output;
@@ -193,8 +199,8 @@ nlohmann::json importedMidiFileToJson(const ImportedMidiFile& file)
   };
 }
 
-std::vector<ImportedMidiFile> loadLibrary(const std::filesystem::path& metadataPath,
-                                          DiagnosticSink& diagnostics)
+MidiLibraryState loadLibraryState(const std::filesystem::path& metadataPath,
+                                  DiagnosticSink& diagnostics)
 {
   try {
     if (!std::filesystem::exists(metadataPath)) {
@@ -216,6 +222,12 @@ std::vector<ImportedMidiFile> loadLibrary(const std::filesystem::path& metadataP
       return {};
     }
 
+    MidiLibraryState state;
+    if (const auto activeIter = json.find("lastActiveMidiId");
+        activeIter != json.end() && activeIter->is_string()) {
+      state.lastActiveMidiId = activeIter->get<std::string>();
+    }
+
     const auto filesIter = json.find("files");
     if (filesIter == json.end() || !filesIter->is_array()) {
       reportWarning(diagnostics,
@@ -224,10 +236,9 @@ std::vector<ImportedMidiFile> loadLibrary(const std::filesystem::path& metadataP
       return {};
     }
 
-    std::vector<ImportedMidiFile> files;
     for (const auto& fileJson : *filesIter) {
       if (auto file = importedMidiFileFromJson(fileJson); file.has_value()) {
-        files.push_back(std::move(*file));
+        state.files.push_back(std::move(*file));
       }
       else {
         reportWarning(diagnostics,
@@ -235,7 +246,7 @@ std::vector<ImportedMidiFile> loadLibrary(const std::filesystem::path& metadataP
                         metadataPath.string());
       }
     }
-    return files;
+    return state;
   }
   catch (const nlohmann::json::exception& exception) {
     std::ostringstream message;
@@ -253,9 +264,9 @@ std::vector<ImportedMidiFile> loadLibrary(const std::filesystem::path& metadataP
   return {};
 }
 
-bool saveLibrary(const std::filesystem::path& metadataPath,
-                 const std::vector<ImportedMidiFile>& files,
-                 DiagnosticSink& diagnostics)
+bool saveLibraryState(const std::filesystem::path& metadataPath,
+                      const MidiLibraryState& state,
+                      DiagnosticSink& diagnostics)
 {
   try {
     if (!metadataPath.parent_path().empty()) {
@@ -266,7 +277,7 @@ bool saveLibrary(const std::filesystem::path& metadataPath,
     tempPath += ".tmp";
 
     nlohmann::json filesJson = nlohmann::json::array();
-    for (const auto& file : files) {
+    for (const auto& file : state.files) {
       filesJson.push_back(importedMidiFileToJson(file));
     }
 
@@ -279,7 +290,12 @@ bool saveLibrary(const std::filesystem::path& metadataPath,
         return false;
       }
 
-      output << nlohmann::json{{"version", 1}, {"files", filesJson}}.dump(2) << '\n';
+      nlohmann::json metadataJson{{"version", 1}, {"files", filesJson}};
+      if (state.lastActiveMidiId.has_value()) {
+        metadataJson["lastActiveMidiId"] = *state.lastActiveMidiId;
+      }
+
+      output << metadataJson.dump(2) << '\n';
       if (!output) {
         reportWarning(diagnostics,
                       "Warning: could not write MIDI library metadata " + tempPath.string());
@@ -373,8 +389,8 @@ std::optional<MidiImportResult> MidiLibraryStore::importFile(
     return std::nullopt;
   }
 
-  auto files = loadLibrary(metadataPath(), diagnostics);
-  for (const auto& file : files) {
+  auto state = loadLibraryState(metadataPath(), diagnostics);
+  for (const auto& file : state.files) {
     if (file.contentHash == signature->contentHash && file.sizeBytes == signature->sizeBytes &&
         std::filesystem::exists(storedFilePath(file), errorCode) &&
         sameFileBytes(FileComparisonPaths{.source = sourcePath,
@@ -387,7 +403,7 @@ std::optional<MidiImportResult> MidiLibraryStore::importFile(
     }
   }
 
-  const auto id = uniqueIdFor(*signature, files);
+  const auto id = uniqueIdFor(*signature, state.files);
   const auto storedFileName = id + sourcePath.extension().string();
   const auto timestamp = utcTimestamp();
   if (!timestamp.has_value()) {
@@ -420,8 +436,8 @@ std::optional<MidiImportResult> MidiLibraryStore::importFile(
     return std::nullopt;
   }
 
-  files.push_back(importedFile);
-  if (!saveLibrary(metadataPath(), files, diagnostics)) {
+  state.files.push_back(importedFile);
+  if (!saveLibraryState(metadataPath(), state, diagnostics)) {
     std::error_code removeError;
     std::filesystem::remove(storedFilePath(importedFile), removeError);
     return std::nullopt;
@@ -432,9 +448,10 @@ std::optional<MidiImportResult> MidiLibraryStore::importFile(
     .alreadyImported = false,
   };
 }
+
 std::vector<ImportedMidiFile> MidiLibraryStore::listImportedFiles(DiagnosticSink& diagnostics) const
 {
-  return loadLibrary(metadataPath(), diagnostics);
+  return loadLibraryState(metadataPath(), diagnostics).files;
 }
 
 std::optional<std::filesystem::path> MidiLibraryStore::importedFilePath(
@@ -464,6 +481,34 @@ std::optional<ImportedMidiFile> MidiLibraryStore::findById(std::string_view id,
   }
 
   return *iter;
+}
+
+std::optional<std::string> MidiLibraryStore::lastActiveMidiId(DiagnosticSink& diagnostics) const
+{
+  return loadLibraryState(metadataPath(), diagnostics).lastActiveMidiId;
+}
+
+bool MidiLibraryStore::setLastActiveMidiId(std::string_view id, DiagnosticSink& diagnostics) const
+{
+  auto state = loadLibraryState(metadataPath(), diagnostics);
+  const auto iter =
+    std::ranges::find_if(state.files, [id](const ImportedMidiFile& file) { return file.id == id; });
+  if (iter == state.files.end()) {
+    reportWarning(diagnostics,
+                  "Warning: could not set last active MIDI file: imported MIDI id not found.");
+    return false;
+  }
+
+  const auto timestamp = utcTimestamp();
+  if (!timestamp.has_value()) {
+    reportWarning(diagnostics,
+                  "Warning: could not set last active MIDI file: timestamp unavailable.");
+    return false;
+  }
+
+  iter->lastOpenedAt = *timestamp;
+  state.lastActiveMidiId = std::string{id};
+  return saveLibraryState(metadataPath(), state, diagnostics);
 }
 
 std::filesystem::path MidiLibraryStore::metadataPath() const

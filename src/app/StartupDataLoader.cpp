@@ -1,8 +1,10 @@
+#include "app/StartupDataLoader.hpp"
+
+#include <chrono>
 #include <filesystem>
 #include <sstream>
 #include <utility>
 
-#include "app/StartupDataLoader.hpp"
 #include "midi/MidiFileLoader.hpp"
 
 namespace {
@@ -16,22 +18,17 @@ void reportResolvedPathIfRelative(const std::filesystem::path& path, DiagnosticS
   std::error_code errorCode;
   const auto absolutePath = std::filesystem::absolute(path, errorCode);
   if (errorCode) {
-    reportInfo(diagnostics,
-               "  resolved absolute path unavailable: " + errorCode.message());
+    reportInfo(diagnostics, "  resolved absolute path unavailable: " + errorCode.message());
     return;
   }
 
   reportInfo(diagnostics, "  resolved absolute path: " + absolutePath.string());
 }
 
-StartupData loadStartupMidiIfPresent(const AppConfig& config, DiagnosticSink& diagnostics)
+StartupData loadMidiFromPath(const std::filesystem::path& midiPath,
+                             const char* missingFileContext,
+                             DiagnosticSink& diagnostics)
 {
-  if (!config.midiFilePath.has_value()) {
-    reportInfo(diagnostics, "No MIDI file provided. Starting with an empty window.");
-    return {};
-  }
-
-  const auto& midiPath = *config.midiFilePath;
   reportInfo(diagnostics, "Loading MIDI file: " + midiPath.string());
   reportResolvedPathIfRelative(midiPath, diagnostics);
 
@@ -42,7 +39,7 @@ StartupData loadStartupMidiIfPresent(const AppConfig& config, DiagnosticSink& di
     if (errorCode) {
       message << " (" << errorCode.message() << ')';
     }
-    message << ". Opening an empty window.";
+    message << missingFileContext;
     reportWarning(diagnostics, message.str());
     return {};
   }
@@ -53,7 +50,7 @@ StartupData loadStartupMidiIfPresent(const AppConfig& config, DiagnosticSink& di
     if (errorCode) {
       message << " (" << errorCode.message() << ')';
     }
-    message << ". Opening an empty window.";
+    message << missingFileContext;
     reportWarning(diagnostics, message.str());
     return {};
   }
@@ -74,9 +71,49 @@ StartupData loadStartupMidiIfPresent(const AppConfig& config, DiagnosticSink& di
   };
 }
 
+StartupData loadLastActiveImportedMidi(const MidiLibraryStore& midiLibraryStore,
+                                       DiagnosticSink& diagnostics)
+{
+  const auto lastActiveId = midiLibraryStore.lastActiveMidiId(diagnostics);
+  if (!lastActiveId.has_value()) {
+    reportInfo(diagnostics,
+               "No last active imported MIDI file found. Starting with an empty window.");
+    return {};
+  }
+
+  const auto midiPath = midiLibraryStore.importedFilePath(*lastActiveId, diagnostics);
+  if (!midiPath.has_value()) {
+    reportWarning(
+      diagnostics,
+      "Warning: last active imported MIDI file is unavailable. Opening an empty window.");
+    return {};
+  }
+
+  reportInfo(diagnostics, "Loading last active imported MIDI file: " + *lastActiveId);
+  return loadMidiFromPath(*midiPath, ". Opening an empty window.", diagnostics);
+}
+
+StartupData loadStartupMidiIfPresent(const AppConfig& config,
+                                     const MidiLibraryStore& midiLibraryStore,
+                                     DiagnosticSink& diagnostics)
+{
+  if (!config.midiFilePath.has_value()) {
+    return loadLastActiveImportedMidi(midiLibraryStore, diagnostics);
+  }
+
+  return loadMidiFromPath(*config.midiFilePath, ". Opening an empty window.", diagnostics);
+}
+
 } // namespace
 
 StartupData StartupDataLoader::load(const AppConfig& config, DiagnosticSink& diagnostics)
 {
-  return loadStartupMidiIfPresent(config, diagnostics);
+  return load(config, MidiLibraryStore{}, diagnostics);
+}
+
+StartupData StartupDataLoader::load(const AppConfig& config,
+                                    const MidiLibraryStore& midiLibraryStore,
+                                    DiagnosticSink& diagnostics)
+{
+  return loadStartupMidiIfPresent(config, midiLibraryStore, diagnostics);
 }

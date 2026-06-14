@@ -106,6 +106,36 @@ TEST_CASE("MidiLibraryStore reuses an existing import for identical bytes", "[ap
   CHECK(store.listImportedFiles().size() == 1);
 }
 
+TEST_CASE("MidiLibraryStore persists the last active imported MIDI id", "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 16, 17, 18, 19});
+  const auto libraryRoot = root / "library";
+  MidiLibraryStore const store(libraryRoot);
+  const auto imported = store.importFile(sourcePath);
+  REQUIRE(imported.has_value());
+
+  CHECK(store.setLastActiveMidiId(imported->file.id));
+
+  MidiLibraryStore const reopenedStore(libraryRoot);
+  const auto lastActiveId = reopenedStore.lastActiveMidiId();
+  REQUIRE(lastActiveId.has_value());
+  CHECK(*lastActiveId == imported->file.id);
+}
+
+TEST_CASE("MidiLibraryStore rejects unknown last active imported MIDI ids", "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 20, 21, 22, 23});
+  MidiLibraryStore const store(root / "library");
+  REQUIRE(store.importFile(sourcePath).has_value());
+
+  CHECK_FALSE(store.setLastActiveMidiId("missing-id"));
+  CHECK_FALSE(store.lastActiveMidiId().has_value());
+}
+
 TEST_CASE("MidiLibraryStore returns stored paths only for existing copied files",
           "[app][midi-library]")
 {
