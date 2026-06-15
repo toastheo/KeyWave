@@ -199,9 +199,32 @@ void Application::renameImportedMidiFile(const std::string_view id, const std::s
   refreshImportedMidiFiles();
 }
 
+void Application::removeImportedMidiFile(const std::string_view id)
+{
+  const bool removingActiveMidi = m_activeImportedMidiId.has_value() && *m_activeImportedMidiId == id;
+
+  if (!m_midiLibraryStore.removeImportedMidiFile(id, m_diagnostics)) {
+    reportWarning(m_diagnostics, "Warning: could not remove imported MIDI file.");
+    return;
+  }
+
+  if (removingActiveMidi) {
+    m_activeImportedMidiId.reset();
+    m_visualizerController.setTimeline(std::nullopt);
+    m_visualizerController.playbackTransport().stop();
+  }
+
+  refreshImportedMidiFiles();
+}
+
 void Application::handleVisualizationSettingsPanelAction(
   const VisualizationSettingsPanelResult& result)
 {
+  if (result.action == VisualizationSettingsPanelAction::RemoveImportedMidiFile) {
+    removeImportedMidiFile(result.selectedImportedMidiId);
+    return;
+  }
+
   if (result.action == VisualizationSettingsPanelAction::RenameImportedMidiFile) {
     renameImportedMidiFile(result.selectedImportedMidiId, result.renamedImportedMidiDisplayName);
     return;
