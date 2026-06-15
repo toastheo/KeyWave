@@ -551,6 +551,38 @@ bool MidiLibraryStore::renameImportedMidiFile(std::string_view id,
   return saveLibraryState(metadataPath(), state, diagnostics);
 }
 
+bool MidiLibraryStore::removeImportedMidiFile(std::string_view id,
+                                              DiagnosticSink& diagnostics) const
+{
+  auto state = loadLibraryState(metadataPath(), diagnostics);
+  const auto iter =
+    std::ranges::find_if(state.files, [id](const ImportedMidiFile& file) { return file.id == id; });
+  if (iter == state.files.end()) {
+    reportWarning(diagnostics,
+                  "Warning: could not remove imported MIDI file: imported MIDI id not found.");
+    return false;
+  }
+
+  const auto copiedFilePath = storedFilePath(*iter);
+  if (std::error_code errorCode; std::filesystem::exists(copiedFilePath, errorCode)) {
+    std::filesystem::remove(copiedFilePath, errorCode);
+    if (errorCode) {
+      std::ostringstream message;
+      message << "Warning: could not delete imported MIDI file: " << copiedFilePath << " ("
+              << errorCode.message() << ")";
+      reportWarning(diagnostics, message.str());
+      return false;
+    }
+  }
+
+  state.files.erase(iter);
+  if (state.lastActiveMidiId.has_value() && *state.lastActiveMidiId == id) {
+    state.lastActiveMidiId.reset();
+  }
+
+  return saveLibraryState(metadataPath(), state, diagnostics);
+}
+
 std::filesystem::path MidiLibraryStore::metadataPath() const
 {
   return m_rootPath / "midi-library.json";

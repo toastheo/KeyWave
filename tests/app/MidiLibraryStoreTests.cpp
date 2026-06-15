@@ -174,6 +174,39 @@ TEST_CASE("MidiLibraryStore rejects invalid imported MIDI renames", "[app][midi-
   CHECK(unchanged->displayName == imported->file.displayName);
 }
 
+TEST_CASE("MidiLibraryStore removes imported MIDI files and their copied files",
+          "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 32, 33, 34, 35});
+  MidiLibraryStore const store(root / "library");
+  const auto imported = store.importFile(sourcePath);
+  REQUIRE(imported.has_value());
+  REQUIRE(store.setLastActiveMidiId(imported->file.id));
+  const auto copiedPath = store.importedFilePath(imported->file.id);
+  REQUIRE(copiedPath.has_value());
+
+  CHECK(store.removeImportedMidiFile(imported->file.id));
+
+  CHECK_FALSE(std::filesystem::exists(*copiedPath));
+  CHECK_FALSE(store.findById(imported->file.id).has_value());
+  CHECK_FALSE(store.lastActiveMidiId().has_value());
+}
+
+TEST_CASE("MidiLibraryStore rejects unknown imported MIDI removals", "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 36, 37, 38, 39});
+  MidiLibraryStore const store(root / "library");
+  const auto imported = store.importFile(sourcePath);
+  REQUIRE(imported.has_value());
+
+  CHECK_FALSE(store.removeImportedMidiFile("missing-id"));
+  CHECK(store.findById(imported->file.id).has_value());
+}
+
 TEST_CASE("MidiLibraryStore returns stored paths only for existing copied files",
           "[app][midi-library]")
 {

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cfloat>
 #include <cmath>
 #include <imgui.h>
 #include <span>
@@ -12,6 +13,8 @@
 #include "imgui_internal.h"
 
 namespace {
+
+constexpr float importedMidiPopupMinWidth = 320.0f;
 
 double finiteOr(const double value, const double fallback)
 {
@@ -108,6 +111,8 @@ VisualizationSettingsPanelResult renderImportedMidiList(
 {
   VisualizationSettingsPanelResult result;
   static std::string renamingImportedMidiId;
+  static std::string removingImportedMidiId;
+  static std::string removingImportedMidiName;
   static std::array<char, 256> renameBuffer{};
 
   ImGui::SeparatorText("Imported MIDI");
@@ -120,9 +125,13 @@ VisualizationSettingsPanelResult renderImportedMidiList(
     ImGui::PushID(file.id.c_str());
     const bool selected = file.id == activeImportedMidiId;
     const auto renameButtonWidth =
-      ImGui::CalcTextSize("Rename").x + ImGui::CalcTextSize("Rename").x;
-    const auto selectableWidth = std::max(
-      1.0f, ImGui::GetContentRegionAvail().x - renameButtonWidth - ImGui::GetStyle().ItemSpacing.x);
+      ImGui::CalcTextSize("Rename").x + (ImGui::GetStyle().FramePadding.x * 2.0f);
+    const auto removeButtonWidth =
+      ImGui::CalcTextSize("Remove").x + (ImGui::GetStyle().FramePadding.x * 2.0f);
+    const auto selectableWidth =
+      std::max(1.0f,
+               ImGui::GetContentRegionAvail().x - renameButtonWidth - removeButtonWidth -
+                 ImGui::GetStyle().ItemSpacing.x * 2.0f);
     if (ImGui::Selectable(file.displayName.c_str(), selected, 0, ImVec2(selectableWidth, 0.0f))) {
       result.action = VisualizationSettingsPanelAction::LoadImportedMidiFile;
       result.selectedImportedMidiId = file.id;
@@ -140,12 +149,37 @@ VisualizationSettingsPanelResult renderImportedMidiList(
       ImGui::OpenPopup("Rename Imported MIDI");
     }
 
+    ImGui::SetNextWindowSizeConstraints(ImVec2(importedMidiPopupMinWidth, 0.0f),
+                                        ImVec2(FLT_MAX, FLT_MAX));
     if (ImGui::BeginPopupModal("Rename Imported MIDI", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
       ImGui::InputText("Display Name", renameBuffer.data(), renameBuffer.size());
       if (ImGui::Button("Save")) {
         result.action = VisualizationSettingsPanelAction::RenameImportedMidiFile;
         result.selectedImportedMidiId = renamingImportedMidiId;
         result.renamedImportedMidiDisplayName = renameBuffer.data();
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Cancel")) {
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::EndPopup();
+    }
+
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Remove")) {
+      removingImportedMidiId = file.id;
+      removingImportedMidiName = file.displayName;
+      ImGui::OpenPopup("Remove Imported MIDI");
+    }
+
+    ImGui::SetNextWindowSizeConstraints(ImVec2(importedMidiPopupMinWidth, 0.0f),
+                                        ImVec2(FLT_MAX, FLT_MAX));
+    if (ImGui::BeginPopupModal("Remove Imported MIDI", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+      ImGui::TextWrapped("Remove imported MIDI \"%s\"?", removingImportedMidiName.c_str());
+      if (ImGui::Button("Remove")) {
+        result.action = VisualizationSettingsPanelAction::RemoveImportedMidiFile;
+        result.selectedImportedMidiId = removingImportedMidiId;
         ImGui::CloseCurrentPopup();
       }
       ImGui::SameLine();

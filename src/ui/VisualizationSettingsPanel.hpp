@@ -14,6 +14,7 @@ enum class VisualizationSettingsPanelAction : std::uint8_t
   LoadMidiFile,
   LoadImportedMidiFile,
   RenameImportedMidiFile,
+  RemoveImportedMidiFile,
 };
 
 struct VisualizationSettingsPanelResult

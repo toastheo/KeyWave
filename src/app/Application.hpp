@@ -38,6 +38,7 @@ private:
   void refreshImportedMidiFiles();
   bool loadImportedMidiFile(std::string_view id);
   void renameImportedMidiFile(std::string_view id, std::string_view displayName);
+  void removeImportedMidiFile(std::string_view id);
   void handleVisualizationSettingsPanelAction(const VisualizationSettingsPanelResult& result);
   void paceFrame(std::chrono::steady_clock::time_point frameStart);
 
