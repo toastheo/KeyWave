@@ -136,6 +136,44 @@ TEST_CASE("MidiLibraryStore rejects unknown last active imported MIDI ids", "[ap
   CHECK_FALSE(store.lastActiveMidiId().has_value());
 }
 
+TEST_CASE("MidiLibraryStore renames imported MIDI display names without renaming stored files",
+          "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto libraryRoot = root / "library";
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 24, 25, 26, 27});
+  MidiLibraryStore const store(libraryRoot);
+  const auto imported = store.importFile(sourcePath);
+  REQUIRE(imported.has_value());
+
+  CHECK(store.renameImportedMidiFile(imported->file.id, "  Better Name  "));
+
+  MidiLibraryStore const reopenedStore(libraryRoot);
+  const auto renamed = reopenedStore.findById(imported->file.id);
+  REQUIRE(renamed.has_value());
+  CHECK(renamed->displayName == "Better Name");
+  CHECK(renamed->storedFileName == imported->file.storedFileName);
+  CHECK(reopenedStore.importedFilePath(imported->file.id).has_value());
+}
+
+TEST_CASE("MidiLibraryStore rejects invalid imported MIDI renames", "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 28, 29, 30, 31});
+  MidiLibraryStore const store(root / "library");
+  const auto imported = store.importFile(sourcePath);
+  REQUIRE(imported.has_value());
+
+  CHECK_FALSE(store.renameImportedMidiFile("missing-id", "Other Name"));
+  CHECK_FALSE(store.renameImportedMidiFile(imported->file.id, "    "));
+
+  const auto unchanged = store.findById(imported->file.id);
+  REQUIRE(unchanged.has_value());
+  CHECK(unchanged->displayName == imported->file.displayName);
+}
+
 TEST_CASE("MidiLibraryStore returns stored paths only for existing copied files",
           "[app][midi-library]")
 {

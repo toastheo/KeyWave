@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -76,6 +77,21 @@ std::optional<std::string> utcTimestamp()
   std::ostringstream output;
   output << std::put_time(&utc, "%Y-%m-%dT%H:%M:%SZ");
   return output.str();
+}
+
+std::string trimAsciiWhitespace(const std::string_view value)
+{
+  const auto first = std::ranges::find_if(value, [](const unsigned char character) {
+    return std::isspace(character) == 0;
+  });
+  if (first == value.end()) {
+    return {};
+  }
+
+  const auto last = std::find_if(value.rbegin(), value.rend(), [](const unsigned char character) {
+    return std::isspace(character) == 0;
+  });
+  return {first, last.base()};
 }
 
 std::optional<FileSignature> computeSignature(const std::filesystem::path& path,
@@ -508,6 +524,30 @@ bool MidiLibraryStore::setLastActiveMidiId(std::string_view id, DiagnosticSink& 
 
   iter->lastOpenedAt = *timestamp;
   state.lastActiveMidiId = std::string{id};
+  return saveLibraryState(metadataPath(), state, diagnostics);
+}
+
+bool MidiLibraryStore::renameImportedMidiFile(std::string_view id,
+                                              std::string_view displayName,
+                                              DiagnosticSink& diagnostics) const
+{
+  auto state = loadLibraryState(metadataPath(), diagnostics);
+  const auto iter =
+    std::ranges::find_if(state.files, [id](const ImportedMidiFile& file) { return file.id == id; });
+  if (iter == state.files.end()) {
+    reportWarning(diagnostics,
+                  "Warning: could not rename imported MIDI file: imported MIDI id not found.");
+    return false;
+  }
+
+  const auto trimmedDisplayName = trimAsciiWhitespace(displayName);
+  if (trimmedDisplayName.empty()) {
+    reportWarning(diagnostics,
+                  "Warning: could not rename imported MIDI file: display name is empty.");
+    return false;
+  }
+
+  iter->displayName = trimmedDisplayName;
   return saveLibraryState(metadataPath(), state, diagnostics);
 }
 

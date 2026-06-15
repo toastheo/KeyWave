@@ -5,6 +5,7 @@
 #include <cmath>
 #include <imgui.h>
 #include <span>
+#include <string>
 #include <string_view>
 
 #include "app/AppSettingsConstraints.hpp"
@@ -106,6 +107,8 @@ VisualizationSettingsPanelResult renderImportedMidiList(
   std::span<const ImportedMidiFile> importedMidiFiles, const std::string_view activeImportedMidiId)
 {
   VisualizationSettingsPanelResult result;
+  static std::string renamingImportedMidiId;
+  static std::array<char, 256> renameBuffer{};
 
   ImGui::SeparatorText("Imported MIDI");
   if (importedMidiFiles.empty()) {
@@ -116,13 +119,42 @@ VisualizationSettingsPanelResult renderImportedMidiList(
   for (const auto& file : importedMidiFiles) {
     ImGui::PushID(file.id.c_str());
     const bool selected = file.id == activeImportedMidiId;
-    if (ImGui::Selectable(file.displayName.c_str(), selected)) {
+    const auto renameButtonWidth =
+      ImGui::CalcTextSize("Rename").x + ImGui::CalcTextSize("Rename").x;
+    const auto selectableWidth = std::max(
+      1.0f, ImGui::GetContentRegionAvail().x - renameButtonWidth - ImGui::GetStyle().ItemSpacing.x);
+    if (ImGui::Selectable(file.displayName.c_str(), selected, 0, ImVec2(selectableWidth, 0.0f))) {
       result.action = VisualizationSettingsPanelAction::LoadImportedMidiFile;
       result.selectedImportedMidiId = file.id;
     }
     if (selected) {
       ImGui::SetItemDefaultFocus();
     }
+
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Rename")) {
+      renamingImportedMidiId = file.id;
+      std::ranges::fill(renameBuffer, '\0');
+      const auto copyLength = std::min(file.displayName.size(), renameBuffer.size() - 1);
+      std::copy_n(file.displayName.data(), copyLength, renameBuffer.data());
+      ImGui::OpenPopup("Rename Imported MIDI");
+    }
+
+    if (ImGui::BeginPopupModal("Rename Imported MIDI", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+      ImGui::InputText("Display Name", renameBuffer.data(), renameBuffer.size());
+      if (ImGui::Button("Save")) {
+        result.action = VisualizationSettingsPanelAction::RenameImportedMidiFile;
+        result.selectedImportedMidiId = renamingImportedMidiId;
+        result.renamedImportedMidiDisplayName = renameBuffer.data();
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Cancel")) {
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::EndPopup();
+    }
+
     ImGui::PopID();
   }
 
