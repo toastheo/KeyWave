@@ -13,12 +13,14 @@ enum class VisualizationSettingsPanelAction : std::uint8_t
   None,
   LoadMidiFile,
   LoadImportedMidiFile,
+  RenameImportedMidiFile,
 };
 
 struct VisualizationSettingsPanelResult
 {
   VisualizationSettingsPanelAction action = VisualizationSettingsPanelAction::None;
   std::string selectedImportedMidiId;
+  std::string renamedImportedMidiDisplayName;
 };
 
 class VisualizationSettingsPanel

@@ -33,6 +33,8 @@ TEST_CASE("Visualization settings panel actions default to none", "[app][visuali
   CHECK(VisualizationSettingsPanelAction::None != VisualizationSettingsPanelAction::LoadMidiFile);
   CHECK(VisualizationSettingsPanelAction::None !=
         VisualizationSettingsPanelAction::LoadImportedMidiFile);
+  CHECK(VisualizationSettingsPanelAction::None !=
+        VisualizationSettingsPanelAction::RenameImportedMidiFile);
 }
 
 } // namespace

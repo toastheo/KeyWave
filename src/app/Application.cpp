@@ -158,7 +158,7 @@ void Application::refreshImportedMidiFiles()
                     });
 }
 
-bool Application::loadImportedMidiFile(std::string_view id)
+bool Application::loadImportedMidiFile(const std::string_view id)
 {
   const auto storedMidiPath = m_midiLibraryStore.importedFilePath(id, m_diagnostics);
   if (!storedMidiPath.has_value()) {
@@ -189,9 +189,24 @@ bool Application::loadImportedMidiFile(std::string_view id)
   return true;
 }
 
+void Application::renameImportedMidiFile(const std::string_view id, const std::string_view displayName)
+{
+  if (!m_midiLibraryStore.renameImportedMidiFile(id, displayName, m_diagnostics)) {
+    reportWarning(m_diagnostics, "Warning: could not rename imported MIDI file.");
+    return;
+  }
+
+  refreshImportedMidiFiles();
+}
+
 void Application::handleVisualizationSettingsPanelAction(
   const VisualizationSettingsPanelResult& result)
 {
+  if (result.action == VisualizationSettingsPanelAction::RenameImportedMidiFile) {
+    renameImportedMidiFile(result.selectedImportedMidiId, result.renamedImportedMidiDisplayName);
+    return;
+  }
+
   if (result.action == VisualizationSettingsPanelAction::LoadImportedMidiFile) {
     loadImportedMidiFile(result.selectedImportedMidiId);
     return;
