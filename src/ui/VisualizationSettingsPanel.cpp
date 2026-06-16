@@ -107,9 +107,12 @@ void renderPlaybackSettings(AppSettings const& settings, PlaybackTransport& tran
 }
 
 VisualizationSettingsPanelResult renderImportedMidiList(
-  std::span<const ImportedMidiFile> importedMidiFiles, const std::string_view activeImportedMidiId)
+  const std::span<const ImportedMidiFile> importedMidiFiles,
+  const std::string_view activeImportedMidiId)
 {
   VisualizationSettingsPanelResult result;
+
+  // The modal edit has to live outside the loop body because ImGui rebuilds this UI every frame.
   static std::string renamingImportedMidiId;
   static std::string removingImportedMidiId;
   static std::string removingImportedMidiName;
@@ -276,8 +279,7 @@ void renderRendererSettings(RendererSettings& settings)
 
 void renderWindowSettings(WindowSettings& settings)
 {
-  // TODO: Fix switching display modes at runtime on linux.
-  //       This is bugged for some reason.
+  // TODO: Fix switching display modes at runtime on linux. This is bugged for some reason.
 #if !defined(__linux__)
   const auto displayMode = settings.displayMode;
   if (const char* displayModeLabel = windowDisplayModeLabel(displayMode);

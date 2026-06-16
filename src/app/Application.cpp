@@ -125,6 +125,7 @@ void Application::applyWindowSettings()
                                                               .height = sanitizedWindow.height},
                                                  m_diagnostics);
     if (!applied && requestedMode != WindowDisplayMode::Windowed) {
+      // Persist the fallback mode so a refused fullscreen switch does not reopen broken next time.
       settings.window.displayMode = WindowDisplayMode::Windowed;
     }
   }
@@ -189,7 +190,8 @@ bool Application::loadImportedMidiFile(const std::string_view id)
   return true;
 }
 
-void Application::renameImportedMidiFile(const std::string_view id, const std::string_view displayName)
+void Application::renameImportedMidiFile(const std::string_view id,
+                                         const std::string_view displayName)
 {
   if (!m_midiLibraryStore.renameImportedMidiFile(id, displayName, m_diagnostics)) {
     reportWarning(m_diagnostics, "Warning: could not rename imported MIDI file.");
@@ -201,7 +203,8 @@ void Application::renameImportedMidiFile(const std::string_view id, const std::s
 
 void Application::removeImportedMidiFile(const std::string_view id)
 {
-  const bool removingActiveMidi = m_activeImportedMidiId.has_value() && *m_activeImportedMidiId == id;
+  const bool removingActiveMidi = m_activeImportedMidiId.has_value() &&
+                                  *m_activeImportedMidiId == id;
 
   if (!m_midiLibraryStore.removeImportedMidiFile(id, m_diagnostics)) {
     reportWarning(m_diagnostics, "Warning: could not remove imported MIDI file.");
@@ -239,6 +242,8 @@ void Application::handleVisualizationSettingsPanelAction(
     return;
   }
 
+  // We don't want the playback to update while the file dialog is opened, otherwise it would create
+  // a visible playback jump.
   m_visualizerController.suppressNextPlaybackUpdate();
 
   const auto midiPath = MidiFileDialog::open(m_diagnostics);
@@ -246,7 +251,7 @@ void Application::handleVisualizationSettingsPanelAction(
     return;
   }
 
-  auto importedMidi = m_midiLibraryStore.importFile(*midiPath, m_diagnostics);
+  const auto importedMidi = m_midiLibraryStore.importFile(*midiPath, m_diagnostics);
   if (!importedMidi.has_value()) {
     reportWarning(m_diagnostics, "Warning: MIDI import failed. Keeping the current MIDI file.");
     return;

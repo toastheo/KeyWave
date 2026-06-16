@@ -114,6 +114,7 @@ bool SettingsStorage::save(const AppSettings& settings,
       std::filesystem::create_directories(parentPath);
     }
 
+    // Create and write through a temporary file, so if it fails, we don't lose the valid settings.
     auto tempPath = path;
     tempPath += ".tmp";
 

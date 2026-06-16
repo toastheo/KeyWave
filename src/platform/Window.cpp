@@ -224,6 +224,9 @@ bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
 
   auto* window = m_handle.get();
   const bool wasWindowed = m_displayMode == PlatformWindowDisplayMode::Windowed;
+
+  // Requesting a window resize while the window is maximized leads to unexpected behavior, so we
+  // have to check if we have to restore the native window.
   restoreNativeWindowBeforeChangingDisplayModeIfNeeded(window, m_displayMode);
   if (wasWindowed) {
     glfwGetWindowPos(window, &m_windowedX, &m_windowedY);

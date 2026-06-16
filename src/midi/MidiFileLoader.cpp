@@ -1,7 +1,6 @@
 #include "midi/MidiFileLoader.hpp"
 
 #include <MidiFile.h>
-
 #include <array>
 #include <filesystem>
 #include <fstream>
@@ -23,7 +22,8 @@ bool hasStandardMidiHeader(const std::filesystem::path& path)
 } // namespace
 
 std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::path& path,
-                                                         DiagnosticSink& diagnostics) {
+                                                         DiagnosticSink& diagnostics)
+{
   if (path.empty()) {
     reportError(diagnostics, "MIDI load failed: file path is empty.");
     return std::nullopt;
@@ -80,13 +80,13 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
         continue;
       }
 
+      // Prevent that malformed pairs poison the timeline length and viewport queries.
       const auto startSeconds = event.seconds;
       const auto durationSeconds = linkedEvent->seconds - event.seconds;
       if (durationSeconds < 0.0) {
         std::ostringstream message;
         message << "MIDI note ignored: linked note-off occurs before note-on"
-                << " track=" << track
-                << " pitch=" << event.getKeyNumber();
+                << " track=" << track << " pitch=" << event.getKeyNumber();
         reportWarning(diagnostics, message.str());
         continue;
       }

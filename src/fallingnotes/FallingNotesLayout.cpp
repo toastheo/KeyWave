@@ -55,6 +55,8 @@ FallingNotesLayoutStyle sanitizedStyle(FallingNotesLayoutStyle style)
 
 Rect shapedNoteRect(Rect rect, const int pitch, const FallingNotesLayoutStyle& style)
 {
+  // Safety net: if we request an inset that's too extreme, we'll make sure it always remains
+  // renderable.
   const auto maximumInset = std::max(0.0, (rect.width - kMinimumPositiveWidth) * 0.5);
   const auto inset = std::min(style.noteHorizontalInset, maximumInset);
   const auto insetWidth = std::max(kMinimumPositiveWidth, rect.width - inset * 2.0);

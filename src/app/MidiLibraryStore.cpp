@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <utility>
 
@@ -17,9 +18,9 @@
 namespace {
 
 // These are the standard published constants for the 64-bit Fowler–Noll–Vo hash family:
-// fnvOffsetBasis is the standard starting value for FNV-1a 64-bit.
-// fnvPrime is the standard multiplier for FNV-1a 64-bit.
-// For more information: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+// fnvOffsetBasis is the standard starting value.
+// fnvPrime is the standard multiplier.
+// This is enough here because the hash is a stable content identifier, not a security boundary.
 constexpr std::uint64_t fnvOffsetBasis = 14695981039346656037ull;
 constexpr std::uint64_t fnvPrime = 1099511628211ull;
 
@@ -88,9 +89,10 @@ std::string trimAsciiWhitespace(const std::string_view value)
     return {};
   }
 
-  const auto last = std::find_if(value.rbegin(), value.rend(), [](const unsigned char character) {
-    return std::isspace(character) == 0;
-  });
+  const auto last =
+    std::ranges::find_if(std::views::reverse(value), [](const unsigned char character) {
+      return std::isspace(character) == 0;
+    });
   return {first, last.base()};
 }
 
@@ -105,6 +107,7 @@ std::optional<FileSignature> computeSignature(const std::filesystem::path& path,
 
   std::uint64_t hash = fnvOffsetBasis;
   std::uintmax_t size = 0;
+  // Hash in chunks because midi files can be very large, and we don't want them fully into memory.
   std::array<char, 8192> buffer{}; // 8 KiB chunk size
   while (input) {
     input.read(buffer.data(), buffer.size());
@@ -135,6 +138,7 @@ bool sameFileBytes(const FileComparisonPaths& paths, DiagnosticSink& diagnostics
     return false;
   }
 
+  // We compare here in chunks again: Same reason as for the signature hashing.
   std::array<char, 8192> leftBuffer{};  // 8 KiB
   std::array<char, 8192> rightBuffer{}; // 8 KiB
   while (leftInput && rightInput) {
@@ -289,6 +293,7 @@ bool saveLibraryState(const std::filesystem::path& metadataPath,
       std::filesystem::create_directories(metadataPath.parent_path());
     }
 
+    // To prevent something like a crash can leave a half-written library index.
     auto tempPath = metadataPath;
     tempPath += ".tmp";
 
@@ -406,6 +411,10 @@ std::optional<MidiImportResult> MidiLibraryStore::importFile(
   }
 
   auto state = loadLibraryState(metadataPath(), diagnostics);
+
+  // First, we compare the hash and the size. If they're different, it can't possibly be the same
+  // file, and we can move on right away. We still perform a byte-by-byte comparison afterward to
+  // account for rare hash collisions.
   for (const auto& file : state.files) {
     if (file.contentHash == signature->contentHash && file.sizeBytes == signature->sizeBytes &&
         std::filesystem::exists(storedFilePath(file), errorCode) &&
@@ -528,7 +537,7 @@ bool MidiLibraryStore::setLastActiveMidiId(std::string_view id, DiagnosticSink& 
 }
 
 bool MidiLibraryStore::renameImportedMidiFile(std::string_view id,
-                                              std::string_view displayName,
+                                              const std::string_view displayName,
                                               DiagnosticSink& diagnostics) const
 {
   auto state = loadLibraryState(metadataPath(), diagnostics);
