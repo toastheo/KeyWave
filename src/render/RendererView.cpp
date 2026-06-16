@@ -151,5 +151,6 @@ Rect lineToPixelAlignedRect(const DrawLineCommand& line,
     };
   }
 
+  // Diagonal strokes are intentionally unsupported because the backend renders lines as rects.
   return {};
 }

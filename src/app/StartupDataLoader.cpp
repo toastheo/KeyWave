@@ -101,6 +101,7 @@ StartupData loadStartupMidiIfPresent(const AppConfig& config,
                                      const MidiLibraryStore& midiLibraryStore,
                                      DiagnosticSink& diagnostics)
 {
+  // An explicit startup file specified via the CLI should take precedence over the last session.
   if (!config.midiFilePath.has_value()) {
     return loadLastActiveImportedMidi(midiLibraryStore, diagnostics);
   }

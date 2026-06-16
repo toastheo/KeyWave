@@ -53,6 +53,7 @@ bool isInPitchRange(const Note& note, const PitchRange& range)
 
 void sortQueriedNotes(std::vector<QueriedNote>& notes)
 {
+  // This is necessary so rendering and tests do not depend on source MIDI event ordering.
   std::ranges::sort(notes, [](const QueriedNote& left, const QueriedNote& right) {
     if (left.note.startSeconds != right.note.startSeconds) {
       return left.note.startSeconds < right.note.startSeconds;
@@ -72,6 +73,7 @@ void sortQueriedNotes(std::vector<QueriedNote>& notes)
 
 void sortNotesByPitchChannelTrack(std::vector<Note>& notes)
 {
+  // Active-key state should be stable even when overlapping notes came from different tracks.
   std::ranges::sort(notes, [](const Note& left, const Note& right) {
     if (left.pitch != right.pitch) {
       return left.pitch < right.pitch;

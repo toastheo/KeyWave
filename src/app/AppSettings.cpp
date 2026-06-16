@@ -241,6 +241,7 @@ KeyboardSettings sanitizeKeyboardSettings(KeyboardSettings settings)
   if (!isNonNegativeFinite(settings.whiteKeyGap)) {
     settings.whiteKeyGap = defaults.whiteKeyGap;
   }
+  // Leave a tiny width so extreme gaps cannot create zero-width note geometry downstream.
   settings.whiteKeyGap =
     std::min(settings.whiteKeyGap, std::max(0.0, settings.whiteKeyWidth - 0.000001));
 

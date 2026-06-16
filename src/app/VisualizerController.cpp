@@ -52,6 +52,8 @@ void VisualizerController::replaceTimelineAndPlayFromStart(std::optional<MidiTim
   m_playbackTransport.seek(0.0);
   if (m_timeline.has_value()) {
     m_playbackTransport.play();
+
+    // Loading a file blocks the frame so we skip one tick so the replacement starts exactly at zero.
     suppressNextPlaybackUpdate();
   }
 }

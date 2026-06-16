@@ -315,6 +315,7 @@ nlohmann::json AppSettingsSerializer::serialize(const AppSettings& settings)
 AppSettings AppSettingsSerializer::deserialize(const nlohmann::json& json,
                                                const AppSettings& defaults)
 {
+  // Merge onto defaults so older or hand-edited settings files can omit fields safely.
   AppSettings settings = defaults;
   if (!json.is_object()) {
     return sanitizeAppSettings(settings);

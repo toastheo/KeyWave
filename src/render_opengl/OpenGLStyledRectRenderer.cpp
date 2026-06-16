@@ -195,6 +195,8 @@ void OpenGLStyledRectRenderer::appendRect(const DrawStyledRectCommand& command,
   const auto topRightClip = worldToClip(Vec2{.x = command.rect.x + command.rect.width,
                                              .y = command.rect.y + command.rect.height},
                                         view.visibleWorldRect);
+
+  // Specify styled radii and borders in pixels so they remain stable while the view scales.
   const auto pixelSize = rectPixelSize(command.rect, view, framebufferSize);
   const auto borderThicknessPixels = positiveFiniteFloat(command.borderThicknessPixels);
   const auto topLeftCornerRadiusPixels = positiveFiniteFloat(command.cornerRadiiPixels.topLeft);
