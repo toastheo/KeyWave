@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "app/MidiLibraryStore.hpp"
+#include "diagnostics/RecordingDiagnosticSink.hpp"
 
 namespace {
 
@@ -199,6 +200,55 @@ TEST_CASE("MidiLibraryStore removes imported MIDI files and their copied files",
   CHECK_FALSE(std::filesystem::exists(*copiedPath));
   CHECK_FALSE(store.findById(imported->file.id).has_value());
   CHECK_FALSE(store.lastActiveMidiId().has_value());
+}
+
+TEST_CASE("MidiLibraryStore keeps copied files when removal metadata save fails",
+          "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto libraryRoot = root / "library";
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 48, 49, 50, 51});
+  MidiLibraryStore const store(libraryRoot);
+  const auto imported = store.importFile(sourcePath);
+  REQUIRE(imported.has_value());
+  REQUIRE(store.setLastActiveMidiId(imported->file.id));
+  const auto copiedPath = store.importedFilePath(imported->file.id);
+  REQUIRE(copiedPath.has_value());
+
+  std::filesystem::create_directory(libraryRoot / "midi-library.json.tmp");
+
+  CHECK_FALSE(store.removeImportedMidiFile(imported->file.id));
+
+  CHECK(std::filesystem::exists(*copiedPath));
+  CHECK(store.findById(imported->file.id).has_value());
+  const auto lastActiveId = store.lastActiveMidiId();
+  REQUIRE(lastActiveId.has_value());
+  CHECK(*lastActiveId == imported->file.id);
+}
+
+TEST_CASE("MidiLibraryStore removes metadata when copied file cleanup fails", "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 52, 53, 54, 55});
+  MidiLibraryStore const store(root / "library");
+  const auto imported = store.importFile(sourcePath);
+  REQUIRE(imported.has_value());
+  const auto copiedPath = store.importedFilePath(imported->file.id);
+  REQUIRE(copiedPath.has_value());
+  std::filesystem::remove(*copiedPath);
+  std::filesystem::create_directory(*copiedPath);
+  writeText(*copiedPath / "nested-file", "still here");
+  RecordingDiagnosticSink diagnostics;
+
+  CHECK(store.removeImportedMidiFile(imported->file.id, diagnostics));
+
+  CHECK_FALSE(store.findById(imported->file.id).has_value());
+  CHECK(std::filesystem::exists(*copiedPath));
+  REQUIRE_FALSE(diagnostics.messages.empty());
+  CHECK(diagnostics.messages.back().message.find("could not delete copied MIDI file") !=
+        std::string::npos);
 }
 
 TEST_CASE("MidiLibraryStore rejects unknown imported MIDI removals", "[app][midi-library]")
