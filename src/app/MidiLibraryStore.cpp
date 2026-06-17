@@ -359,7 +359,7 @@ bool saveLibraryState(const std::filesystem::path& metadataPath,
       std::filesystem::create_directories(metadataPath.parent_path());
     }
 
-    // To prevent something like a crash can leave a half-written library index.
+    // Write to a temporary file first so a crash does not leave a half-written library index.
     auto tempPath = metadataPath;
     tempPath += ".tmp";
 
