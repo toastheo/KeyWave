@@ -80,7 +80,7 @@ std::optional<std::string> utcTimestamp()
   return output.str();
 }
 
-std::string trimAsciiWhitespace(const std::string_view value)
+std::string trimWhitespace(const std::string_view value)
 {
   const auto first = std::ranges::find_if(value, [](const unsigned char character) {
     return std::isspace(character) == 0;
@@ -94,6 +94,40 @@ std::string trimAsciiWhitespace(const std::string_view value)
       return std::isspace(character) == 0;
     });
   return {first, last.base()};
+}
+
+std::string normalizeExtension(const std::filesystem::path& path)
+{
+  auto extension = path.extension().string();
+  std::ranges::transform(extension, extension.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  return extension;
+}
+
+bool hasAllowedMidiExtension(const std::filesystem::path& path)
+{
+  const auto extension = normalizeExtension(path);
+  return extension == ".mid" || extension == ".midi" || extension == ".kar";
+}
+
+bool isSafeStoredFileName(const std::string& name)
+{
+  const std::filesystem::path path{name};
+
+  if (name.empty() || name == "." || name == "..") {
+    return false;
+  }
+
+  if (path.filename() != path || path.is_absolute()) {
+    return false;
+  }
+
+  if (name.find('/') != std::string::npos || name.find('\\') != std::string::npos) {
+    return false;
+  }
+
+  return hasAllowedMidiExtension(path);
 }
 
 std::optional<FileSignature> computeSignature(const std::filesystem::path& path,
@@ -187,9 +221,14 @@ std::optional<ImportedMidiFile> importedMidiFileFromJson(const nlohmann::json& j
   const auto sizeIter = json.find("sizeBytes");
   auto importedAt = stringValue("importedAt");
   auto lastOpenedAt = stringValue("lastOpenedAt");
+
   if (!id.has_value() || !displayName.has_value() || !storedFileName.has_value() ||
       !contentHash.has_value() || !originalFileName.has_value() || !importedAt.has_value() ||
       !lastOpenedAt.has_value() || sizeIter == json.end() || !sizeIter->is_number_unsigned()) {
+    return std::nullopt;
+  }
+
+  if (!isSafeStoredFileName(*storedFileName)) {
     return std::nullopt;
   }
 
@@ -376,6 +415,7 @@ std::filesystem::path MidiLibraryStore::defaultRootPath()
 {
   return SettingsStorage::defaultSettingsPath().parent_path() / "midi-library";
 }
+
 std::optional<MidiImportResult> MidiLibraryStore::importFile(
   const std::filesystem::path& sourcePath, DiagnosticSink& diagnostics) const
 {
@@ -405,6 +445,11 @@ std::optional<MidiImportResult> MidiLibraryStore::importFile(
     return std::nullopt;
   }
 
+  if (!hasAllowedMidiExtension(sourcePath)) {
+    reportWarning(diagnostics, "Warning: MIDI import failed: unsupported file extension: " + sourcePath.string());
+    return std::nullopt;
+  }
+
   auto signature = computeSignature(sourcePath, diagnostics);
   if (!signature.has_value()) {
     return std::nullopt;
@@ -429,7 +474,7 @@ std::optional<MidiImportResult> MidiLibraryStore::importFile(
   }
 
   const auto id = uniqueIdFor(*signature, state.files);
-  const auto storedFileName = id + sourcePath.extension().string();
+  const auto storedFileName = id + normalizeExtension(sourcePath);
   const auto timestamp = utcTimestamp();
   if (!timestamp.has_value()) {
     reportWarning(diagnostics, "Warning: MIDI import failed: could not create import timestamp.");
@@ -536,23 +581,24 @@ bool MidiLibraryStore::setLastActiveMidiId(std::string_view id, DiagnosticSink& 
   return saveLibraryState(metadataPath(), state, diagnostics);
 }
 
+// Renaming is ui exclusive since we only modify the display name here.
 bool MidiLibraryStore::renameImportedMidiFile(std::string_view id,
                                               const std::string_view displayName,
                                               DiagnosticSink& diagnostics) const
 {
+  const auto trimmedDisplayName = trimWhitespace(displayName);
+  if (trimmedDisplayName.empty()) {
+    reportWarning(diagnostics,
+                  "Warning: could not rename imported MIDI file: display name is empty.");
+    return false;
+  }
+
   auto state = loadLibraryState(metadataPath(), diagnostics);
   const auto iter =
     std::ranges::find_if(state.files, [id](const ImportedMidiFile& file) { return file.id == id; });
   if (iter == state.files.end()) {
     reportWarning(diagnostics,
                   "Warning: could not rename imported MIDI file: imported MIDI id not found.");
-    return false;
-  }
-
-  const auto trimmedDisplayName = trimAsciiWhitespace(displayName);
-  if (trimmedDisplayName.empty()) {
-    reportWarning(diagnostics,
-                  "Warning: could not rename imported MIDI file: display name is empty.");
     return false;
   }
 
@@ -573,15 +619,14 @@ bool MidiLibraryStore::removeImportedMidiFile(std::string_view id,
   }
 
   const auto copiedFilePath = storedFilePath(*iter);
-  if (std::error_code errorCode; std::filesystem::exists(copiedFilePath, errorCode)) {
-    std::filesystem::remove(copiedFilePath, errorCode);
-    if (errorCode) {
-      std::ostringstream message;
-      message << "Warning: could not delete imported MIDI file: " << copiedFilePath << " ("
-              << errorCode.message() << ")";
-      reportWarning(diagnostics, message.str());
-      return false;
-    }
+  std::error_code errorCode;
+  std::filesystem::remove(copiedFilePath, errorCode);
+  if (errorCode) {
+    std::ostringstream message;
+    message << "Warning: could not delete imported MIDI file: " << copiedFilePath << " ("
+            << errorCode.message() << ")";
+    reportWarning(diagnostics, message.str());
+    return false;
   }
 
   state.files.erase(iter);
