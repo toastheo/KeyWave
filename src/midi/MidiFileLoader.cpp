@@ -85,8 +85,8 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
       const auto durationSeconds = linkedEvent->seconds - event.seconds;
       if (durationSeconds < 0.0) {
         std::ostringstream message;
-        message << "MIDI note ignored: linked note-off occurs before note-on"
-                << " track=" << track << " pitch=" << event.getKeyNumber();
+        message << "MIDI note ignored: linked note-off occurs before note-on" << " track=" << track
+                << " pitch=" << event.getKeyNumber();
         reportWarning(diagnostics, message.str());
         continue;
       }

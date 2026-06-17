@@ -1,5 +1,4 @@
 #include <catch2/catch_test_macros.hpp>
-
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -51,12 +50,10 @@ std::vector<std::filesystem::path> sourceFilesUnder(const std::filesystem::path&
   return files;
 }
 
-TEST_CASE("Visualization targets do not publicly depend on app settings",
-          "[architecture][layers]")
+TEST_CASE("Visualization targets do not publicly depend on app settings", "[architecture][layers]")
 {
   const auto sourceRoot = std::filesystem::path{KEYWAVE_SOURCE_DIR};
-  const auto appSettingsHeader =
-    readTextFile(sourceRoot / "src" / "app" / "AppSettings.hpp");
+  const auto appSettingsHeader = readTextFile(sourceRoot / "src" / "app" / "AppSettings.hpp");
 
   CHECK_FALSE(contains(appSettingsHeader, "#include \"midi/"));
   CHECK_FALSE(contains(appSettingsHeader, "#include \"render/"));
@@ -72,10 +69,9 @@ TEST_CASE("Visualization targets do not publicly depend on app settings",
   }
 
   const auto srcCmakeLists = readTextFile(sourceRoot / "src" / "CMakeLists.txt");
-  CHECK_FALSE(contains(targetLinkBlock(srcCmakeLists, "keywave_keyboard"),
-                       "keywave_app_settings"));
-  CHECK_FALSE(contains(targetLinkBlock(srcCmakeLists, "keywave_fallingnotes"),
-                       "keywave_app_settings"));
+  CHECK_FALSE(contains(targetLinkBlock(srcCmakeLists, "keywave_keyboard"), "keywave_app_settings"));
+  CHECK_FALSE(
+    contains(targetLinkBlock(srcCmakeLists, "keywave_fallingnotes"), "keywave_app_settings"));
 }
 
 TEST_CASE("First-party code routes diagnostics through the diagnostics boundary",

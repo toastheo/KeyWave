@@ -1,9 +1,5 @@
-#include "midi/MidiFileLoader.hpp"
-#include "midi/MidiFixtures.hpp"
-
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -11,6 +7,8 @@
 #include <sstream>
 
 #include "diagnostics/RecordingDiagnosticSink.hpp"
+#include "midi/MidiFileLoader.hpp"
+#include "midi/MidiFixtures.hpp"
 
 namespace {
 
@@ -23,7 +21,8 @@ std::filesystem::path nextUnsupportedFilePath()
          ("keywave-unsupported-midi-test-" + std::to_string(now) + ".png");
 }
 
-TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]") {
+TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]")
+{
   auto fixture = midi_fixtures::tempoChangeMidi();
 
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
@@ -34,7 +33,8 @@ TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]") {
   REQUIRE(timeline->notes().size() == 2);
   CHECK(timeline->lengthSeconds() == Catch::Approx(1.25).margin(kTimeTolerance));
 
-  const auto&[pitch, velocity, channel, track, startSeconds, durationSeconds] = timeline->notes()[0];
+  const auto& [pitch, velocity, channel, track, startSeconds, durationSeconds] =
+    timeline->notes()[0];
   CHECK(pitch == 60);
   CHECK(velocity == 64);
   CHECK(channel == 0);
@@ -51,7 +51,8 @@ TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]") {
   CHECK(second.durationSeconds == Catch::Approx(1.0).margin(kTimeTolerance));
 }
 
-TEST_CASE("MidiFileLoader treats note-on velocity zero as note-off", "[midi]") {
+TEST_CASE("MidiFileLoader treats note-on velocity zero as note-off", "[midi]")
+{
   auto fixture = midi_fixtures::tempoChangeMidi();
 
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
@@ -62,7 +63,8 @@ TEST_CASE("MidiFileLoader treats note-on velocity zero as note-off", "[midi]") {
   CHECK(timeline->notes()[1].durationSeconds == Catch::Approx(1.0).margin(kTimeTolerance));
 }
 
-TEST_CASE("MidiFileLoader pairs overlapping notes using FIFO order", "[midi]") {
+TEST_CASE("MidiFileLoader pairs overlapping notes using FIFO order", "[midi]")
+{
   auto fixture = midi_fixtures::overlappingNotesMidi();
 
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
@@ -83,7 +85,8 @@ TEST_CASE("MidiFileLoader pairs overlapping notes using FIFO order", "[midi]") {
   CHECK(second.durationSeconds == Catch::Approx(0.25).margin(kTimeTolerance));
 }
 
-TEST_CASE("MidiFileLoader returns nullopt for missing files", "[midi]") {
+TEST_CASE("MidiFileLoader returns nullopt for missing files", "[midi]")
+{
   const auto missingPath = std::filesystem::temp_directory_path() / "keywave-missing-midi-file.mid";
 
   const auto timeline = MidiFileLoader::loadFromFile(missingPath);

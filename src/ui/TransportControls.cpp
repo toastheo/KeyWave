@@ -1,7 +1,6 @@
 #include "ui/TransportControls.hpp"
 
 #include <imgui.h>
-
 #include <sstream>
 
 #include "app/PlaybackTransportAction.hpp"
@@ -41,15 +40,17 @@ void TransportControls::render(PlaybackTransport& transport,
   const auto seekForwardLabel = seekLabel + " >>";
 
   if (ImGui::Button(seekBackwardLabel.c_str())) {
-    applyPlaybackTransportAction(
-      PlaybackTransportAction::SeekBackward, transport, sanitizedSettings);
+    applyPlaybackTransportAction(PlaybackTransportAction::SeekBackward,
+                                 transport,
+                                 sanitizedSettings);
   }
 
   ImGui::SameLine();
   const char* playPauseLabel = transport.state() == PlaybackState::Playing ? "Pause" : "Play";
   if (ImGui::Button(playPauseLabel)) {
-    applyPlaybackTransportAction(
-      PlaybackTransportAction::TogglePlayPause, transport, sanitizedSettings);
+    applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause,
+                                 transport,
+                                 sanitizedSettings);
   }
 
   ImGui::SameLine();
@@ -59,8 +60,9 @@ void TransportControls::render(PlaybackTransport& transport,
 
   ImGui::SameLine();
   if (ImGui::Button(seekForwardLabel.c_str())) {
-    applyPlaybackTransportAction(
-      PlaybackTransportAction::SeekForward, transport, sanitizedSettings);
+    applyPlaybackTransportAction(PlaybackTransportAction::SeekForward,
+                                 transport,
+                                 sanitizedSettings);
   }
 
   ImGui::SameLine();

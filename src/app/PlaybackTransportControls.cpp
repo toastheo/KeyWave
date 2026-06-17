@@ -1,8 +1,8 @@
 #include "app/PlaybackTransportControls.hpp"
 
-#include "app/PlaybackTransportAction.hpp"
-
 #include <optional>
+
+#include "app/PlaybackTransportAction.hpp"
 
 namespace {
 std::optional<PlaybackTransportAction> actionFromKey(const Key key)

@@ -91,7 +91,7 @@ Cpp11BracedListStyle: true
 LambdaBodyIndentation: Signature
 
 # Comments
-ReflowComments: Always
+ReflowComments: true
 
 # Misc
 DerivePointerAlignment: false

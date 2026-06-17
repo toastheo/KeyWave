@@ -446,7 +446,9 @@ std::optional<MidiImportResult> MidiLibraryStore::importFile(
   }
 
   if (!hasAllowedMidiExtension(sourcePath)) {
-    reportWarning(diagnostics, "Warning: MIDI import failed: unsupported file extension: " + sourcePath.string());
+    reportWarning(diagnostics,
+                  "Warning: MIDI import failed: unsupported file extension: " +
+                    sourcePath.string());
     return std::nullopt;
   }
 

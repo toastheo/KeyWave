@@ -1,9 +1,8 @@
 #include "render_opengl/OpenGLShader.hpp"
 
-#include <glad/gl.h>
-
 #include <cstddef>
 #include <fstream>
+#include <glad/gl.h>
 #include <sstream>
 #include <string>
 
@@ -61,8 +60,7 @@ unsigned int compileShader(const unsigned int shaderType,
   int compileStatus = GL_FALSE;
   glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
   if (compileStatus != GL_TRUE) {
-    reportError(diagnostics,
-                "OpenGL shader compilation failed:\n" + shaderInfoLog(shader));
+    reportError(diagnostics, "OpenGL shader compilation failed:\n" + shaderInfoLog(shader));
     glDeleteShader(shader);
     return 0;
   }

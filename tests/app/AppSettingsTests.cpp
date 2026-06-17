@@ -1,8 +1,7 @@
+#include <array>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-
 #include <string_view>
-#include <array>
 
 #include "app/AppSettings.hpp"
 #include "app/AppSettingsConstraints.hpp"
@@ -150,8 +149,7 @@ TEST_CASE("Window display mode helpers expose labels and setting values", "[app]
     CHECK(windowDisplayModeFromSettingValue(displayMode.settingValue) == displayMode.mode);
   }
 
-  CHECK(windowDisplayModeFromSettingValue("unsupported",
-                                          WindowDisplayMode::ExclusiveFullscreen) ==
+  CHECK(windowDisplayModeFromSettingValue("unsupported", WindowDisplayMode::ExclusiveFullscreen) ==
         WindowDisplayMode::ExclusiveFullscreen);
 }
 

@@ -1,20 +1,19 @@
-#include "app/SettingsStorage.hpp"
-
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <string>
+
+#include "app/SettingsStorage.hpp"
 
 namespace {
 
 std::filesystem::path uniqueSettingsPath()
 {
   const auto suffix = std::chrono::steady_clock::now().time_since_epoch().count();
-  return std::filesystem::temp_directory_path() / ("keywave-settings-test-" + std::to_string(suffix)) /
-         "nested" / "settings.json";
+  return std::filesystem::temp_directory_path() /
+         ("keywave-settings-test-" + std::to_string(suffix)) / "nested" / "settings.json";
 }
 
 TEST_CASE("SettingsStorage returns nullopt when the settings file is missing", "[app][settings]")
