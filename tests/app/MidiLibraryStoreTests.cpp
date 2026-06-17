@@ -37,6 +37,13 @@ std::vector<unsigned char> readBytes(const std::filesystem::path& path)
   return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
 }
 
+void writeText(const std::filesystem::path& path, const std::string& text)
+{
+  std::filesystem::create_directories(path.parent_path());
+  std::ofstream output(path, std::ios::trunc);
+  output << text;
+}
+
 TEST_CASE("MidiLibraryStore imports a MIDI file into app-owned storage", "[app][midi-library]")
 {
   const auto root = uniqueLibraryRoot();
@@ -236,6 +243,53 @@ TEST_CASE("MidiLibraryStore rejects missing source files without writing metadat
   CHECK_FALSE(result.has_value());
   CHECK(store.listImportedFiles().empty());
   CHECK_FALSE(std::filesystem::exists(root / "library" / "midi-library.json"));
+}
+
+TEST_CASE("MidiLibraryStore keeps malformed metadata read-only", "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto metadataPath = root / "library" / "midi-library.json";
+  writeText(metadataPath, "{ invalid json");
+  MidiLibraryStore const store(root / "library");
+
+  CHECK(store.listImportedFiles().empty());
+  CHECK_FALSE(store.lastActiveMidiId().has_value());
+}
+
+TEST_CASE("MidiLibraryStore does not overwrite malformed metadata during import",
+          "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto libraryRoot = root / "library";
+  const auto metadataPath = libraryRoot / "midi-library.json";
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "new.mid", {'M', 'T', 'h', 'd', 40, 41, 42, 43});
+  MidiLibraryStore const store(libraryRoot);
+  writeText(metadataPath, "{ invalid json");
+  const auto originalMetadata = readBytes(metadataPath);
+
+  const auto result = store.importFile(sourcePath);
+
+  CHECK_FALSE(result.has_value());
+  CHECK(readBytes(metadataPath) == originalMetadata);
+}
+
+TEST_CASE("MidiLibraryStore does not overwrite incomplete metadata during import",
+          "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto libraryRoot = root / "library";
+  const auto metadataPath = libraryRoot / "midi-library.json";
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "new.mid", {'M', 'T', 'h', 'd', 44, 45, 46, 47});
+  MidiLibraryStore const store(libraryRoot);
+  writeText(metadataPath, R"({"version":1})");
+  const auto originalMetadata = readBytes(metadataPath);
+
+  const auto result = store.importFile(sourcePath);
+
+  CHECK_FALSE(result.has_value());
+  CHECK(readBytes(metadataPath) == originalMetadata);
 }
 
 } // namespace
