@@ -1,7 +1,7 @@
-#include "ui/TransportControlsConfig.hpp"
-
 #include <catch2/catch_test_macros.hpp>
 #include <imgui.h>
+
+#include "ui/TransportControlsConfig.hpp"
 
 TEST_CASE("transport controls do not take initial keyboard focus", "[ui][transport]")
 {

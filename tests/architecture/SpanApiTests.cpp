@@ -1,7 +1,6 @@
 #include <array>
-#include <span>
-
 #include <catch2/catch_test_macros.hpp>
+#include <span>
 
 #include "fallingnotes/FallingNotesLayout.hpp"
 #include "keyboard/KeyboardGeometry.hpp"
@@ -13,7 +12,10 @@ namespace {
 class RecordingRendererBackend final : public RendererBackend
 {
 public:
-  bool initialize() override { return true; }
+  bool initialize() override
+  {
+    return true;
+  }
   void shutdown() override {}
   void setFramebufferSize(const FramebufferSize&) override {}
   void setClearColor(Color) override {}
@@ -43,10 +45,10 @@ TEST_CASE("render and layout APIs accept contiguous spans", "[architecture]")
   const std::array queriedNotes{
     QueriedNote{.note = Note{.pitch = 60, .velocity = 100, .durationSeconds = 1.0}},
   };
-  const auto layout = FallingNotesLayout::build(queriedNotes,
-                                                FallingNotesViewport{.pitchRange = {.minPitch = 60,
-                                                                                    .maxPitch = 72}},
-                                                KeyboardGeometry{});
+  const auto layout =
+    FallingNotesLayout::build(queriedNotes,
+                              FallingNotesViewport{.pitchRange = {.minPitch = 60, .maxPitch = 72}},
+                              KeyboardGeometry{});
   CHECK(layout.notes.size() == queriedNotes.size());
 
   const std::array activeNotes{
