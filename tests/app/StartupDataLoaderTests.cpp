@@ -22,7 +22,7 @@ TEST_CASE("StartupDataLoader loads the last active imported MIDI when no CLI pat
 {
   auto fixture = midi_fixtures::tempoChangeMidi();
   const auto root = uniqueStartupLibraryRoot();
-  MidiLibraryStore const store(root);
+  MidiLibraryStore store(root);
   const auto imported = store.importFile(fixture.path());
   REQUIRE(imported.has_value());
   REQUIRE(store.setLastActiveMidiId(imported->file.id));
@@ -40,7 +40,7 @@ TEST_CASE("StartupDataLoader keeps CLI MIDI path precedence over imported MIDI r
 {
   auto fixture = midi_fixtures::tempoChangeMidi();
   const auto root = uniqueStartupLibraryRoot();
-  MidiLibraryStore const store(root);
+  MidiLibraryStore store(root);
   const auto imported = store.importFile(fixture.path());
   REQUIRE(imported.has_value());
   REQUIRE(store.setLastActiveMidiId(imported->file.id));
@@ -56,7 +56,7 @@ TEST_CASE("StartupDataLoader starts empty when the last active imported copy is 
           "[app][startup][midi-library]")
 {
   auto fixture = midi_fixtures::tempoChangeMidi();
-  MidiLibraryStore const store(uniqueStartupLibraryRoot());
+  MidiLibraryStore store(uniqueStartupLibraryRoot());
   const auto imported = store.importFile(fixture.path());
   REQUIRE(imported.has_value());
   REQUIRE(store.setLastActiveMidiId(imported->file.id));

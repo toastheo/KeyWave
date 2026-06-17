@@ -444,7 +444,7 @@ std::filesystem::path MidiLibraryStore::defaultRootPath()
 }
 
 std::optional<MidiImportResult> MidiLibraryStore::importFile(
-  const std::filesystem::path& sourcePath, DiagnosticSink& diagnostics) const
+  const std::filesystem::path& sourcePath, DiagnosticSink& diagnostics)
 {
   if (sourcePath.empty()) {
     reportWarning(diagnostics, "Warning: MIDI import failed: file path is empty.");
@@ -590,7 +590,7 @@ std::optional<std::string> MidiLibraryStore::lastActiveMidiId(DiagnosticSink& di
   return loadLibraryState(metadataPath(), diagnostics).lastActiveMidiId;
 }
 
-bool MidiLibraryStore::setLastActiveMidiId(std::string_view id, DiagnosticSink& diagnostics) const
+bool MidiLibraryStore::setLastActiveMidiId(std::string_view id, DiagnosticSink& diagnostics)
 {
   auto state = loadLibraryStateForWrite(metadataPath(), diagnostics);
   if (!state.has_value()) {
@@ -621,7 +621,7 @@ bool MidiLibraryStore::setLastActiveMidiId(std::string_view id, DiagnosticSink& 
 // Renaming is ui exclusive since we only modify the display name here.
 bool MidiLibraryStore::renameImportedMidiFile(std::string_view id,
                                               const std::string_view displayName,
-                                              DiagnosticSink& diagnostics) const
+                                              DiagnosticSink& diagnostics)
 {
   const auto trimmedDisplayName = trimWhitespace(displayName);
   if (trimmedDisplayName.empty()) {
@@ -648,8 +648,7 @@ bool MidiLibraryStore::renameImportedMidiFile(std::string_view id,
   return saveLibraryState(metadataPath(), *state, diagnostics);
 }
 
-bool MidiLibraryStore::removeImportedMidiFile(std::string_view id,
-                                              DiagnosticSink& diagnostics) const
+bool MidiLibraryStore::removeImportedMidiFile(std::string_view id, DiagnosticSink& diagnostics)
 {
   auto state = loadLibraryStateForWrite(metadataPath(), diagnostics);
   if (!state.has_value()) {
