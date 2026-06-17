@@ -34,8 +34,7 @@ public:
   [[nodiscard]] static std::filesystem::path defaultRootPath();
 
   [[nodiscard]] std::optional<MidiImportResult> importFile(
-    const std::filesystem::path& sourcePath,
-    DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
+    const std::filesystem::path& sourcePath, DiagnosticSink& diagnostics = nullDiagnosticSink());
   [[nodiscard]] std::vector<ImportedMidiFile> listImportedFiles(
     DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
   [[nodiscard]] std::optional<std::filesystem::path> importedFilePath(
@@ -45,13 +44,12 @@ public:
   [[nodiscard]] std::optional<std::string> lastActiveMidiId(
     DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
   [[nodiscard]] bool setLastActiveMidiId(std::string_view id,
-                                         DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
-  [[nodiscard]] bool renameImportedMidiFile(
-    std::string_view id,
-    std::string_view displayName,
-    DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
-  [[nodiscard]] bool removeImportedMidiFile(
-    std::string_view id, DiagnosticSink& diagnostics = nullDiagnosticSink()) const;
+                                         DiagnosticSink& diagnostics = nullDiagnosticSink());
+  [[nodiscard]] bool renameImportedMidiFile(std::string_view id,
+                                            std::string_view displayName,
+                                            DiagnosticSink& diagnostics = nullDiagnosticSink());
+  [[nodiscard]] bool removeImportedMidiFile(std::string_view id,
+                                            DiagnosticSink& diagnostics = nullDiagnosticSink());
 
 private:
   [[nodiscard]] std::filesystem::path metadataPath() const;

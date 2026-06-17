@@ -50,7 +50,7 @@ TEST_CASE("MidiLibraryStore imports a MIDI file into app-owned storage", "[app][
   const auto root = uniqueLibraryRoot();
   const auto sourcePath =
     writeSourceMidi(root / "source", "song.mid", {'M', 'T', 'h', 'd', 0, 1, 2, 3});
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
 
   const auto result = store.importFile(sourcePath);
 
@@ -78,7 +78,7 @@ TEST_CASE("MidiLibraryStore persists imported MIDI metadata", "[app][midi-librar
   const auto libraryRoot = root / "library";
   const auto sourcePath =
     writeSourceMidi(root / "source", "persisted.midi", {'M', 'T', 'h', 'd', 0, 1, 2, 3});
-  MidiLibraryStore const store(libraryRoot);
+  MidiLibraryStore store(libraryRoot);
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
 
@@ -102,7 +102,7 @@ TEST_CASE("MidiLibraryStore reuses an existing import for identical bytes", "[ap
   const std::vector<unsigned char> bytes{'M', 'T', 'h', 'd', 8, 9, 10, 11};
   const auto firstSource = writeSourceMidi(root / "source-a", "first.mid", bytes);
   const auto secondSource = writeSourceMidi(root / "source-b", "renamed.mid", bytes);
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
 
   const auto firstImport = store.importFile(firstSource);
   REQUIRE(firstImport.has_value());
@@ -120,7 +120,7 @@ TEST_CASE("MidiLibraryStore persists the last active imported MIDI id", "[app][m
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 16, 17, 18, 19});
   const auto libraryRoot = root / "library";
-  MidiLibraryStore const store(libraryRoot);
+  MidiLibraryStore store(libraryRoot);
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
 
@@ -137,7 +137,7 @@ TEST_CASE("MidiLibraryStore rejects unknown last active imported MIDI ids", "[ap
   const auto root = uniqueLibraryRoot();
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 20, 21, 22, 23});
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
   REQUIRE(store.importFile(sourcePath).has_value());
 
   CHECK_FALSE(store.setLastActiveMidiId("missing-id"));
@@ -151,7 +151,7 @@ TEST_CASE("MidiLibraryStore renames imported MIDI display names without renaming
   const auto libraryRoot = root / "library";
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 24, 25, 26, 27});
-  MidiLibraryStore const store(libraryRoot);
+  MidiLibraryStore store(libraryRoot);
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
 
@@ -170,7 +170,7 @@ TEST_CASE("MidiLibraryStore rejects invalid imported MIDI renames", "[app][midi-
   const auto root = uniqueLibraryRoot();
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 28, 29, 30, 31});
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
 
@@ -188,7 +188,7 @@ TEST_CASE("MidiLibraryStore removes imported MIDI files and their copied files",
   const auto root = uniqueLibraryRoot();
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 32, 33, 34, 35});
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
   REQUIRE(store.setLastActiveMidiId(imported->file.id));
@@ -209,7 +209,7 @@ TEST_CASE("MidiLibraryStore keeps copied files when removal metadata save fails"
   const auto libraryRoot = root / "library";
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 48, 49, 50, 51});
-  MidiLibraryStore const store(libraryRoot);
+  MidiLibraryStore store(libraryRoot);
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
   REQUIRE(store.setLastActiveMidiId(imported->file.id));
@@ -232,7 +232,7 @@ TEST_CASE("MidiLibraryStore removes metadata when copied file cleanup fails", "[
   const auto root = uniqueLibraryRoot();
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 52, 53, 54, 55});
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
   const auto copiedPath = store.importedFilePath(imported->file.id);
@@ -256,7 +256,7 @@ TEST_CASE("MidiLibraryStore rejects unknown imported MIDI removals", "[app][midi
   const auto root = uniqueLibraryRoot();
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 36, 37, 38, 39});
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
 
@@ -270,7 +270,7 @@ TEST_CASE("MidiLibraryStore returns stored paths only for existing copied files"
   const auto root = uniqueLibraryRoot();
   const auto sourcePath =
     writeSourceMidi(root / "source", "stored.mid", {'M', 'T', 'h', 'd', 12, 13, 14, 15});
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
   const auto imported = store.importFile(sourcePath);
   REQUIRE(imported.has_value());
 
@@ -286,7 +286,7 @@ TEST_CASE("MidiLibraryStore rejects missing source files without writing metadat
           "[app][midi-library]")
 {
   const auto root = uniqueLibraryRoot();
-  MidiLibraryStore const store(root / "library");
+  MidiLibraryStore store(root / "library");
 
   const auto result = store.importFile(root / "source" / "missing.id");
 
@@ -314,7 +314,7 @@ TEST_CASE("MidiLibraryStore does not overwrite malformed metadata during import"
   const auto metadataPath = libraryRoot / "midi-library.json";
   const auto sourcePath =
     writeSourceMidi(root / "source", "new.mid", {'M', 'T', 'h', 'd', 40, 41, 42, 43});
-  MidiLibraryStore const store(libraryRoot);
+  MidiLibraryStore store(libraryRoot);
   writeText(metadataPath, "{ invalid json");
   const auto originalMetadata = readBytes(metadataPath);
 
@@ -332,7 +332,7 @@ TEST_CASE("MidiLibraryStore does not overwrite incomplete metadata during import
   const auto metadataPath = libraryRoot / "midi-library.json";
   const auto sourcePath =
     writeSourceMidi(root / "source", "new.mid", {'M', 'T', 'h', 'd', 44, 45, 46, 47});
-  MidiLibraryStore const store(libraryRoot);
+  MidiLibraryStore store(libraryRoot);
   writeText(metadataPath, R"({"version":1})");
   const auto originalMetadata = readBytes(metadataPath);
 
