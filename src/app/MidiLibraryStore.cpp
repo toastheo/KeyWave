@@ -666,22 +666,25 @@ bool MidiLibraryStore::removeImportedMidiFile(std::string_view id,
   }
 
   const auto copiedFilePath = storedFilePath(*iter);
-  std::error_code errorCode;
-  std::filesystem::remove(copiedFilePath, errorCode);
-  if (errorCode) {
-    std::ostringstream message;
-    message << "Warning: could not delete imported MIDI file: " << copiedFilePath << " ("
-            << errorCode.message() << ")";
-    reportWarning(diagnostics, message.str());
-    return false;
-  }
-
   state->files.erase(iter);
   if (state->lastActiveMidiId.has_value() && *state->lastActiveMidiId == id) {
     state->lastActiveMidiId.reset();
   }
 
-  return saveLibraryState(metadataPath(), *state, diagnostics);
+  if (!saveLibraryState(metadataPath(), *state, diagnostics)) {
+    return false;
+  }
+
+  std::error_code errorCode;
+  std::filesystem::remove(copiedFilePath, errorCode);
+  if (errorCode) {
+    std::ostringstream message;
+    message << "Warning: removed imported MIDI metadata, but could not delete copied MIDI file: "
+            << copiedFilePath << " (" << errorCode.message() << ")";
+    reportWarning(diagnostics, message.str());
+  }
+
+  return true;
 }
 
 std::filesystem::path MidiLibraryStore::metadataPath() const
