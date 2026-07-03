@@ -177,6 +177,14 @@ add_library(keywave_app_core STATIC
         app/PlaybackTransportControls.cpp
         app/MidiLibraryStore.hpp
         app/MidiLibraryStore.cpp
+        app/midi_library/FileOps.hpp
+        app/midi_library/FileOps.cpp
+        app/midi_library/Hash.hpp
+        app/midi_library/Hash.cpp
+        app/midi_library/Ids.hpp
+        app/midi_library/Ids.cpp
+        app/midi_library/Metadata.hpp
+        app/midi_library/Metadata.cpp
         app/VisualizationSettingsPanelControls.hpp
         app/VisualizationSettingsPanelControls.cpp
         app/VisualizationSettingsAdapters.hpp

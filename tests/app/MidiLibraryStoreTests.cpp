@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <filesystem>
@@ -5,6 +6,8 @@
 #include <iterator>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include "app/MidiLibraryStore.hpp"
@@ -43,6 +46,33 @@ void writeText(const std::filesystem::path& path, const std::string& text)
   std::filesystem::create_directories(path.parent_path());
   std::ofstream output(path, std::ios::trunc);
   output << text;
+}
+
+nlohmann::json midiFileMetadata(std::string id,
+                                std::string storedFileName,
+                                const std::uintmax_t sizeBytes,
+                                std::string contentHash = "0123456789abcdef",
+                                std::string importedAt = "2026-06-17T12:34:56Z",
+                                std::string lastOpenedAt = "2026-06-17T12:34:56Z")
+{
+  return nlohmann::json{
+    {"id", std::move(id)},
+    {"displayName", "Stored song"},
+    {"storedFileName", std::move(storedFileName)},
+    {"originalFileName", "stored.mid"},
+    {"contentHash", std::move(contentHash)},
+    {"sizeBytes", sizeBytes},
+    {"importedAt", std::move(importedAt)},
+    {"lastOpenedAt", std::move(lastOpenedAt)},
+  };
+}
+
+bool hasDiagnosticContaining(const RecordingDiagnosticSink& diagnostics,
+                             const std::string_view text)
+{
+  return std::ranges::any_of(diagnostics.messages, [text](const RecordedDiagnostic& diagnostic) {
+    return diagnostic.message.find(text) != std::string::npos;
+  });
 }
 
 TEST_CASE("MidiLibraryStore imports a MIDI file into app-owned storage", "[app][midi-library]")
@@ -340,6 +370,89 @@ TEST_CASE("MidiLibraryStore does not overwrite incomplete metadata during import
 
   CHECK_FALSE(result.has_value());
   CHECK(readBytes(metadataPath) == originalMetadata);
+}
+
+TEST_CASE("MidiLibraryStore drops invalid metadata entries while reading",
+          "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto libraryRoot = root / "library";
+  const auto metadataPath = libraryRoot / "midi-library.json";
+  const auto validId = std::string{"4-0123456789abcdef"};
+  const auto missingId = std::string{"4-fedcba9876543210"};
+  const auto badHashId = std::string{"4-1111111111111111"};
+  const auto badTimestampId = std::string{"4-2222222222222222"};
+  const auto wrongNameId = std::string{"4-3333333333333333"};
+  const auto wrongSizeId = std::string{"4-4444444444444444"};
+  writeSourceMidi(libraryRoot / "files", validId + ".mid", {1, 2, 3, 4});
+  writeSourceMidi(libraryRoot / "files", badHashId + ".mid", {5, 6, 7, 8});
+  writeSourceMidi(libraryRoot / "files", badTimestampId + ".mid", {9, 10, 11, 12});
+  writeSourceMidi(libraryRoot / "files", "does-not-match.mid", {13, 14, 15, 16});
+  writeSourceMidi(libraryRoot / "files", wrongSizeId + ".mid", {17, 18});
+  writeText(metadataPath,
+            nlohmann::json{
+              {"version", 1},
+              {"lastActiveMidiId", missingId},
+              {"files",
+               nlohmann::json::array(
+                 {midiFileMetadata(validId, validId + ".mid", 4),
+                  midiFileMetadata(missingId, missingId + ".mid", 4, "fedcba9876543210"),
+                  midiFileMetadata(badHashId, badHashId + ".mid", 4, "not-a-hex-hash"),
+                  midiFileMetadata(badTimestampId,
+                                   badTimestampId + ".mid",
+                                   4,
+                                   "2222222222222222",
+                                   "2026-02-30T12:34:56Z"),
+                  midiFileMetadata(wrongNameId, "does-not-match.mid", 4, "3333333333333333"),
+                  midiFileMetadata(wrongSizeId, wrongSizeId + ".mid", 4, "4444444444444444")})}}
+              .dump(2));
+  MidiLibraryStore const store(libraryRoot);
+  RecordingDiagnosticSink diagnostics;
+
+  const auto files = store.listImportedFiles(diagnostics);
+
+  REQUIRE(files.size() == 1);
+  CHECK(files.front().id == validId);
+  CHECK_FALSE(store.lastActiveMidiId(diagnostics).has_value());
+  CHECK(hasDiagnosticContaining(diagnostics, "missing copied MIDI file"));
+  CHECK(hasDiagnosticContaining(diagnostics, "invalid content hash"));
+  CHECK(hasDiagnosticContaining(diagnostics, "invalid timestamp"));
+  CHECK(hasDiagnosticContaining(diagnostics, "stored file name does not match id"));
+  CHECK(hasDiagnosticContaining(diagnostics, "size does not match"));
+  CHECK(hasDiagnosticContaining(diagnostics, "last active MIDI id does not exist"));
+}
+
+TEST_CASE("MidiLibraryStore rejects structurally conflicted metadata before writing",
+          "[app][midi-library]")
+{
+  const auto root = uniqueLibraryRoot();
+  const auto libraryRoot = root / "library";
+  const auto metadataPath = libraryRoot / "midi-library.json";
+  const auto duplicateId = std::string{"4-0123456789abcdef"};
+  writeSourceMidi(libraryRoot / "files", duplicateId + ".mid", {1, 2, 3, 4});
+  writeSourceMidi(libraryRoot / "files", duplicateId + ".midi", {5, 6, 7, 8});
+  writeText(metadataPath,
+            nlohmann::json{
+              {"version", 1},
+              {"files",
+               nlohmann::json::array({midiFileMetadata(duplicateId, duplicateId + ".mid", 4),
+                                       midiFileMetadata(duplicateId,
+                                                        duplicateId + ".midi",
+                                                        4,
+                                                        "fedcba9876543210")})}}
+              .dump(2));
+  const auto originalMetadata = readBytes(metadataPath);
+  const auto sourcePath =
+    writeSourceMidi(root / "source", "new.mid", {'M', 'T', 'h', 'd', 60, 61, 62, 63});
+  MidiLibraryStore store(libraryRoot);
+  RecordingDiagnosticSink diagnostics;
+
+  CHECK(store.listImportedFiles(diagnostics).empty());
+  const auto result = store.importFile(sourcePath, diagnostics);
+
+  CHECK_FALSE(result.has_value());
+  CHECK(readBytes(metadataPath) == originalMetadata);
+  CHECK(hasDiagnosticContaining(diagnostics, "duplicate id"));
 }
 
 } // namespace
