@@ -5,6 +5,9 @@ assets/test-midi/**/*.mid
 assets/test-midi/**/*.midi
 
 build/
+build-tidy/
+
+clang-tidy-findings.txt
 
 .superpowers/
 .worktrees/
