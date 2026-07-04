@@ -9,3 +9,11 @@ struct Note
   double startSeconds = 0.0;
   double durationSeconds = 0.0;
 };
+
+inline constexpr double defaultMidiBpm = 120.0;
+
+struct TempoEvent
+{
+  double timeSeconds = 0.0;
+  double bpm = defaultMidiBpm;
+};

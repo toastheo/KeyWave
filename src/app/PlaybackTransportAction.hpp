@@ -2,6 +2,7 @@
 
 #include "app/AppSettings.hpp"
 #include "diagnostics/Diagnostics.hpp"
+#include "midi/MidiTypes.hpp"
 #include "playback/PlaybackTransport.hpp"
 
 enum class PlaybackTransportAction : std::uint8_t
@@ -11,13 +12,15 @@ enum class PlaybackTransportAction : std::uint8_t
   Stop,
   SeekBackward,
   SeekForward,
-  IncreasePlaybackRate,
-  DecreasePlaybackRate,
+  IncreasePlaybackBpm,
+  DecreasePlaybackBpm,
 };
 
 void applyPlaybackTransportAction(PlaybackTransportAction action,
                                   PlaybackTransport& transport,
-                                  const PlaybackControlSettings& settings = {});
+                                  const PlaybackControlSettings& settings = {},
+                                  double sourceBpm = defaultMidiBpm);
 void reportPlaybackTransportAction(PlaybackTransportAction action,
                                    const PlaybackTransport& transport,
-                                   DiagnosticSink& diagnostics);
+                                   DiagnosticSink& diagnostics,
+                                   double sourceBpm = defaultMidiBpm);

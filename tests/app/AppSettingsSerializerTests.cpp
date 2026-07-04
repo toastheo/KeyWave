@@ -15,6 +15,9 @@ TEST_CASE("AppSettingsSerializer serializes settings without removed color keys"
   settings.window.vsyncEnabled = false;
   settings.window.fpsLimit = 360;
   settings.playbackControls.seekStepSeconds = 7.5;
+  settings.playbackControls.minPlaybackBpm = 45.0;
+  settings.playbackControls.maxPlaybackBpm = 220.0;
+  settings.playbackControls.playbackBpmStep = 2.0;
   settings.fallingNotes.pitchRange = PitchRange{.minPitch = 30, .maxPitch = 90};
   settings.fallingNotes.noteHorizontalInset = 0.08;
   settings.fallingNotes.blackNoteWidthScale = 0.85;
@@ -36,6 +39,12 @@ TEST_CASE("AppSettingsSerializer serializes settings without removed color keys"
   CHECK(json.at("window").at("fpsLimit") == 360);
   CHECK(json.at("renderer").at("clearColor").at(0) == Catch::Approx(0.1));
   CHECK(json.at("playbackControls").at("seekStepSeconds") == Catch::Approx(7.5));
+  CHECK(json.at("playbackControls").at("minPlaybackBpm") == Catch::Approx(45.0));
+  CHECK(json.at("playbackControls").at("maxPlaybackBpm") == Catch::Approx(220.0));
+  CHECK(json.at("playbackControls").at("playbackBpmStep") == Catch::Approx(2.0));
+  CHECK_FALSE(json.at("playbackControls").contains("minPlaybackRate"));
+  CHECK_FALSE(json.at("playbackControls").contains("maxPlaybackRate"));
+  CHECK_FALSE(json.at("playbackControls").contains("playbackRateStep"));
   CHECK(json.at("fallingNotes").at("pitchRange").at("minPitch") == 30);
   CHECK(json.at("fallingNotes").at("noteHorizontalInset") == Catch::Approx(0.08));
   CHECK(json.at("fallingNotes").at("blackNoteWidthScale") == Catch::Approx(0.85));
@@ -88,6 +97,9 @@ TEST_CASE("AppSettingsSerializer falls back for invalid values and clamps colors
     {"renderer", {{"clearColor", {-1.0, 0.5, 2.0, 1.0}}}},
     {"playbackControls",
      {{"seekStepSeconds", -1.0},
+      {"minPlaybackBpm", 300.0},
+      {"maxPlaybackBpm", 20.0},
+      {"playbackBpmStep", 0.0},
       {"minPlaybackRate", 4.0},
       {"maxPlaybackRate", 0.25},
       {"playbackRateStep", 0.0}}},
@@ -115,9 +127,9 @@ TEST_CASE("AppSettingsSerializer falls back for invalid values and clamps colors
   CHECK(settings.renderer.clearColor.b == Catch::Approx(1.0f));
   CHECK(settings.renderer.clearColor.a == Catch::Approx(1.0f));
   CHECK(settings.playbackControls.seekStepSeconds == Catch::Approx(5.0));
-  CHECK(settings.playbackControls.minPlaybackRate == Catch::Approx(0.25));
-  CHECK(settings.playbackControls.maxPlaybackRate == Catch::Approx(4.0));
-  CHECK(settings.playbackControls.playbackRateStep == Catch::Approx(0.25));
+  CHECK(settings.playbackControls.minPlaybackBpm == Catch::Approx(20.0));
+  CHECK(settings.playbackControls.maxPlaybackBpm == Catch::Approx(300.0));
+  CHECK(settings.playbackControls.playbackBpmStep == Catch::Approx(5.0));
   CHECK(settings.fallingNotes.pitchRange.minPitch == 21);
   CHECK(settings.fallingNotes.pitchRange.maxPitch == 108);
   CHECK(settings.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));

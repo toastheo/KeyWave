@@ -42,6 +42,8 @@ TEST_CASE("VisualizerController routes keyboard input around UI capture", "[app]
 TEST_CASE("VisualizerController updates playback and builds the current scene", "[app][visualizer]")
 {
   MidiTimeline timeline;
+  timeline.addTempoEvent(0.0, 120.0);
+  timeline.addTempoEvent(2.0, 60.0);
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 2.0, .durationSeconds = 1.0});
 
   VisualizerController controller;
@@ -49,13 +51,19 @@ TEST_CASE("VisualizerController updates playback and builds the current scene", 
   controller.playbackTransport().play();
 
   CHECK(controller.durationSeconds() == Catch::Approx(3.0));
+  CHECK(controller.sourceBpmAtPlaybackPosition() == Catch::Approx(120.0));
 
   controller.update(1.5);
+  CHECK(controller.sourceBpmAtPlaybackPosition() == Catch::Approx(120.0));
+
   const auto scene = controller.buildScene();
   const auto rects = styledRectsForScene(scene);
 
   REQUIRE_FALSE(rects.empty());
   CHECK(rects.front().rect.y == Catch::Approx(0.5));
+
+  controller.update(0.5);
+  CHECK(controller.sourceBpmAtPlaybackPosition() == Catch::Approx(60.0));
 }
 
 TEST_CASE("VisualizerController builds an empty scene without a timeline", "[app][visualizer]")

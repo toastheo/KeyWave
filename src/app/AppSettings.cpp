@@ -166,13 +166,13 @@ PlaybackControlSettings sanitizePlaybackControlSettings(PlaybackControlSettings 
   if (!isPositiveFinite(settings.seekStepSeconds)) {
     settings.seekStepSeconds = defaults.seekStepSeconds;
   }
-  if (!isPositiveFinite(settings.minPlaybackRate) || !isPositiveFinite(settings.maxPlaybackRate) ||
-      settings.minPlaybackRate > settings.maxPlaybackRate) {
-    settings.minPlaybackRate = defaults.minPlaybackRate;
-    settings.maxPlaybackRate = defaults.maxPlaybackRate;
+  if (!isPositiveFinite(settings.minPlaybackBpm) || !isPositiveFinite(settings.maxPlaybackBpm) ||
+      settings.minPlaybackBpm > settings.maxPlaybackBpm) {
+    settings.minPlaybackBpm = defaults.minPlaybackBpm;
+    settings.maxPlaybackBpm = defaults.maxPlaybackBpm;
   }
-  if (!isPositiveFinite(settings.playbackRateStep)) {
-    settings.playbackRateStep = defaults.playbackRateStep;
+  if (!isPositiveFinite(settings.playbackBpmStep)) {
+    settings.playbackBpmStep = defaults.playbackBpmStep;
   }
 
   return settings;

@@ -166,17 +166,15 @@ void deserializePlaybackControlSettings(const nlohmann::json& json,
 
   settings.seekStepSeconds =
     numberOrFallback(json, "seekStepSeconds", settings.seekStepSeconds, true);
-  settings.minPlaybackRate =
-    numberOrFallback(json, "minPlaybackRate", settings.minPlaybackRate, true);
-  settings.maxPlaybackRate =
-    numberOrFallback(json, "maxPlaybackRate", settings.maxPlaybackRate, true);
-  settings.playbackRateStep =
-    numberOrFallback(json, "playbackRateStep", settings.playbackRateStep, true);
+  settings.minPlaybackBpm = numberOrFallback(json, "minPlaybackBpm", settings.minPlaybackBpm, true);
+  settings.maxPlaybackBpm = numberOrFallback(json, "maxPlaybackBpm", settings.maxPlaybackBpm, true);
+  settings.playbackBpmStep =
+    numberOrFallback(json, "playbackBpmStep", settings.playbackBpmStep, true);
 
-  if (settings.minPlaybackRate > settings.maxPlaybackRate) {
+  if (settings.minPlaybackBpm > settings.maxPlaybackBpm) {
     constexpr PlaybackControlSettings defaults;
-    settings.minPlaybackRate = defaults.minPlaybackRate;
-    settings.maxPlaybackRate = defaults.maxPlaybackRate;
+    settings.minPlaybackBpm = defaults.minPlaybackBpm;
+    settings.maxPlaybackBpm = defaults.maxPlaybackBpm;
   }
 }
 
@@ -277,9 +275,9 @@ nlohmann::json AppSettingsSerializer::serialize(const AppSettings& settings)
     {"renderer", {{"clearColor", colorToJson(settings.renderer.clearColor)}}},
     {"playbackControls",
      {{"seekStepSeconds", settings.playbackControls.seekStepSeconds},
-      {"minPlaybackRate", settings.playbackControls.minPlaybackRate},
-      {"maxPlaybackRate", settings.playbackControls.maxPlaybackRate},
-      {"playbackRateStep", settings.playbackControls.playbackRateStep}}},
+      {"minPlaybackBpm", settings.playbackControls.minPlaybackBpm},
+      {"maxPlaybackBpm", settings.playbackControls.maxPlaybackBpm},
+      {"playbackBpmStep", settings.playbackControls.playbackBpmStep}}},
     {"fallingNotes",
      {{"pitchRange", pitchRangeToJson(settings.fallingNotes.pitchRange)},
       {"lookAheadSeconds", settings.fallingNotes.lookAheadSeconds},

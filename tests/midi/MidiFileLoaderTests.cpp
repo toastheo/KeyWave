@@ -30,6 +30,10 @@ TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]")
   REQUIRE(timeline.has_value());
   CHECK(timeline->trackCount() == 2);
   CHECK(timeline->ticksPerQuarterNote() == 480);
+  CHECK(timeline->sourceBpmAt(0.0) == Catch::Approx(120.0));
+  CHECK(timeline->sourceBpmAt(0.249) == Catch::Approx(120.0));
+  CHECK(timeline->sourceBpmAt(0.25) == Catch::Approx(60.0));
+  CHECK(timeline->sourceBpmAt(12.0) == Catch::Approx(60.0));
   REQUIRE(timeline->notes().size() == 2);
   CHECK(timeline->lengthSeconds() == Catch::Approx(1.25).margin(kTimeTolerance));
 
@@ -70,6 +74,8 @@ TEST_CASE("MidiFileLoader pairs overlapping notes using FIFO order", "[midi]")
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
 
   REQUIRE(timeline.has_value());
+  CHECK(timeline->sourceBpmAt(0.0) == Catch::Approx(120.0));
+  CHECK(timeline->sourceBpmAt(2.0) == Catch::Approx(120.0));
   REQUIRE(timeline->notes().size() == 2);
 
   const auto& first = timeline->notes()[0];

@@ -68,6 +68,15 @@ double VisualizerController::durationSeconds() const
   return m_timeline.has_value() ? m_timeline->lengthSeconds() : 0.0;
 }
 
+double VisualizerController::sourceBpmAtPlaybackPosition() const
+{
+  if (!m_timeline.has_value()) {
+    return defaultMidiBpm;
+  }
+
+  return m_timeline->sourceBpmAt(m_playbackTransport.currentTimeSeconds());
+}
+
 PlaybackTransport& VisualizerController::playbackTransport()
 {
   return m_playbackTransport;
@@ -97,8 +106,11 @@ void VisualizerController::handleInput(const std::span<const Key> pressedKeys,
     applyVisualizationSettingsPanelControl(key, m_visualizationSettingsPanelVisible);
 
     if (!imguiWantsKeyboardCapture) {
-      applyPlaybackTransportControl(
-        key, m_playbackTransport, m_diagnostics, m_settings.playbackControls);
+      applyPlaybackTransportControl(key,
+                                    m_playbackTransport,
+                                    m_diagnostics,
+                                    m_settings.playbackControls,
+                                    sourceBpmAtPlaybackPosition());
     }
   }
 }

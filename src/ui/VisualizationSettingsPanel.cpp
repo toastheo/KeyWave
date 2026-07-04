@@ -89,20 +89,20 @@ template <typename Body> void disabledIf(const bool disabled, Body body)
   }
 }
 
-void renderPlaybackSettings(AppSettings const& settings, PlaybackTransport& transport)
+void renderPlaybackSettings(AppSettings const& settings,
+                            PlaybackTransport& transport,
+                            const double sourceBpm)
 {
   const auto playbackSettings = sanitizePlaybackControlSettings(settings.playbackControls);
-  const auto minimumRate = playbackSettings.minPlaybackRate;
-  const auto maximumRate = playbackSettings.maxPlaybackRate;
+  const auto minimumBpm = playbackSettings.minPlaybackBpm;
+  const auto maximumBpm = playbackSettings.maxPlaybackBpm;
 
-  auto playbackRate =
-    static_cast<float>(clampRange(transport.playbackRate(), minimumRate, maximumRate));
-  if (ImGui::SliderFloat("Playback Speed",
-                         &playbackRate,
-                         static_cast<float>(minimumRate),
-                         static_cast<float>(maximumRate),
-                         "%.2fx")) {
-    transport.setPlaybackRate(clampRange(playbackRate, minimumRate, maximumRate));
+  auto playbackBpm = static_cast<int>(
+    std::round(clampRange(transport.effectiveBpm(sourceBpm), minimumBpm, maximumBpm)));
+  const auto minimumBpmValue = static_cast<int>(std::round(minimumBpm));
+  const auto maximumBpmValue = static_cast<int>(std::round(maximumBpm));
+  if (ImGui::SliderInt("BPM", &playbackBpm, minimumBpmValue, maximumBpmValue)) {
+    transport.setEffectiveBpm(sourceBpm, clampRange(playbackBpm, minimumBpm, maximumBpm));
   }
 }
 
@@ -356,7 +356,8 @@ VisualizationSettingsPanelResult VisualizationSettingsPanel::render(
   AppSettings& settings,
   PlaybackTransport& transport,
   const std::span<const ImportedMidiFile> importedMidiFiles,
-  const std::string_view activeImportedMidiId)
+  const std::string_view activeImportedMidiId,
+  const double sourceBpm)
 {
   if (!ImGui::Begin("Visualization Settings")) {
     ImGui::End();
@@ -374,7 +375,7 @@ VisualizationSettingsPanelResult VisualizationSettingsPanel::render(
   }
 
   if (ImGui::CollapsingHeader("Playback", ImGuiTreeNodeFlags_DefaultOpen)) {
-    renderPlaybackSettings(settings, transport);
+    renderPlaybackSettings(settings, transport, sourceBpm);
     if (ImGui::Button("Load MIDI...")) {
       result.action = VisualizationSettingsPanelAction::LoadMidiFile;
     }

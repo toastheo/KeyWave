@@ -22,9 +22,14 @@ public:
   void setTicksPerQuarterNote(int ticksPerQuarterNote);
   [[nodiscard]] int ticksPerQuarterNote() const;
 
+  void addTempoEvent(double timeSeconds, double bpm);
+  [[nodiscard]] const std::vector<TempoEvent>& tempoEvents() const;
+  [[nodiscard]] double sourceBpmAt(double seconds) const;
+
 private:
   std::vector<Note> m_notes;
   std::vector<MidiTrack> m_tracks;
+  std::vector<TempoEvent> m_tempoEvents;
   double m_lengthSeconds = 0.0;
   int m_ticksPerQuarterNote = 0;
 };

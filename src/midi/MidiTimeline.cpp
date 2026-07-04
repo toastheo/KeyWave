@@ -1,6 +1,8 @@
 #include "midi/MidiTimeline.hpp"
 
 #include <algorithm>
+#include <cmath>
+#include <iterator>
 #include <utility>
 
 void MidiTimeline::addNote(const Note& note)
@@ -90,4 +92,48 @@ void MidiTimeline::setTicksPerQuarterNote(int ticksPerQuarterNote)
 int MidiTimeline::ticksPerQuarterNote() const
 {
   return m_ticksPerQuarterNote;
+}
+
+void MidiTimeline::addTempoEvent(const double timeSeconds, const double bpm)
+{
+  if (!std::isfinite(timeSeconds) || !std::isfinite(bpm) || bpm <= 0.0) {
+    return;
+  }
+
+  m_tempoEvents.push_back(TempoEvent{
+    .timeSeconds = std::max(0.0, timeSeconds),
+    .bpm = bpm,
+  });
+
+  std::stable_sort(m_tempoEvents.begin(),
+                   m_tempoEvents.end(),
+                   [](const TempoEvent& left, const TempoEvent& right) {
+                     return left.timeSeconds < right.timeSeconds;
+                   });
+}
+
+const std::vector<TempoEvent>& MidiTimeline::tempoEvents() const
+{
+  return m_tempoEvents;
+}
+
+double MidiTimeline::sourceBpmAt(const double seconds) const
+{
+  if (m_tempoEvents.empty()) {
+    return defaultMidiBpm;
+  }
+
+  const auto clampedSeconds = std::isfinite(seconds) ? std::max(0.0, seconds) : 0.0;
+  const auto nextTempo = std::upper_bound(m_tempoEvents.begin(),
+                                          m_tempoEvents.end(),
+                                          clampedSeconds,
+                                          [](const double timeSeconds, const TempoEvent& event) {
+                                            return timeSeconds < event.timeSeconds;
+                                          });
+
+  if (nextTempo == m_tempoEvents.begin()) {
+    return defaultMidiBpm;
+  }
+
+  return std::prev(nextTempo)->bpm;
 }

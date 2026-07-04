@@ -28,6 +28,9 @@ public:
   void setPlaybackRate(double rate);
   [[nodiscard]] double playbackRate() const;
 
+  void setEffectiveBpm(double sourceBpm, double targetBpm);
+  [[nodiscard]] double effectiveBpm(double sourceBpm) const;
+
 private:
   DiagnosticSink& m_diagnostics;
   double m_currentTimeSeconds = 0.0;

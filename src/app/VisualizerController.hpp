@@ -26,6 +26,7 @@ public:
   void replaceTimelineAndPlayFromStart(std::optional<MidiTimeline> timeline);
   [[nodiscard]] bool hasTimeline() const;
   [[nodiscard]] double durationSeconds() const;
+  [[nodiscard]] double sourceBpmAtPlaybackPosition() const;
 
   [[nodiscard]] PlaybackTransport& playbackTransport();
   [[nodiscard]] const PlaybackTransport& playbackTransport() const;

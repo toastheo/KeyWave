@@ -307,13 +307,15 @@ void Application::run()
     m_imguiLayer.beginFrame();
     TransportControls::render(m_visualizerController.playbackTransport(),
                               m_visualizerController.durationSeconds(),
-                              m_visualizerController.settings().playbackControls);
+                              m_visualizerController.settings().playbackControls,
+                              m_visualizerController.sourceBpmAtPlaybackPosition());
     if (m_visualizerController.visualizationSettingsPanelVisible()) {
       const auto settingsAction =
         VisualizationSettingsPanel::render(m_visualizerController.settings(),
                                            m_visualizerController.playbackTransport(),
                                            m_importedMidiFiles,
-                                           m_activeImportedMidiId.value_or(""));
+                                           m_activeImportedMidiId.value_or(""),
+                                           m_visualizerController.sourceBpmAtPlaybackPosition());
       handleVisualizationSettingsPanelAction(settingsAction);
     }
     applyWindowSettings();

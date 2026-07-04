@@ -372,8 +372,7 @@ TEST_CASE("MidiLibraryStore does not overwrite incomplete metadata during import
   CHECK(readBytes(metadataPath) == originalMetadata);
 }
 
-TEST_CASE("MidiLibraryStore drops invalid metadata entries while reading",
-          "[app][midi-library]")
+TEST_CASE("MidiLibraryStore drops invalid metadata entries while reading", "[app][midi-library]")
 {
   const auto root = uniqueLibraryRoot();
   const auto libraryRoot = root / "library";
@@ -389,23 +388,21 @@ TEST_CASE("MidiLibraryStore drops invalid metadata entries while reading",
   writeSourceMidi(libraryRoot / "files", badTimestampId + ".mid", {9, 10, 11, 12});
   writeSourceMidi(libraryRoot / "files", "does-not-match.mid", {13, 14, 15, 16});
   writeSourceMidi(libraryRoot / "files", wrongSizeId + ".mid", {17, 18});
-  writeText(metadataPath,
-            nlohmann::json{
-              {"version", 1},
-              {"lastActiveMidiId", missingId},
-              {"files",
-               nlohmann::json::array(
-                 {midiFileMetadata(validId, validId + ".mid", 4),
-                  midiFileMetadata(missingId, missingId + ".mid", 4, "fedcba9876543210"),
-                  midiFileMetadata(badHashId, badHashId + ".mid", 4, "not-a-hex-hash"),
-                  midiFileMetadata(badTimestampId,
-                                   badTimestampId + ".mid",
-                                   4,
-                                   "2222222222222222",
-                                   "2026-02-30T12:34:56Z"),
-                  midiFileMetadata(wrongNameId, "does-not-match.mid", 4, "3333333333333333"),
-                  midiFileMetadata(wrongSizeId, wrongSizeId + ".mid", 4, "4444444444444444")})}}
-              .dump(2));
+  writeText(
+    metadataPath,
+    nlohmann::json{
+      {"version", 1},
+      {"lastActiveMidiId", missingId},
+      {"files",
+       nlohmann::json::array(
+         {midiFileMetadata(validId, validId + ".mid", 4),
+          midiFileMetadata(missingId, missingId + ".mid", 4, "fedcba9876543210"),
+          midiFileMetadata(badHashId, badHashId + ".mid", 4, "not-a-hex-hash"),
+          midiFileMetadata(
+            badTimestampId, badTimestampId + ".mid", 4, "2222222222222222", "2026-02-30T12:34:56Z"),
+          midiFileMetadata(wrongNameId, "does-not-match.mid", 4, "3333333333333333"),
+          midiFileMetadata(wrongSizeId, wrongSizeId + ".mid", 4, "4444444444444444")})}}
+      .dump(2));
   MidiLibraryStore const store(libraryRoot);
   RecordingDiagnosticSink diagnostics;
 
@@ -435,11 +432,9 @@ TEST_CASE("MidiLibraryStore rejects structurally conflicted metadata before writ
             nlohmann::json{
               {"version", 1},
               {"files",
-               nlohmann::json::array({midiFileMetadata(duplicateId, duplicateId + ".mid", 4),
-                                       midiFileMetadata(duplicateId,
-                                                        duplicateId + ".midi",
-                                                        4,
-                                                        "fedcba9876543210")})}}
+               nlohmann::json::array(
+                 {midiFileMetadata(duplicateId, duplicateId + ".mid", 4),
+                  midiFileMetadata(duplicateId, duplicateId + ".midi", 4, "fedcba9876543210")})}}
               .dump(2));
   const auto originalMetadata = readBytes(metadataPath);
   const auto sourcePath =

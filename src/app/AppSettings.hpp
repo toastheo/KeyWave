@@ -47,9 +47,9 @@ struct RendererSettings
 struct PlaybackControlSettings
 {
   double seekStepSeconds = 5.0;
-  double minPlaybackRate = 0.25;
-  double maxPlaybackRate = 4.0;
-  double playbackRateStep = 0.25;
+  double minPlaybackBpm = 20.0;
+  double maxPlaybackBpm = 300.0;
+  double playbackBpmStep = 5.0;
 };
 
 struct FallingNotesSettings

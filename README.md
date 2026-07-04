@@ -64,7 +64,7 @@ Or windows:
 | R | Restart |
 | S | Stop |
 | Left / Right | Seek backward or forward |
-| Up / Down | Increase or decrease playback speed |
+| Up / Down | Increase or decrease playback BPM |
 | Escape | Show or hide the visualization settings panel |
 
 ## Tests

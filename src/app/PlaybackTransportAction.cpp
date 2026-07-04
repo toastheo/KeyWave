@@ -6,15 +6,16 @@
 
 namespace {
 
-double clampedPlaybackRate(const double rate, const PlaybackControlSettings& settings)
+double clampedPlaybackBpm(const double bpm, const PlaybackControlSettings& settings)
 {
-  return std::clamp(rate, settings.minPlaybackRate, settings.maxPlaybackRate);
+  return std::clamp(bpm, settings.minPlaybackBpm, settings.maxPlaybackBpm);
 }
 } // namespace
 
 void applyPlaybackTransportAction(const PlaybackTransportAction action,
                                   PlaybackTransport& transport,
-                                  const PlaybackControlSettings& settings)
+                                  const PlaybackControlSettings& settings,
+                                  const double sourceBpm)
 {
   const auto sanitizedSettings = sanitizePlaybackControlSettings(settings);
 
@@ -45,21 +46,26 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
       transport.seek(transport.currentTimeSeconds() + sanitizedSettings.seekStepSeconds);
       break;
 
-    case PlaybackTransportAction::IncreasePlaybackRate:
-      transport.setPlaybackRate(clampedPlaybackRate(
-        transport.playbackRate() + sanitizedSettings.playbackRateStep, sanitizedSettings));
+    case PlaybackTransportAction::IncreasePlaybackBpm:
+      transport.setEffectiveBpm(sourceBpm,
+                                clampedPlaybackBpm(transport.effectiveBpm(sourceBpm) +
+                                                     sanitizedSettings.playbackBpmStep,
+                                                   sanitizedSettings));
       break;
 
-    case PlaybackTransportAction::DecreasePlaybackRate:
-      transport.setPlaybackRate(clampedPlaybackRate(
-        transport.playbackRate() - sanitizedSettings.playbackRateStep, sanitizedSettings));
+    case PlaybackTransportAction::DecreasePlaybackBpm:
+      transport.setEffectiveBpm(sourceBpm,
+                                clampedPlaybackBpm(transport.effectiveBpm(sourceBpm) -
+                                                     sanitizedSettings.playbackBpmStep,
+                                                   sanitizedSettings));
       break;
   }
 }
 
 void reportPlaybackTransportAction(const PlaybackTransportAction action,
                                    const PlaybackTransport& transport,
-                                   DiagnosticSink& diagnostics)
+                                   DiagnosticSink& diagnostics,
+                                   const double sourceBpm)
 {
   std::ostringstream message;
 
@@ -86,9 +92,9 @@ void reportPlaybackTransportAction(const PlaybackTransportAction action,
       message << "Playback seeked to " << transport.currentTimeSeconds() << "s.";
       break;
 
-    case PlaybackTransportAction::IncreasePlaybackRate:
-    case PlaybackTransportAction::DecreasePlaybackRate:
-      message << "Playback rate set to " << transport.playbackRate() << "x.";
+    case PlaybackTransportAction::IncreasePlaybackBpm:
+    case PlaybackTransportAction::DecreasePlaybackBpm:
+      message << "Playback BPM set to " << transport.effectiveBpm(sourceBpm) << " BPM.";
       break;
   }
 

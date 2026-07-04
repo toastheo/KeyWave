@@ -55,7 +55,8 @@ PlaybackState PlaybackTransport::state() const
 void PlaybackTransport::setPlaybackRate(const double rate)
 {
   if (!std::isfinite(rate) || rate <= 0.0) {
-    reportWarning(m_diagnostics, "Playback rate ignored: rate must be a finite positive value.");
+    reportWarning(m_diagnostics,
+                  "Playback BPM ignored: computed multiplier must be a finite positive value.");
     return;
   }
 
@@ -65,4 +66,29 @@ void PlaybackTransport::setPlaybackRate(const double rate)
 double PlaybackTransport::playbackRate() const
 {
   return m_playbackRate;
+}
+
+void PlaybackTransport::setEffectiveBpm(const double sourceBpm, const double targetBpm)
+{
+  if (!std::isfinite(sourceBpm) || sourceBpm <= 0.0) {
+    reportWarning(m_diagnostics,
+                  "Playback BPM ignored: source BPM must be a finite positive value.");
+    return;
+  }
+  if (!std::isfinite(targetBpm) || targetBpm <= 0.0) {
+    reportWarning(m_diagnostics,
+                  "Playback BPM ignored: target BPM must be a finite positive value.");
+    return;
+  }
+
+  setPlaybackRate(targetBpm / sourceBpm);
+}
+
+double PlaybackTransport::effectiveBpm(const double sourceBpm) const
+{
+  if (!std::isfinite(sourceBpm) || sourceBpm <= 0.0) {
+    return 0.0;
+  }
+
+  return sourceBpm * m_playbackRate;
 }

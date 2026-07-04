@@ -6,6 +6,7 @@
 
 #include "app/AppSettings.hpp"
 #include "app/MidiLibraryStore.hpp"
+#include "midi/MidiTypes.hpp"
 #include "playback/PlaybackTransport.hpp"
 
 enum class VisualizationSettingsPanelAction : std::uint8_t
@@ -30,5 +31,6 @@ public:
   static VisualizationSettingsPanelResult render(AppSettings& settings,
                                                  PlaybackTransport& transport,
                                                  std::span<const ImportedMidiFile> importedMidiFiles,
-                                                 std::string_view activeImportedMidiId);
+                                                 std::string_view activeImportedMidiId,
+                                                 double sourceBpm = defaultMidiBpm);
 };

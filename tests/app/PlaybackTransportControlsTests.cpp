@@ -39,21 +39,21 @@ TEST_CASE("Playback transport controls map keys to transport actions", "[app][pl
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
 }
 
-TEST_CASE("Playback transport controls clamp playback rate", "[app][playback]")
+TEST_CASE("Playback transport controls clamp playback BPM", "[app][playback]")
 {
   PlaybackTransport transport;
   RecordingDiagnosticSink diagnostics;
   constexpr PlaybackControlSettings settings;
 
-  for (int count = 0; count < 20; ++count) {
+  for (int count = 0; count < 100; ++count) {
     applyPlaybackTransportControl(Key::Up, transport, diagnostics, settings);
   }
-  CHECK(transport.playbackRate() == Catch::Approx(4.0));
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(300.0));
 
-  for (int count = 0; count < 20; ++count) {
+  for (int count = 0; count < 100; ++count) {
     applyPlaybackTransportControl(Key::Down, transport, diagnostics, settings);
   }
-  CHECK(transport.playbackRate() == Catch::Approx(0.25));
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(20.0));
 }
 
 TEST_CASE("Playback transport controls use custom playback control settings", "[app][playback]")
@@ -62,9 +62,9 @@ TEST_CASE("Playback transport controls use custom playback control settings", "[
   RecordingDiagnosticSink diagnostics;
   constexpr PlaybackControlSettings settings{
     .seekStepSeconds = 2.5,
-    .minPlaybackRate = 0.5,
-    .maxPlaybackRate = 2.0,
-    .playbackRateStep = 0.5,
+    .minPlaybackBpm = 60.0,
+    .maxPlaybackBpm = 180.0,
+    .playbackBpmStep = 10.0,
   };
 
   transport.seek(12.0);
@@ -77,12 +77,12 @@ TEST_CASE("Playback transport controls use custom playback control settings", "[
   for (int count = 0; count < 20; ++count) {
     applyPlaybackTransportControl(Key::Up, transport, diagnostics, settings);
   }
-  CHECK(transport.playbackRate() == Catch::Approx(2.0));
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(180.0));
 
   for (int count = 0; count < 20; ++count) {
     applyPlaybackTransportControl(Key::Down, transport, diagnostics, settings);
   }
-  CHECK(transport.playbackRate() == Catch::Approx(0.5));
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(60.0));
 }
 
 TEST_CASE("Playback transport controls ignore unmapped keys", "[app][playback]")

@@ -33,9 +33,9 @@ TEST_CASE("AppSettings defaults preserve the current runtime configuration", "[a
   SECTION("playback control defaults")
   {
     CHECK(settings.playbackControls.seekStepSeconds == Catch::Approx(5.0));
-    CHECK(settings.playbackControls.minPlaybackRate == Catch::Approx(0.25));
-    CHECK(settings.playbackControls.maxPlaybackRate == Catch::Approx(4.0));
-    CHECK(settings.playbackControls.playbackRateStep == Catch::Approx(0.25));
+    CHECK(settings.playbackControls.minPlaybackBpm == Catch::Approx(20.0));
+    CHECK(settings.playbackControls.maxPlaybackBpm == Catch::Approx(300.0));
+    CHECK(settings.playbackControls.playbackBpmStep == Catch::Approx(5.0));
   }
 
   SECTION("falling notes defaults")
@@ -159,9 +159,9 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   settings.window.width = 0;
   settings.window.height = -10;
   settings.playbackControls.seekStepSeconds = -5.0;
-  settings.playbackControls.minPlaybackRate = 4.0;
-  settings.playbackControls.maxPlaybackRate = 0.25;
-  settings.playbackControls.playbackRateStep = 0.0;
+  settings.playbackControls.minPlaybackBpm = 300.0;
+  settings.playbackControls.maxPlaybackBpm = 20.0;
+  settings.playbackControls.playbackBpmStep = 0.0;
   settings.fallingNotes.pitchRange = PitchRange{.minPitch = 108, .maxPitch = 21};
   settings.fallingNotes.lookAheadSeconds = -10.0;
   settings.fallingNotes.visiblePastSeconds = -0.5;
@@ -180,9 +180,9 @@ TEST_CASE("sanitizeAppSettings clamps invalid customizable values", "[app][setti
   CHECK(sanitized.window.width == 1280);
   CHECK(sanitized.window.height == 720);
   CHECK(sanitized.playbackControls.seekStepSeconds == Catch::Approx(5.0));
-  CHECK(sanitized.playbackControls.minPlaybackRate == Catch::Approx(0.25));
-  CHECK(sanitized.playbackControls.maxPlaybackRate == Catch::Approx(4.0));
-  CHECK(sanitized.playbackControls.playbackRateStep == Catch::Approx(0.25));
+  CHECK(sanitized.playbackControls.minPlaybackBpm == Catch::Approx(20.0));
+  CHECK(sanitized.playbackControls.maxPlaybackBpm == Catch::Approx(300.0));
+  CHECK(sanitized.playbackControls.playbackBpmStep == Catch::Approx(5.0));
   CHECK(sanitized.fallingNotes.pitchRange.minPitch == 21);
   CHECK(sanitized.fallingNotes.pitchRange.maxPitch == 108);
   CHECK(sanitized.fallingNotes.lookAheadSeconds == Catch::Approx(10.0));

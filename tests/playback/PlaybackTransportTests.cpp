@@ -42,6 +42,23 @@ TEST_CASE("PlaybackTransport controls playback state and time", "[playback]")
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
 }
 
+TEST_CASE("PlaybackTransport exposes effective BPM controls", "[playback]")
+{
+  PlaybackTransport transport;
+
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(120.0));
+
+  transport.setEffectiveBpm(120.0, 180.0);
+
+  CHECK(transport.playbackRate() == Catch::Approx(1.5));
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(180.0));
+
+  transport.play();
+  transport.update(0.5);
+
+  CHECK(transport.currentTimeSeconds() == Catch::Approx(0.75));
+}
+
 TEST_CASE("PlaybackTransport ignores invalid timing input safely", "[playback]")
 {
   PlaybackTransport transport;
@@ -69,6 +86,8 @@ TEST_CASE("PlaybackTransport does not print diagnostics directly", "[playback][d
 
   transport.seek(std::numeric_limits<double>::infinity());
   transport.setPlaybackRate(-1.0);
+  transport.setEffectiveBpm(0.0, 120.0);
+  transport.setEffectiveBpm(120.0, -1.0);
 
   std::cerr.rdbuf(originalErrorBuffer);
 
@@ -83,13 +102,21 @@ TEST_CASE("PlaybackTransport reports invalid timing input through diagnostics",
 
   transport.seek(std::numeric_limits<double>::infinity());
   transport.setPlaybackRate(-1.0);
+  transport.setEffectiveBpm(0.0, 120.0);
+  transport.setEffectiveBpm(120.0, -1.0);
 
-  REQUIRE(diagnostics.messages.size() == 2);
+  REQUIRE(diagnostics.messages.size() == 4);
   CHECK(diagnostics.messages[0].severity == DiagnosticSeverity::Warning);
   CHECK(diagnostics.messages[0].message == "Playback seek ignored: time must be finite.");
   CHECK(diagnostics.messages[1].severity == DiagnosticSeverity::Warning);
   CHECK(diagnostics.messages[1].message ==
-        "Playback rate ignored: rate must be a finite positive value.");
+        "Playback BPM ignored: computed multiplier must be a finite positive value.");
+  CHECK(diagnostics.messages[2].severity == DiagnosticSeverity::Warning);
+  CHECK(diagnostics.messages[2].message ==
+        "Playback BPM ignored: source BPM must be a finite positive value.");
+  CHECK(diagnostics.messages[3].severity == DiagnosticSeverity::Warning);
+  CHECK(diagnostics.messages[3].message ==
+        "Playback BPM ignored: target BPM must be a finite positive value.");
 }
 
 } // namespace

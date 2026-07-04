@@ -24,10 +24,10 @@ std::optional<PlaybackTransportAction> actionFromKey(const Key key)
       return PlaybackTransportAction::SeekForward;
 
     case Key::Up:
-      return PlaybackTransportAction::IncreasePlaybackRate;
+      return PlaybackTransportAction::IncreasePlaybackBpm;
 
     case Key::Down:
-      return PlaybackTransportAction::DecreasePlaybackRate;
+      return PlaybackTransportAction::DecreasePlaybackBpm;
   }
 
   return std::nullopt;
@@ -37,13 +37,14 @@ std::optional<PlaybackTransportAction> actionFromKey(const Key key)
 void applyPlaybackTransportControl(const Key key,
                                    PlaybackTransport& transport,
                                    DiagnosticSink& diagnostics,
-                                   const PlaybackControlSettings& settings)
+                                   const PlaybackControlSettings& settings,
+                                   const double sourceBpm)
 {
   const auto action = actionFromKey(key);
   if (!action.has_value()) {
     return;
   }
 
-  applyPlaybackTransportAction(*action, transport, settings);
-  reportPlaybackTransportAction(*action, transport, diagnostics);
+  applyPlaybackTransportAction(*action, transport, settings, sourceBpm);
+  reportPlaybackTransportAction(*action, transport, diagnostics, sourceBpm);
 }

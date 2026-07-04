@@ -20,7 +20,8 @@ std::string formatSeekStepLabel(const double seekStepSeconds)
 
 void TransportControls::render(PlaybackTransport& transport,
                                const double durationSeconds,
-                               const PlaybackControlSettings& settings)
+                               const PlaybackControlSettings& settings,
+                               const double sourceBpm)
 {
   const auto sanitizedSettings = sanitizePlaybackControlSettings(settings);
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -66,7 +67,7 @@ void TransportControls::render(PlaybackTransport& transport,
   }
 
   ImGui::SameLine();
-  ImGui::Text("Rate %.2fx", transport.playbackRate());
+  ImGui::Text("BPM %.0f", transport.effectiveBpm(sourceBpm));
 
   const auto clampedTime = clampTransportPosition(transport.currentTimeSeconds(), durationSeconds);
   double currentTime = clampedTime;

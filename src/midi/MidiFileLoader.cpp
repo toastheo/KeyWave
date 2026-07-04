@@ -19,6 +19,23 @@ bool hasStandardMidiHeader(const std::filesystem::path& path)
   return header == std::array{'M', 'T', 'h', 'd'};
 }
 
+void extractTempoEvents(const smf::MidiFile& midifile, MidiTimeline& timeline)
+{
+  for (int track = 0; track < midifile.getTrackCount(); ++track) {
+    for (int eventIndex = 0; eventIndex < midifile.getEventCount(track); ++eventIndex) {
+      const auto& event = midifile.getEvent(track, eventIndex);
+      if (event.isTempo()) {
+        timeline.addTempoEvent(event.seconds, event.getTempoBPM());
+      }
+    }
+  }
+
+  const auto& tempoEvents = timeline.tempoEvents();
+  if (tempoEvents.empty() || tempoEvents.front().timeSeconds > 0.0) {
+    timeline.addTempoEvent(0.0, defaultMidiBpm);
+  }
+}
+
 } // namespace
 
 std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::path& path,
@@ -67,6 +84,7 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
   MidiTimeline timeline;
   timeline.setTrackCount(midiFile.getTrackCount());
   timeline.setTicksPerQuarterNote(midiFile.getTicksPerQuarterNote());
+  extractTempoEvents(midiFile, timeline);
 
   for (int track = 0; track < midiFile.getTrackCount(); ++track) {
     for (int eventIndex = 0; eventIndex < midiFile.getEventCount(track); ++eventIndex) {

@@ -3,9 +3,11 @@
 #include "app/AppSettings.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "input/Key.hpp"
+#include "midi/MidiTypes.hpp"
 #include "playback/PlaybackTransport.hpp"
 
 void applyPlaybackTransportControl(Key key,
                                    PlaybackTransport& transport,
                                    DiagnosticSink& diagnostics,
-                                   const PlaybackControlSettings& settings = {});
+                                   const PlaybackControlSettings& settings = {},
+                                   double sourceBpm = defaultMidiBpm);
