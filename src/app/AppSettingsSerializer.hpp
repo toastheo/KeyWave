@@ -1,12 +1,13 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include <string>
+#include <string_view>
 
 #include "app/AppSettings.hpp"
 
 class AppSettingsSerializer
 {
 public:
-  static nlohmann::json serialize(const AppSettings& settings);
-  static AppSettings deserialize(const nlohmann::json& json, const AppSettings& defaults = {});
+  static std::string serialize(const AppSettings& settings, int indentation = -1);
+  static AppSettings deserialize(std::string_view text, const AppSettings& defaults = {});
 };

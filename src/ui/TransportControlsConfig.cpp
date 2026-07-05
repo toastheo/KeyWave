@@ -1,10 +1,11 @@
 #include "ui/TransportControlsConfig.hpp"
 
-#include <imgui.h>
-
-ImGuiWindowFlags transportControlsWindowFlags()
+TransportControlsWindowFlags transportControlsWindowFlags()
 {
-  return ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
-         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove |
-         ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavFocus;
+  return transportControlsWindowFlagValue(TransportControlsWindowFlag::NoDecoration) |
+         transportControlsWindowFlagValue(TransportControlsWindowFlag::AlwaysAutoResize) |
+         transportControlsWindowFlagValue(TransportControlsWindowFlag::NoSavedSettings) |
+         transportControlsWindowFlagValue(TransportControlsWindowFlag::NoMove) |
+         transportControlsWindowFlagValue(TransportControlsWindowFlag::NoFocusOnAppearing) |
+         transportControlsWindowFlagValue(TransportControlsWindowFlag::NoNavFocus);
 }

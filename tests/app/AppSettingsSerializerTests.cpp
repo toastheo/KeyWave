@@ -1,5 +1,6 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <nlohmann/json.hpp>
 
 #include "app/AppSettingsSerializer.hpp"
 
@@ -28,7 +29,7 @@ TEST_CASE("AppSettingsSerializer serializes settings without removed color keys"
   settings.fallingNotes.includeOutline = false;
   settings.keyboard.includeHitLine = false;
 
-  const auto json = AppSettingsSerializer::serialize(settings);
+  const auto json = nlohmann::json::parse(AppSettingsSerializer::serialize(settings));
 
   CHECK(json.at("version") == 1);
   CHECK(json.at("window").at("title") == "KeyWave");
@@ -71,7 +72,7 @@ TEST_CASE("AppSettingsSerializer merges missing keys over defaults and ignores u
     {"fallingNotes", {{"clippedNoteColor", {1.0, 0.0, 0.0, 1.0}}}},
   };
 
-  const auto settings = AppSettingsSerializer::deserialize(json, defaults);
+  const auto settings = AppSettingsSerializer::deserialize(json.dump(), defaults);
 
   CHECK(settings.renderer.clearColor.r == Catch::Approx(0.5f));
   CHECK(settings.renderer.clearColor.g == Catch::Approx(0.4f));
@@ -120,7 +121,7 @@ TEST_CASE("AppSettingsSerializer falls back for invalid values and clamps colors
       {"whiteKeyColor", "not-a-color"}}},
   };
 
-  const auto settings = AppSettingsSerializer::deserialize(json, defaults);
+  const auto settings = AppSettingsSerializer::deserialize(json.dump(), defaults);
 
   CHECK(settings.renderer.clearColor.r == Catch::Approx(0.0f));
   CHECK(settings.renderer.clearColor.g == Catch::Approx(0.5f));
@@ -163,7 +164,7 @@ TEST_CASE("AppSettingsSerializer deserializes window settings", "[app][settings]
       {"fpsLimit", 0}}},
   };
 
-  const auto settings = AppSettingsSerializer::deserialize(json);
+  const auto settings = AppSettingsSerializer::deserialize(json.dump());
 
   CHECK(settings.window.title == "Custom KeyWave");
   CHECK(settings.window.displayMode == WindowDisplayMode::ExclusiveFullscreen);
@@ -185,7 +186,7 @@ TEST_CASE("AppSettingsSerializer falls back for invalid window settings", "[app]
       {"fpsLimit", 75}}},
   };
 
-  const auto settings = AppSettingsSerializer::deserialize(json);
+  const auto settings = AppSettingsSerializer::deserialize(json.dump());
 
   CHECK(settings.window.title == "KeyWave");
   CHECK(settings.window.displayMode == WindowDisplayMode::Windowed);
@@ -205,7 +206,7 @@ TEST_CASE("AppSettingsSerializer deserializes falling note outline settings", "[
       {"includeOutline", false}}},
   };
 
-  const auto settings = AppSettingsSerializer::deserialize(json);
+  const auto settings = AppSettingsSerializer::deserialize(json.dump());
 
   CHECK(settings.fallingNotes.outlineColor.r == Catch::Approx(0.6f));
   CHECK(settings.fallingNotes.outlineColor.g == Catch::Approx(0.5f));
@@ -223,7 +224,7 @@ TEST_CASE("AppSettingsSerializer deserializes falling note width settings", "[ap
      {{"noteHorizontalInset", 0.12}, {"blackNoteWidthScale", 0.7}, {"whiteNoteWidthScale", 0.8}}},
   };
 
-  const auto settings = AppSettingsSerializer::deserialize(json);
+  const auto settings = AppSettingsSerializer::deserialize(json.dump());
 
   CHECK(settings.fallingNotes.noteHorizontalInset == Catch::Approx(0.12));
   CHECK(settings.fallingNotes.blackNoteWidthScale == Catch::Approx(0.7));
@@ -239,7 +240,7 @@ TEST_CASE("AppSettingsSerializer clamps pitch values through shared constraints"
     {"fallingNotes", {{"pitchRange", {{"minPitch", -12}, {"maxPitch", 140}}}}},
   };
 
-  const auto settings = AppSettingsSerializer::deserialize(json, defaults);
+  const auto settings = AppSettingsSerializer::deserialize(json.dump(), defaults);
 
   CHECK(settings.fallingNotes.pitchRange.minPitch == 0);
   CHECK(settings.fallingNotes.pitchRange.maxPitch == 127);

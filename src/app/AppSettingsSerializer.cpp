@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cstddef>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
+#include <string>
 
 #include "app/AppSettings.hpp"
 #include "app/AppSettingsConstraints.hpp"
@@ -263,9 +265,7 @@ void deserializeKeyboardSettings(const nlohmann::json& json, KeyboardSettings& s
   settings.includeHitLine = boolOrFallback(json, "includeHitLine", settings.includeHitLine);
 }
 
-} // namespace
-
-nlohmann::json AppSettingsSerializer::serialize(const AppSettings& settings)
+nlohmann::json serializeToJson(const AppSettings& settings)
 {
   return nlohmann::json{
     {"version", settingsSchemaVersion},
@@ -314,8 +314,7 @@ nlohmann::json AppSettingsSerializer::serialize(const AppSettings& settings)
   };
 }
 
-AppSettings AppSettingsSerializer::deserialize(const nlohmann::json& json,
-                                               const AppSettings& defaults)
+AppSettings deserializeFromJson(const nlohmann::json& json, const AppSettings& defaults)
 {
   // Merge onto defaults so older or hand-edited settings files can omit fields safely.
   AppSettings settings = defaults;
@@ -340,4 +339,23 @@ AppSettings AppSettingsSerializer::deserialize(const nlohmann::json& json,
   }
 
   return sanitizeAppSettings(settings);
+}
+
+} // namespace
+
+std::string AppSettingsSerializer::serialize(const AppSettings& settings, const int indentation)
+{
+  return serializeToJson(settings).dump(indentation);
+}
+
+AppSettings AppSettingsSerializer::deserialize(const std::string_view text,
+                                               const AppSettings& defaults)
+{
+  try {
+    const auto json = nlohmann::json::parse(text.begin(), text.end());
+    return deserializeFromJson(json, defaults);
+  }
+  catch (const nlohmann::json::exception& exception) {
+    throw std::invalid_argument(std::string{"malformed settings JSON: "} + exception.what());
+  }
 }

@@ -64,6 +64,11 @@ target_link_libraries(KeyWaveMidiTests
         keywave_ui
 )
 
+target_include_directories(KeyWaveMidiTests
+        PRIVATE
+        ${PROJECT_SOURCE_DIR}/external
+)
+
 target_compile_definitions(KeyWaveMidiTests
         PRIVATE
         KEYWAVE_SOURCE_DIR="${PROJECT_SOURCE_DIR}"

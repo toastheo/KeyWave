@@ -75,6 +75,7 @@ add_library(keywave_app_settings STATIC
 target_include_directories(keywave_app_settings
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        PRIVATE
         ${PROJECT_SOURCE_DIR}/external
 )
 
@@ -198,6 +199,8 @@ add_library(keywave_app_core STATIC
 target_include_directories(keywave_app_core
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        PRIVATE
+        ${PROJECT_SOURCE_DIR}/external
 )
 
 target_link_libraries(keywave_app_core
@@ -233,8 +236,8 @@ target_link_libraries(keywave_ui
         keywave_app_core
         keywave_diagnostics
         keywave_playback
-        imgui
         PRIVATE
+        imgui
         glfw
         OpenGL::GL
 )

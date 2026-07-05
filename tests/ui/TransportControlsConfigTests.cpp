@@ -1,5 +1,4 @@
 #include <catch2/catch_test_macros.hpp>
-#include <imgui.h>
 
 #include "ui/TransportControlsConfig.hpp"
 
@@ -7,7 +6,7 @@ TEST_CASE("transport controls do not take initial keyboard focus", "[ui][transpo
 {
   const auto flags = transportControlsWindowFlags();
 
-  CHECK((flags & ImGuiWindowFlags_NoFocusOnAppearing) != 0);
-  CHECK((flags & ImGuiWindowFlags_NoNavFocus) != 0);
-  CHECK((flags & ImGuiWindowFlags_NoMouseInputs) == 0);
+  CHECK(hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoFocusOnAppearing));
+  CHECK(hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoNavFocus));
+  CHECK_FALSE(hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoMouseInputs));
 }

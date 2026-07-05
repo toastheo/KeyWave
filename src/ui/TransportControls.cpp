@@ -19,6 +19,34 @@ std::string formatSeekStepLabel(const double seekStepSeconds)
   return output.str();
 }
 
+ImGuiWindowFlags toImGuiWindowFlags(const TransportControlsWindowFlags flags)
+{
+  ImGuiWindowFlags imguiFlags = 0;
+  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoDecoration)) {
+    imguiFlags |= ImGuiWindowFlags_NoDecoration;
+  }
+  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::AlwaysAutoResize)) {
+    imguiFlags |= ImGuiWindowFlags_AlwaysAutoResize;
+  }
+  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoSavedSettings)) {
+    imguiFlags |= ImGuiWindowFlags_NoSavedSettings;
+  }
+  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoMove)) {
+    imguiFlags |= ImGuiWindowFlags_NoMove;
+  }
+  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoFocusOnAppearing)) {
+    imguiFlags |= ImGuiWindowFlags_NoFocusOnAppearing;
+  }
+  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoNavFocus)) {
+    imguiFlags |= ImGuiWindowFlags_NoNavFocus;
+  }
+  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoMouseInputs)) {
+    imguiFlags |= ImGuiWindowFlags_NoMouseInputs;
+  }
+
+  return imguiFlags;
+}
+
 } // namespace
 
 void TransportControls::render(PlaybackTransport& transport,
@@ -34,7 +62,8 @@ void TransportControls::render(PlaybackTransport& transport,
   ImGui::SetNextWindowPos(position, ImGuiCond_Always);
   ImGui::SetNextWindowBgAlpha(0.88f);
 
-  if (!ImGui::Begin("Transport Controls", nullptr, transportControlsWindowFlags())) {
+  if (!ImGui::Begin(
+        "Transport Controls", nullptr, toImGuiWindowFlags(transportControlsWindowFlags()))) {
     ImGui::End();
     return;
   }

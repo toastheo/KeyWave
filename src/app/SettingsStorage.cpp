@@ -5,9 +5,9 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
-#include <nlohmann/json.hpp>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <system_error>
 #include <utility>
 
@@ -86,10 +86,11 @@ std::optional<AppSettings> SettingsStorage::load(const std::filesystem::path& pa
       return std::nullopt;
     }
 
-    const auto json = nlohmann::json::parse(input);
-    return AppSettingsSerializer::deserialize(json, AppSettings{});
+    std::ostringstream contents;
+    contents << input.rdbuf();
+    return AppSettingsSerializer::deserialize(contents.str(), AppSettings{});
   }
-  catch (const nlohmann::json::exception& exception) {
+  catch (const std::invalid_argument& exception) {
     std::ostringstream message;
     message << "Warning: malformed settings file, using defaults: " << path << " ("
             << exception.what() << ")";
@@ -133,7 +134,7 @@ bool SettingsStorage::save(const AppSettings& settings,
         return false;
       }
 
-      output << AppSettingsSerializer::serialize(sanitizeAppSettings(settings)).dump(2) << '\n';
+      output << AppSettingsSerializer::serialize(sanitizeAppSettings(settings), 2) << '\n';
       if (!output) {
         reportWarning(diagnostics, "Warning: could not write settings file: " + tempPath.string());
         return false;
