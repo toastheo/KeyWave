@@ -2,7 +2,11 @@
 
 #include <optional>
 
+#include "app/AppSettings.hpp"
 #include "app/PlaybackTransportAction.hpp"
+#include "diagnostics/Diagnostics.hpp"
+#include "input/Key.hpp"
+#include "playback/PlaybackTransport.hpp"
 
 namespace {
 std::optional<PlaybackTransportAction> actionFromKey(const Key key)

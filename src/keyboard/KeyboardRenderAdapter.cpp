@@ -2,6 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <vector>
+
+#include "core/CoreTypes.hpp"
+#include "keyboard/KeyboardTypes.hpp"
+#include "render/RenderCommand.hpp"
 
 namespace {
 

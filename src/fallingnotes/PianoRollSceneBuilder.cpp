@@ -3,15 +3,24 @@
 #include <cmath>
 #include <iterator>
 #include <sstream>
+#include <utility>
 #include <vector>
 
+#include "core/CoreTypes.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "fallingnotes/FallingNotesLayout.hpp"
 #include "fallingnotes/FallingNotesRenderAdapter.hpp"
+#include "fallingnotes/FallingNotesTypes.hpp"
 #include "keyboard/KeyboardGeometry.hpp"
 #include "keyboard/KeyboardLayout.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
 #include "keyboard/KeyboardState.hpp"
+#include "midi/MidiTimeline.hpp"
 #include "midi/MidiTimelineQuery.hpp"
+#include "midi/MidiTypes.hpp"
+#include "render/RenderCommand.hpp"
+#include "render/RenderScene.hpp"
+#include "render/RendererView.hpp"
 
 namespace {
 

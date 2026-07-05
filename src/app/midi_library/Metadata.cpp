@@ -4,19 +4,27 @@
 #include <array>
 #include <cctype>
 #include <chrono>
+#include <cstdint>
 #include <ctime>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <ios>
 #include <nlohmann/json.hpp>
-#include <ranges>
+#include <optional>
 #include <sstream>
+#include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
+#include "app/MidiLibraryStore.hpp"
 #include "app/midi_library/FileOps.hpp"
 #include "app/midi_library/Ids.hpp"
+#include "diagnostics/Diagnostics.hpp"
 
 namespace midi_library {
 namespace {

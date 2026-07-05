@@ -2,8 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <functional>
 #include <iterator>
 #include <utility>
+#include <vector>
+
+#include "midi/MidiTypes.hpp"
 
 void MidiTimeline::addNote(const Note& note)
 {
@@ -105,11 +110,7 @@ void MidiTimeline::addTempoEvent(const double timeSeconds, const double bpm)
     .bpm = bpm,
   });
 
-  std::stable_sort(m_tempoEvents.begin(),
-                   m_tempoEvents.end(),
-                   [](const TempoEvent& left, const TempoEvent& right) {
-                     return left.timeSeconds < right.timeSeconds;
-                   });
+  std::ranges::stable_sort(m_tempoEvents, {}, &TempoEvent::timeSeconds);
 }
 
 const std::vector<TempoEvent>& MidiTimeline::tempoEvents() const
@@ -124,12 +125,8 @@ double MidiTimeline::sourceBpmAt(const double seconds) const
   }
 
   const auto clampedSeconds = std::isfinite(seconds) ? std::max(0.0, seconds) : 0.0;
-  const auto nextTempo = std::upper_bound(m_tempoEvents.begin(),
-                                          m_tempoEvents.end(),
-                                          clampedSeconds,
-                                          [](const double timeSeconds, const TempoEvent& event) {
-                                            return timeSeconds < event.timeSeconds;
-                                          });
+  const auto nextTempo = std::ranges::upper_bound(
+    m_tempoEvents, clampedSeconds, std::ranges::less{}, &TempoEvent::timeSeconds);
 
   if (nextTempo == m_tempoEvents.begin()) {
     return defaultMidiBpm;

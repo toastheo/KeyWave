@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <ostream>
+#include <string_view>
 
 void NullDiagnosticSink::report(DiagnosticSeverity, std::string_view) {}
 

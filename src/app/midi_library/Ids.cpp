@@ -2,7 +2,13 @@
 
 #include <algorithm>
 #include <cctype>
-#include <ranges>
+#include <filesystem>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "app/MidiLibraryStore.hpp"
+#include "app/midi_library/Hash.hpp"
 
 namespace midi_library {
 

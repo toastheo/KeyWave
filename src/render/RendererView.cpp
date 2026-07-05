@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "core/CoreTypes.hpp"
 #include "render/RenderCommand.hpp"
 
 namespace {

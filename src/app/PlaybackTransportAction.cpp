@@ -2,7 +2,10 @@
 
 #include <algorithm>
 #include <sstream>
-#include <string>
+
+#include "app/AppSettings.hpp"
+#include "diagnostics/Diagnostics.hpp"
+#include "playback/PlaybackTransport.hpp"
 
 namespace {
 

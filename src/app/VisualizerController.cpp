@@ -1,11 +1,19 @@
 #include "app/VisualizerController.hpp"
 
+#include <optional>
+#include <span>
 #include <utility>
 
+#include "app/AppSettings.hpp"
 #include "app/PlaybackTransportControls.hpp"
 #include "app/VisualizationSettingsAdapters.hpp"
 #include "app/VisualizationSettingsPanelControls.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
+#include "input/Key.hpp"
+#include "midi/MidiTimeline.hpp"
+#include "midi/MidiTypes.hpp"
+#include "render/RenderScene.hpp"
 
 VisualizerController::VisualizerController()
     : VisualizerController(AppSettings{}, nullDiagnosticSink())

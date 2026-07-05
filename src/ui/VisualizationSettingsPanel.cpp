@@ -9,8 +9,11 @@
 #include <string>
 #include <string_view>
 
+#include "app/AppSettings.hpp"
 #include "app/AppSettingsConstraints.hpp"
-#include "imgui_internal.h"
+#include "app/MidiLibraryStore.hpp"
+#include "core/CoreTypes.hpp"
+#include "playback/PlaybackTransport.hpp"
 
 namespace {
 

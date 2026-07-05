@@ -3,6 +3,12 @@
 #include <algorithm>
 #include <cmath>
 #include <sstream>
+#include <vector>
+
+#include "core/CoreTypes.hpp"
+#include "diagnostics/Diagnostics.hpp"
+#include "midi/MidiTimeline.hpp"
+#include "midi/MidiTypes.hpp"
 
 namespace {
 

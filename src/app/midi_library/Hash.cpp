@@ -2,9 +2,17 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <ios>
+#include <optional>
 #include <sstream>
+#include <string>
+
+#include "diagnostics/Diagnostics.hpp"
 
 namespace midi_library {
 namespace {

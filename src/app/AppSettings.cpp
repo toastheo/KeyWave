@@ -7,6 +7,7 @@
 #include <string_view>
 
 #include "app/AppSettingsConstraints.hpp"
+#include "core/CoreTypes.hpp"
 
 namespace {
 

@@ -4,7 +4,13 @@
 #include <array>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <optional>
 #include <sstream>
+
+#include "diagnostics/Diagnostics.hpp"
+#include "midi/MidiTimeline.hpp"
+#include "midi/MidiTypes.hpp"
 
 namespace {
 

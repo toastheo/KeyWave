@@ -2,6 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <unordered_map>
+
+#include "core/CoreTypes.hpp"
+#include "keyboard/KeyboardTypes.hpp"
 
 namespace {
 

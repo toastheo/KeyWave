@@ -1,8 +1,16 @@
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
+#include <cstddef>
 #include <glad/gl.h>
+#include <span>
 #include <sstream>
 #include <variant>
+
+#include "core/CoreTypes.hpp"
+#include "diagnostics/Diagnostics.hpp"
+#include "platform/Window.hpp"
+#include "render/RenderCommand.hpp"
+#include "render/RendererView.hpp"
 
 namespace {
 

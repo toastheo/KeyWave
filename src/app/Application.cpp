@@ -3,14 +3,21 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <sstream>
+#include <string>
 #include <string_view>
 #include <thread>
 #include <utility>
 
+#include "app/AppConfig.hpp"
+#include "app/AppSettings.hpp"
+#include "app/MidiLibraryStore.hpp"
 #include "app/StartupDataLoader.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "midi/MidiFileLoader.hpp"
 #include "platform/MidiFileDialog.hpp"
+#include "platform/Window.hpp"
 #include "render/RenderScene.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 #include "ui/TransportControls.hpp"

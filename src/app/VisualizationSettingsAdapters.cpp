@@ -1,5 +1,13 @@
 #include "app/VisualizationSettingsAdapters.hpp"
 
+#include "app/AppSettings.hpp"
+#include "core/CoreTypes.hpp"
+#include "fallingnotes/FallingNotesRenderAdapter.hpp"
+#include "fallingnotes/FallingNotesTypes.hpp"
+#include "fallingnotes/PianoRollSceneBuilder.hpp"
+#include "keyboard/KeyboardRenderAdapter.hpp"
+#include "keyboard/KeyboardTypes.hpp"
+
 KeyboardLayoutConfig keyboardLayoutConfigFromSettings(const KeyboardSettings& settings,
                                                       const PitchRange& pitchRange)
 {

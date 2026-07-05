@@ -1,5 +1,7 @@
 #include "ui/TransportControlsConfig.hpp"
 
+#include <imgui.h>
+
 ImGuiWindowFlags transportControlsWindowFlags()
 {
   return ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |

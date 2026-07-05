@@ -2,8 +2,11 @@
 
 #include <imgui.h>
 #include <sstream>
+#include <string>
 
+#include "app/AppSettings.hpp"
 #include "app/PlaybackTransportAction.hpp"
+#include "playback/PlaybackTransport.hpp"
 #include "ui/TransportControlsConfig.hpp"
 #include "ui/TransportTime.hpp"
 

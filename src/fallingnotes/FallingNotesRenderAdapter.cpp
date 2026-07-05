@@ -1,6 +1,11 @@
 #include "fallingnotes/FallingNotesRenderAdapter.hpp"
 
 #include <cmath>
+#include <vector>
+
+#include "core/CoreTypes.hpp"
+#include "fallingnotes/FallingNotesTypes.hpp"
+#include "render/RenderCommand.hpp"
 
 namespace {
 

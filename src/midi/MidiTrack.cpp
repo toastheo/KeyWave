@@ -1,5 +1,9 @@
 #include "midi/MidiTrack.hpp"
 
+#include <vector>
+
+#include "midi/MidiTypes.hpp"
+
 MidiTrack::MidiTrack(const int index)
     : m_index(index)
 {}

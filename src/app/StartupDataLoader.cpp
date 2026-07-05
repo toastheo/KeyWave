@@ -1,10 +1,13 @@
 #include "app/StartupDataLoader.hpp"
 
-#include <chrono>
 #include <filesystem>
 #include <sstream>
+#include <system_error>
 #include <utility>
 
+#include "app/AppConfig.hpp"
+#include "app/MidiLibraryStore.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "midi/MidiFileLoader.hpp"
 
 namespace {

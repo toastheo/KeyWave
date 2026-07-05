@@ -1,6 +1,11 @@
 #include "app/midi_library/FileOps.hpp"
 
+#include <filesystem>
 #include <sstream>
+#include <system_error>
+
+#include "app/MidiLibraryStore.hpp"
+#include "diagnostics/Diagnostics.hpp"
 
 namespace midi_library {
 

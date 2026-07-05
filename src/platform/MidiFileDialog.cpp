@@ -4,8 +4,11 @@
 #include <filesystem>
 #include <memory>
 #include <nfd.h>
+#include <optional>
 #include <sstream>
 #include <string>
+
+#include "diagnostics/Diagnostics.hpp"
 
 namespace {
 

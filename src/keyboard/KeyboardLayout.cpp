@@ -1,5 +1,10 @@
 #include "keyboard/KeyboardLayout.hpp"
 
+#include "core/CoreTypes.hpp"
+#include "keyboard/KeyboardGeometry.hpp"
+#include "keyboard/KeyboardState.hpp"
+#include "keyboard/KeyboardTypes.hpp"
+
 namespace {
 
 bool isValidKeyRect(const Rect& rect)

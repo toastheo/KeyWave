@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "diagnostics/Diagnostics.hpp"
+
 PlaybackTransport::PlaybackTransport(DiagnosticSink& diagnostics)
     : m_diagnostics(diagnostics)
 {}

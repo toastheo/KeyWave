@@ -2,8 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <nlohmann/json.hpp>
 
+#include "app/AppSettings.hpp"
 #include "app/AppSettingsConstraints.hpp"
+#include "core/CoreTypes.hpp"
 
 namespace {
 

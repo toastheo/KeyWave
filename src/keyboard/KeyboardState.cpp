@@ -1,7 +1,11 @@
 #include "keyboard/KeyboardState.hpp"
 
 #include <algorithm>
+#include <span>
 #include <utility>
+#include <vector>
+
+#include "midi/MidiTypes.hpp"
 
 KeyboardState::KeyboardState(std::vector<ActiveKey> activeKeys)
     : m_activeKeys(std::move(activeKeys))

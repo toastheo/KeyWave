@@ -1,10 +1,14 @@
 #include "render_opengl/OpenGLShader.hpp"
 
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
 #include <glad/gl.h>
 #include <sstream>
 #include <string>
+#include <string_view>
+
+#include "diagnostics/Diagnostics.hpp"
 
 namespace {
 

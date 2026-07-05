@@ -1,13 +1,19 @@
 #include "app/SettingsStorage.hpp"
 
 #include <cstdlib>
+#include <exception>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <nlohmann/json.hpp>
+#include <optional>
 #include <sstream>
 #include <system_error>
 #include <utility>
 
+#include "app/AppSettings.hpp"
 #include "app/AppSettingsSerializer.hpp"
+#include "diagnostics/Diagnostics.hpp"
 
 namespace {
 

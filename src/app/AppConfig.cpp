@@ -1,5 +1,9 @@
 #include "app/AppConfig.hpp"
 
+#include <optional>
+
+#include "diagnostics/Diagnostics.hpp"
+
 namespace {
 
 void reportUsage(DiagnosticSink& diagnostics)

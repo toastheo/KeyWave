@@ -2,6 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <span>
+
+#include "core/CoreTypes.hpp"
+#include "fallingnotes/FallingNotesTypes.hpp"
+#include "keyboard/KeyboardGeometry.hpp"
+#include "midi/MidiTimelineQuery.hpp"
+#include "midi/MidiTypes.hpp"
 
 namespace {
 

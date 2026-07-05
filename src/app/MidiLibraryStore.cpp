@@ -4,15 +4,21 @@
 #include <cctype>
 #include <exception>
 #include <filesystem>
+#include <optional>
 #include <ranges>
 #include <sstream>
+#include <string>
+#include <string_view>
+#include <system_error>
 #include <utility>
+#include <vector>
 
 #include "app/SettingsStorage.hpp"
 #include "app/midi_library/FileOps.hpp"
 #include "app/midi_library/Hash.hpp"
 #include "app/midi_library/Ids.hpp"
 #include "app/midi_library/Metadata.hpp"
+#include "diagnostics/Diagnostics.hpp"
 
 namespace {
 

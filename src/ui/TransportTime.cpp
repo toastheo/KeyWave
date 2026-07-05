@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 std::string formatTransportTime(const double seconds)
 {

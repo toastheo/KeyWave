@@ -5,6 +5,12 @@
 #include <filesystem>
 #include <glad/gl.h>
 
+#include "core/CoreTypes.hpp"
+#include "diagnostics/Diagnostics.hpp"
+#include "render/RenderCommand.hpp"
+#include "render/RendererView.hpp"
+#include "render_opengl/OpenGLShader.hpp"
+
 #ifndef KEYWAVE_SHADER_DIR
 #define KEYWAVE_SHADER_DIR "."
 #endif

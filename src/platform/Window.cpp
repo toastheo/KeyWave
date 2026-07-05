@@ -4,6 +4,11 @@
 #include <GLFW/glfw3.h>
 #include <optional>
 #include <sstream>
+#include <vector>
+
+#include "core/CoreTypes.hpp"
+#include "diagnostics/Diagnostics.hpp"
+#include "input/Key.hpp"
 
 namespace {
 void reportGlfwError(const char* fallbackMessage, DiagnosticSink& diagnostics)
@@ -28,11 +33,10 @@ NativeProcAddress loadOpenGLProcAddress(const char* name)
 
 GLFWmonitor* primaryMonitor(DiagnosticSink& diagnostics)
 {
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-  if (monitor == nullptr) {
+  if (glfwGetPrimaryMonitor() == nullptr) {
     reportError(diagnostics, "Failed to apply fullscreen mode: no primary monitor.");
   }
-  return monitor;
+  return glfwGetPrimaryMonitor();
 }
 
 const GLFWvidmode* currentVideoMode(GLFWmonitor* monitor, DiagnosticSink& diagnostics)
