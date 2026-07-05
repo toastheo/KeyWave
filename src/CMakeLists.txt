@@ -40,6 +40,17 @@ target_link_libraries(keywave_midi
         midifile
 )
 
+add_library(keywave_audio STATIC
+        audio/PianoSynth.hpp
+        audio/NullPianoSynth.hpp
+        audio/NullPianoSynth.cpp
+)
+
+target_include_directories(keywave_audio
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_library(keywave_render STATIC
         render/RendererBackend.hpp
         render/RenderCommand.hpp

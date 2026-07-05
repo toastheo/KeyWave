@@ -21,6 +21,7 @@ target_include_directories(keywave_test_support
 add_executable(KeyWaveMidiTests
         architecture/LayeringTests.cpp
         architecture/SpanApiTests.cpp
+        audio/NullPianoSynthTests.cpp
         app/AppConfigTests.cpp
         app/AppSettingsTests.cpp
         app/AppSettingsSerializerTests.cpp
@@ -55,6 +56,7 @@ set_target_properties(KeyWaveMidiTests
 target_link_libraries(KeyWaveMidiTests
         PRIVATE
         Catch2::Catch2WithMain
+        keywave_audio
         keywave_app_core
         keywave_fallingnotes
         keywave_midi
