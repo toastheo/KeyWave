@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "diagnostics/Diagnostics.hpp"
-#include "platform/Window.hpp"
 #include "render/RenderTypes.hpp"
 #include "render/RendererBackend.hpp"
 #include "render/RendererView.hpp"

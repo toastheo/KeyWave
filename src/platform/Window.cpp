@@ -9,6 +9,7 @@
 #include "core/CoreTypes.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "input/Key.hpp"
+#include "render/RenderTypes.hpp"
 
 namespace {
 void reportGlfwError(const char* fallbackMessage, DiagnosticSink& diagnostics)

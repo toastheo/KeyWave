@@ -37,9 +37,6 @@ struct WindowedSize
   int height = 720;
 };
 
-using NativeProcAddress = void (*)();
-using NativeProcAddressLoader = NativeProcAddress (*)(const char* name);
-
 struct GlfwWindowDeleter
 {
   void operator()(GLFWwindow* window) const;

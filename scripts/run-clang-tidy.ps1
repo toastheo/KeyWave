@@ -2,7 +2,10 @@ param(
     [string]$BuildDir = "build-tidy",
     [string[]]$SourceDirs = @("src"),
     [string]$Output = "clang-tidy-findings.txt",
-    [string]$Tidy = $env:CLANG_TIDY
+    [string]$Tidy = $env:CLANG_TIDY,
+
+    # Optional: Scan only one source file from compile_commands.json
+    [string]$File = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -64,21 +67,46 @@ if ($sourceRoots.Count -eq 0) {
 
 $commands = Get-Content $compileCommands -Raw | ConvertFrom-Json
 
-$files = $commands |
+$allProjectFiles = $commands |
     ForEach-Object { Resolve-CompileCommandFile $_ } |
     Sort-Object -Unique |
     Where-Object {
-        $file = $_
+        $currentFile = $_
 
         ($sourceRoots | Where-Object {
             $root = $_
 
-            $file.StartsWith(
+            $currentFile.StartsWith(
                 $root + [System.IO.Path]::DirectorySeparatorChar,
                 [System.StringComparison]::OrdinalIgnoreCase
             )
         }).Count -gt 0
     }
+
+if ($File) {
+    if ([System.IO.Path]::IsPathRooted($File)) {
+        $requestedFile = [System.IO.Path]::GetFullPath($File)
+    }
+    else {
+        $requestedFile = [System.IO.Path]::GetFullPath((Join-Path $projectRoot $File))
+    }
+
+    $files = $allProjectFiles |
+        Where-Object {
+            [System.String]::Equals(
+                $_,
+                $requestedFile,
+                [System.StringComparison]::OrdinalIgnoreCase
+            )
+        }
+
+    if ($files.Count -eq 0) {
+        Write-Error "File was not found in compile_commands.json: $requestedFile"
+    }
+}
+else {
+    $files = $allProjectFiles
+}
 
 if ($files.Count -eq 0) {
     Write-Error "No matching project files found in compile_commands.json."

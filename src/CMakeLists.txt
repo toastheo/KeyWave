@@ -267,7 +267,6 @@ target_compile_definitions(keywave_render_opengl
 target_link_libraries(keywave_render_opengl
         PUBLIC
         keywave_diagnostics
-        keywave_platform
         keywave_render
         PRIVATE
         glad
