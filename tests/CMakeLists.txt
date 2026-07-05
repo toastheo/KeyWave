@@ -22,6 +22,7 @@ add_executable(KeyWaveMidiTests
         architecture/LayeringTests.cpp
         architecture/SpanApiTests.cpp
         audio/NullPianoSynthTests.cpp
+        audio/TimelineAudioSchedulerTests.cpp
         app/AppConfigTests.cpp
         app/AppSettingsTests.cpp
         app/AppSettingsSerializerTests.cpp

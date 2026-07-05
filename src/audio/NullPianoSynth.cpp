@@ -1,9 +1,8 @@
 #include "audio/NullPianoSynth.hpp"
 
-void NullPianoSynth::noteOn(const int pitch, const int velocity)
+void NullPianoSynth::noteOn(const PianoNote note)
 {
-  (void)pitch;
-  (void)velocity;
+  (void)note;
 }
 
 void NullPianoSynth::noteOff(const int pitch)
