@@ -1,12 +1,12 @@
 #include "audio/TimelineAudioScheduler.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <functional>
+
 #include "audio/PianoSynth.hpp"
 #include "midi/MidiTimeline.hpp"
-
-#include <algorithm>
-#include <cstddef>
-#include <cmath>
-#include <functional>
 
 TimelineAudioScheduler::TimelineAudioScheduler(PianoSynth& synth)
     : m_synth(synth)
