@@ -4,6 +4,9 @@
 #include <span>
 
 #include "app/AppSettings.hpp"
+#include "audio/NullPianoSynth.hpp"
+#include "audio/PianoSynth.hpp"
+#include "audio/TimelineAudioScheduler.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
@@ -40,6 +43,8 @@ private:
   AppSettings m_settings;
   std::optional<MidiTimeline> m_timeline;
   PlaybackTransport m_playbackTransport;
+  NullPianoSynth m_nullPianoSynth;
+  TimelineAudioScheduler m_audioScheduler;
   bool m_visualizationSettingsPanelVisible = true;
   bool m_skipNextPlaybackUpdate = false;
 };

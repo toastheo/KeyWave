@@ -1,14 +1,38 @@
 #include <array>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <string>
 #include <variant>
+#include <vector>
 
 #include "app/VisualizerController.hpp"
+#include "audio/PianoSynth.hpp"
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "render/RenderCommand.hpp"
 
 namespace {
+
+class RecordingPianoSynth final : public PianoSynth
+{
+public:
+  void noteOn(const PianoNote note) override
+  {
+    commands.push_back("on:" + std::to_string(note.pitch) + ":" + std::to_string(note.velocity));
+  }
+
+  void noteOff(const int pitch) override
+  {
+    commands.push_back("off:" + std::to_string(pitch));
+  }
+
+  void allNotesOff() override
+  {
+    commands.emplace_back("all-off");
+  }
+
+  std::vector<std::string> commands;
+};
 
 std::vector<DrawStyledRectCommand> styledRectsForScene(const RenderScene& scene)
 {
@@ -100,6 +124,27 @@ TEST_CASE("VisualizerController replaces the timeline and starts playback from t
 
   controller.update(0.25);
   CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(0.25));
+}
+
+TEST_CASE("VisualizerController schedules audio while loaded timeline is playing",
+          "[app][visualizer][audio]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.25, .durationSeconds = 0.5});
+
+  RecordingPianoSynth synth;
+  VisualizerController controller(synth);
+
+  controller.replaceTimelineAndPlayFromStart(std::move(timeline));
+  controller.update(0.1);
+  CHECK(synth.commands.empty());
+
+  controller.update(0.25);
+  controller.update(0.5);
+
+  REQUIRE(synth.commands.size() == 2);
+  CHECK(synth.commands[0] == "on:60:90");
+  CHECK(synth.commands[1] == "off:60");
 }
 
 } // namespace

@@ -222,6 +222,7 @@ target_include_directories(keywave_app_core
 target_link_libraries(keywave_app_core
         PUBLIC
         keywave_app_settings
+        keywave_audio
         keywave_diagnostics
         keywave_fallingnotes
         keywave_keyboard

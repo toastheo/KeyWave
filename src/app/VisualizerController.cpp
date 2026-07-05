@@ -8,11 +8,14 @@
 #include "app/PlaybackTransportControls.hpp"
 #include "app/VisualizationSettingsAdapters.hpp"
 #include "app/VisualizationSettingsPanelControls.hpp"
+#include "audio/PianoSynth.hpp"
+#include "audio/TimelineAudioScheduler.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "midi/MidiTypes.hpp"
+#include "playback/PlaybackState.hpp"
 #include "render/RenderScene.hpp"
 
 VisualizerController::VisualizerController()
@@ -22,6 +25,21 @@ VisualizerController::VisualizerController()
 VisualizerController::VisualizerController(DiagnosticSink& diagnostics)
     : m_diagnostics(diagnostics)
     , m_playbackTransport(diagnostics)
+    , m_audioScheduler(m_nullPianoSynth)
+{
+  setSettings(std::move(settings));
+}
+
+VisualizerController::VisualizerController(PianoSynth& pianoSynth)
+    : VisualizerController(AppSettings{}, nullDiagnosticSink(), pianoSynth)
+{}
+
+VisualizerController::VisualizerController(AppSettings settings,
+                                           DiagnosticSink& diagnostics,
+                                           PianoSynth& pianoSynth)
+    : m_diagnostics(diagnostics)
+    , m_playbackTransport(diagnostics)
+    , m_audioScheduler(pianoSynth)
 {
   setSettings(AppSettings{});
 }
@@ -39,6 +57,13 @@ const AppSettings& VisualizerController::settings() const
 void VisualizerController::setTimeline(std::optional<MidiTimeline> timeline)
 {
   m_timeline = std::move(timeline);
+
+  if (m_timeline.has_value()) {
+    m_audioScheduler.setTimeline(*m_timeline);
+    return;
+  }
+
+  m_audioScheduler.setTimeline(MidiTimeline{});
 }
 
 void VisualizerController::replaceTimelineAndPlayFromStart(std::optional<MidiTimeline> timeline)
@@ -112,7 +137,11 @@ void VisualizerController::update(const double elapsedSeconds)
     return;
   }
 
+  const auto previousTimeSeconds = m_playbackTransport.currentTimeSeconds();
   m_playbackTransport.update(elapsedSeconds);
+  if (m_playbackTransport.state() == PlaybackState::Playing) {
+    m_audioScheduler.update(previousTimeSeconds, m_playbackTransport.currentTimeSeconds());
+  }
 }
 
 void VisualizerController::suppressNextPlaybackUpdate()
