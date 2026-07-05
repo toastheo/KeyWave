@@ -44,11 +44,18 @@ add_library(keywave_audio STATIC
         audio/PianoSynth.hpp
         audio/NullPianoSynth.hpp
         audio/NullPianoSynth.cpp
+        audio/TimelineAudioScheduler.hpp
+        audio/TimelineAudioScheduler.cpp
 )
 
 target_include_directories(keywave_audio
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(keywave_audio
+        PUBLIC
+        keywave_midi
 )
 
 add_library(keywave_render STATIC

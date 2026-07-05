@@ -9,7 +9,7 @@ TEST_CASE("NullPianoSynth implements the piano synth interface as a no-op", "[au
   NullPianoSynth nullSynth;
   PianoSynth& synth = nullSynth;
 
-  synth.noteOn(60, 96);
+  synth.noteOn(PianoNote{.pitch = 60, .velocity = 96});
   synth.noteOff(60);
   synth.allNotesOff();
 
