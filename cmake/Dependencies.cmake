@@ -24,6 +24,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nativefiledialog-extended)
 
 find_package(OpenGL REQUIRED)
+if (KEYWAVE_ENABLE_AUDIO)
+    find_package(FluidSynth CONFIG REQUIRED)
+endif()
 
 add_library(glad STATIC
     ${PROJECT_SOURCE_DIR}/external/glad/src/gl.c
