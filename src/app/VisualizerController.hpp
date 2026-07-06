@@ -30,6 +30,7 @@ public:
 
   [[nodiscard]] PlaybackTransport& playbackTransport();
   [[nodiscard]] const PlaybackTransport& playbackTransport() const;
+  [[nodiscard]] TimelineAudioScheduler& audioScheduler();
 
   [[nodiscard]] bool visualizationSettingsPanelVisible() const;
 

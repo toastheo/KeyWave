@@ -15,7 +15,7 @@
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "midi/MidiTypes.hpp"
-#include "playback/PlaybackState.hpp"
+#include "playback/PlaybackTransport.hpp"
 #include "render/RenderScene.hpp"
 
 VisualizerController::VisualizerController()
@@ -107,6 +107,11 @@ const PlaybackTransport& VisualizerController::playbackTransport() const
   return m_playbackTransport;
 }
 
+TimelineAudioScheduler& VisualizerController::audioScheduler()
+{
+  return m_audioScheduler;
+}
+
 bool VisualizerController::visualizationSettingsPanelVisible() const
 {
   return m_visualizationSettingsPanelVisible;
@@ -124,6 +129,7 @@ void VisualizerController::handleInput(const std::span<const Key> pressedKeys,
       applyPlaybackTransportControl(key,
                                     m_playbackTransport,
                                     m_diagnostics,
+                                    m_audioScheduler,
                                     m_settings.playbackControls,
                                     sourceBpmAtPlaybackPosition());
     }

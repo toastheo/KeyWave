@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "app/AppSettings.hpp"
+#include "audio/TimelineAudioScheduler.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "playback/PlaybackTransport.hpp"
 
@@ -13,10 +14,21 @@ double clampedPlaybackBpm(const double bpm, const PlaybackControlSettings& setti
 {
   return std::clamp(bpm, settings.minPlaybackBpm, settings.maxPlaybackBpm);
 }
+
+void adjustPlaybackBpm(PlaybackTransport& transport,
+                       const PlaybackControlSettings& settings,
+                       const double sourceBpm,
+                       const double bpmDelta)
+{
+  const auto targetBpm = clampedPlaybackBpm(transport.effectiveBpm(sourceBpm) + bpmDelta, settings);
+  transport.setEffectiveBpm(sourceBpm, targetBpm);
+}
+
 } // namespace
 
 void applyPlaybackTransportAction(const PlaybackTransportAction action,
                                   PlaybackTransport& transport,
+                                  TimelineAudioScheduler& audioScheduler,
                                   const PlaybackControlSettings& settings,
                                   const double sourceBpm)
 {
@@ -26,6 +38,7 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
     case PlaybackTransportAction::TogglePlayPause:
       if (transport.state() == PlaybackState::Playing) {
         transport.pause();
+        audioScheduler.seek(transport.currentTimeSeconds());
       }
       else {
         transport.play();
@@ -34,15 +47,18 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
 
     case PlaybackTransportAction::Restart:
       transport.seek(0.0);
+      audioScheduler.stop();
       transport.play();
       break;
 
     case PlaybackTransportAction::Stop:
       transport.stop();
+      audioScheduler.stop();
       break;
 
     case PlaybackTransportAction::SeekBackward:
       transport.seek(transport.currentTimeSeconds() - sanitizedSettings.seekStepSeconds);
+      audioScheduler.seek(transport.currentTimeSeconds());
       break;
 
     case PlaybackTransportAction::SeekForward:
@@ -50,17 +66,11 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
       break;
 
     case PlaybackTransportAction::IncreasePlaybackBpm:
-      transport.setEffectiveBpm(sourceBpm,
-                                clampedPlaybackBpm(transport.effectiveBpm(sourceBpm) +
-                                                     sanitizedSettings.playbackBpmStep,
-                                                   sanitizedSettings));
+      adjustPlaybackBpm(transport, sanitizedSettings, sourceBpm, sanitizedSettings.playbackBpmStep);
       break;
 
     case PlaybackTransportAction::DecreasePlaybackBpm:
-      transport.setEffectiveBpm(sourceBpm,
-                                clampedPlaybackBpm(transport.effectiveBpm(sourceBpm) -
-                                                     sanitizedSettings.playbackBpmStep,
-                                                   sanitizedSettings));
+      adjustPlaybackBpm(transport, sanitizedSettings, sourceBpm, -sanitizedSettings.playbackBpmStep);
       break;
   }
 }
