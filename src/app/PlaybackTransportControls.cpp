@@ -4,11 +4,13 @@
 
 #include "app/AppSettings.hpp"
 #include "app/PlaybackTransportAction.hpp"
+#include "audio/TimelineAudioScheduler.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "input/Key.hpp"
 #include "playback/PlaybackTransport.hpp"
 
 namespace {
+
 std::optional<PlaybackTransportAction> actionFromKey(const Key key)
 {
   switch (key) {
@@ -36,11 +38,13 @@ std::optional<PlaybackTransportAction> actionFromKey(const Key key)
 
   return std::nullopt;
 }
+
 } // namespace
 
 void applyPlaybackTransportControl(const Key key,
                                    PlaybackTransport& transport,
                                    DiagnosticSink& diagnostics,
+                                   TimelineAudioScheduler& audioScheduler,
                                    const PlaybackControlSettings& settings,
                                    const double sourceBpm)
 {
@@ -49,6 +53,6 @@ void applyPlaybackTransportControl(const Key key,
     return;
   }
 
-  applyPlaybackTransportAction(*action, transport, settings, sourceBpm);
+  applyPlaybackTransportAction(*action, transport, audioScheduler, settings, sourceBpm);
   reportPlaybackTransportAction(*action, transport, diagnostics, sourceBpm);
 }

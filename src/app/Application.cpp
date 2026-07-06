@@ -315,6 +315,7 @@ void Application::run()
     m_imguiLayer.beginFrame();
     TransportControls::render(m_visualizerController.playbackTransport(),
                               m_visualizerController.durationSeconds(),
+                              m_visualizerController.audioScheduler(),
                               m_visualizerController.settings().playbackControls,
                               m_visualizerController.sourceBpmAtPlaybackPosition());
     if (m_visualizerController.visualizationSettingsPanelVisible()) {

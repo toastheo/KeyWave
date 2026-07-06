@@ -1,9 +1,11 @@
 #pragma once
 
 #include "app/AppSettings.hpp"
-#include "diagnostics/Diagnostics.hpp"
 #include "midi/MidiTypes.hpp"
-#include "playback/PlaybackTransport.hpp"
+
+class DiagnosticSink;
+class PlaybackTransport;
+class TimelineAudioScheduler;
 
 enum class PlaybackTransportAction : std::uint8_t
 {
@@ -18,6 +20,7 @@ enum class PlaybackTransportAction : std::uint8_t
 
 void applyPlaybackTransportAction(PlaybackTransportAction action,
                                   PlaybackTransport& transport,
+                                  TimelineAudioScheduler& audioScheduler,
                                   const PlaybackControlSettings& settings = {},
                                   double sourceBpm = defaultMidiBpm);
 void reportPlaybackTransportAction(PlaybackTransportAction action,
