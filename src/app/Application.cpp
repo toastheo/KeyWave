@@ -2,18 +2,23 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <thread>
 #include <utility>
 
 #include "app/AppConfig.hpp"
 #include "app/AppSettings.hpp"
+#include "app/AssetPaths.hpp"
 #include "app/MidiLibraryStore.hpp"
 #include "app/StartupDataLoader.hpp"
+#include "audio/NullPianoSynth.hpp"
+#include "audio/PianoSynth.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "midi/MidiFileLoader.hpp"
 #include "platform/MidiFileDialog.hpp"
@@ -22,6 +27,10 @@
 #include "render_opengl/OpenGLRendererBackend.hpp"
 #include "ui/TransportControls.hpp"
 #include "ui/VisualizationSettingsPanel.hpp"
+
+#if defined(KEYWAVE_ENABLE_AUDIO)
+#include "audio/FluidSynthPianoSynth.hpp"
+#endif
 
 namespace {
 
@@ -38,6 +47,32 @@ PlatformWindowDisplayMode platformDisplayMode(const WindowDisplayMode displayMod
   return PlatformWindowDisplayMode::Windowed;
 }
 
+std::unique_ptr<PianoSynth> createPianoSynth(DiagnosticSink& diagnostics)
+{
+#if defined(KEYWAVE_ENABLE_AUDIO)
+  const auto soundFontPath = defaultPianoSoundFontPath();
+  std::error_code existsError;
+  if (!std::filesystem::exists(soundFontPath, existsError)) {
+    const auto messagePrefix = existsError ? "Audio disabled: SoundFont path could not be checked: "
+                                           : "Audio disabled: SoundFont not found: ";
+    reportWarning(diagnostics, messagePrefix + soundFontPath.string());
+    return std::make_unique<NullPianoSynth>();
+  }
+
+  auto synth = std::make_unique<FluidSynthPianoSynth>(soundFontPath, diagnostics);
+  if (!synth->available()) {
+    reportWarning(diagnostics, "Audio disabled: FluidSynth piano backend could not initialize.");
+    return std::make_unique<NullPianoSynth>();
+  }
+
+  reportInfo(diagnostics, "Audio enabled: " + soundFontPath.string());
+  return synth;
+#else
+  void(diagnostics);
+  return std::make_unique<NullPianoSynth>();
+#endif
+}
+
 } // namespace
 
 Application::Application(AppConfig config)
@@ -47,7 +82,8 @@ Application::Application(AppConfig config)
 Application::Application(AppConfig config, DiagnosticSink& diagnostics)
     : m_config(std::move(config))
     , m_diagnostics(diagnostics)
-    , m_visualizerController(diagnostics)
+    , m_pianoSynth(createPianoSynth(diagnostics))
+    , m_visualizerController(AppSettings{}, diagnostics, *m_pianoSynth)
 {}
 
 Application::~Application()
