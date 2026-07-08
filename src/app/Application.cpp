@@ -119,7 +119,7 @@ bool Application::initialize()
 
 void Application::applyWindowSettings()
 {
-  auto& settings = m_visualizerController.settings();
+  auto settings = m_visualizerController.settings();
   const auto sanitizedWindow = sanitizeWindowSettings(settings.window);
   settings.window = sanitizedWindow;
 
@@ -148,6 +148,7 @@ void Application::applyWindowSettings()
     m_window.setVsyncEnabled(sanitizedWindow.vsyncEnabled);
   }
 
+  m_visualizerController.setSettings(settings);
   m_appliedWindowSettings = settings.window;
 }
 
@@ -317,12 +318,14 @@ void Application::run()
                               m_visualizerController.settings().playbackControls,
                               m_visualizerController.sourceBpmAtPlaybackPosition());
     if (m_visualizerController.visualizationSettingsPanelVisible()) {
+      auto editedSettings = m_visualizerController.settings();
       const auto settingsAction =
-        VisualizationSettingsPanel::render(m_visualizerController.settings(),
+        VisualizationSettingsPanel::render(editedSettings,
                                            m_visualizerController.playbackTransport(),
                                            m_importedMidiFiles,
                                            m_activeImportedMidiId.value_or(""),
                                            m_visualizerController.sourceBpmAtPlaybackPosition());
+      m_visualizerController.setSettings(std::move(editedSettings));
       handleVisualizationSettingsPanelAction(settingsAction);
     }
     applyWindowSettings();

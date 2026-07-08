@@ -39,11 +39,6 @@ void VisualizerController::setSettings(AppSettings settings)
   m_settings = sanitizeAppSettings(std::move(settings));
 }
 
-AppSettings& VisualizerController::settings()
-{
-  return m_settings;
-}
-
 const AppSettings& VisualizerController::settings() const
 {
   return m_settings;

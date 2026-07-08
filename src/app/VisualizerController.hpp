@@ -19,7 +19,6 @@ public:
   VisualizerController(AppSettings settings, DiagnosticSink& diagnostics);
 
   void setSettings(AppSettings settings);
-  [[nodiscard]] AppSettings& settings();
   [[nodiscard]] const AppSettings& settings() const;
 
   void setTimeline(std::optional<MidiTimeline> timeline);
