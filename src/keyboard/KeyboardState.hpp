@@ -15,7 +15,7 @@ struct ActiveKey
 struct KeyboardState
 {
   KeyboardState() = default;
-  explicit KeyboardState(std::vector<ActiveKey> activeKeys);
+  explicit KeyboardState(const std::vector<ActiveKey>& activeKeys);
 
   [[nodiscard]] bool isActive(int pitch) const;
   [[nodiscard]] int velocityForPitch(int pitch) const;

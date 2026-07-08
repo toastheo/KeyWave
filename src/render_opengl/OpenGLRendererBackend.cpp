@@ -8,8 +8,8 @@
 
 #include "core/CoreTypes.hpp"
 #include "diagnostics/Diagnostics.hpp"
-#include "platform/Window.hpp"
 #include "render/RenderCommand.hpp"
+#include "render/RenderTypes.hpp"
 #include "render/RendererView.hpp"
 
 namespace {

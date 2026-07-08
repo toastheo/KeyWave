@@ -1,5 +1,7 @@
 #include "audio/NullPianoSynth.hpp"
 
+#include "audio/PianoSynth.hpp"
+
 void NullPianoSynth::noteOn(const PianoNote note)
 {
   (void)note;

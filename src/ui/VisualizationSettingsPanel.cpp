@@ -266,8 +266,9 @@ void renderKeyboardSettings(KeyboardSettings& settings)
 
   settings.blackKeyWidth =
     clampRange(settings.blackKeyWidth, constraints.blackKeyWidth.minimum, settings.whiteKeyWidth);
-  settings.blackKeyHeight =
-    clampRange(settings.blackKeyHeight, constraints.blackKeyHeight.minimum, settings.whiteKeyHeight);
+  settings.blackKeyHeight = clampRange(settings.blackKeyHeight,
+                                       constraints.blackKeyHeight.minimum,
+                                       settings.whiteKeyHeight);
   settings.separatorWidth =
     std::max(constraints.separatorWidth.minimum, finiteOr(settings.separatorWidth, 0.0));
   settings.hitLineHeight =
