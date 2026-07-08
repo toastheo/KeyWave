@@ -6,6 +6,11 @@ struct DoubleSettingRange
   double maximum = 0.0;
 };
 
+struct DoubleSettingMinimum
+{
+  double minimum = 0.0;
+};
+
 struct IntSettingRange
 {
   int minimum = 0;
@@ -28,8 +33,11 @@ struct KeyboardSettingsConstraints
   double minimumPositiveValue = 0.000001;
   DoubleSettingRange whiteKeyWidth{.minimum = 0.1, .maximum = 3.0};
   DoubleSettingRange whiteKeyHeight{.minimum = 0.2, .maximum = 6.0};
-  DoubleSettingRange blackKeyWidth{.minimum = 0.05, .maximum = 1.0};
-  DoubleSettingRange blackKeyHeight{.minimum = 0.1, .maximum = 1.0};
+
+  // The maximum size of the black keys is calculated dynamically based on
+  // the size of the white keys, so we'll just define a minimum here.
+  DoubleSettingMinimum blackKeyWidth{.minimum = 0.05};
+  DoubleSettingMinimum blackKeyHeight{.minimum = 0.1};
   DoubleSettingRange separatorWidth{.minimum = 0.0, .maximum = 8.0};
   DoubleSettingRange hitLineHeight{.minimum = 0.005, .maximum = 0.25};
 };
