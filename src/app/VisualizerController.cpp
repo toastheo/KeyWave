@@ -16,22 +16,14 @@
 #include "render/RenderScene.hpp"
 
 VisualizerController::VisualizerController()
-    : VisualizerController(AppSettings{}, nullDiagnosticSink())
+    : VisualizerController(nullDiagnosticSink())
 {}
 
 VisualizerController::VisualizerController(DiagnosticSink& diagnostics)
-    : VisualizerController(AppSettings{}, diagnostics)
-{}
-
-VisualizerController::VisualizerController(AppSettings settings)
-    : VisualizerController(std::move(settings), nullDiagnosticSink())
-{}
-
-VisualizerController::VisualizerController(AppSettings settings, DiagnosticSink& diagnostics)
     : m_diagnostics(diagnostics)
     , m_playbackTransport(diagnostics)
 {
-  setSettings(std::move(settings));
+  setSettings(AppSettings{});
 }
 
 void VisualizerController::setSettings(AppSettings settings)

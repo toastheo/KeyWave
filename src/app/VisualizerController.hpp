@@ -15,8 +15,6 @@ class VisualizerController
 public:
   VisualizerController();
   explicit VisualizerController(DiagnosticSink& diagnostics);
-  explicit VisualizerController(AppSettings settings);
-  VisualizerController(AppSettings settings, DiagnosticSink& diagnostics);
 
   void setSettings(AppSettings settings);
   [[nodiscard]] const AppSettings& settings() const;
