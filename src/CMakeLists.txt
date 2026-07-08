@@ -207,6 +207,8 @@ target_link_libraries(keywave_platform
 add_library(keywave_app_core STATIC
         app/AppConfig.hpp
         app/AppConfig.cpp
+        app/AssetPaths.hpp
+        app/AssetPaths.cpp
         app/PlaybackTransportAction.hpp
         app/PlaybackTransportAction.cpp
         app/PlaybackTransportControls.hpp
@@ -236,6 +238,11 @@ target_include_directories(keywave_app_core
         ${CMAKE_CURRENT_SOURCE_DIR}
         PRIVATE
         ${PROJECT_SOURCE_DIR}/external
+)
+
+target_compile_definitions(keywave_app_core
+        PRIVATE
+        KEYWAVE_ASSET_DIR="${PROJECT_BINARY_DIR}/assets"
 )
 
 target_link_libraries(keywave_app_core
@@ -348,3 +355,15 @@ target_link_libraries(KeyWave
         PRIVATE
         keywave_app
 )
+
+if (KEYWAVE_ENABLE_AUDIO)
+        add_custom_command(TARGET KeyWave POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory
+                "${PROJECT_BINARY_DIR}/assets"
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${PROJECT_SOURCE_DIR}/assets/soundfonts"
+                "${PROJECT_BINARY_DIR}/assets/soundfonts"
+                COMMENT "Copying KeyWave soundfont assets"
+                VERBATIM
+        )
+endif ()
