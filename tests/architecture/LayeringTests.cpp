@@ -104,4 +104,31 @@ TEST_CASE("Ostream diagnostics use named streams instead of adjacent stream para
                        "std::ostream& warningErrorStream)"));
 }
 
+TEST_CASE("FluidSynth stays behind the audio backend and app wiring", "[architecture][audio]")
+{
+  const auto sourceRoot = std::filesystem::path{KEYWAVE_SOURCE_DIR};
+
+  for (const auto& sourceDir : std::vector{
+         sourceRoot / "src" / "midi",
+         sourceRoot / "src" / "render",
+         sourceRoot / "src" / "render_opengl",
+         sourceRoot / "src" / "ui",
+       }) {
+    for (const auto& file : sourceFilesUnder(sourceDir)) {
+      const auto relativePath = std::filesystem::relative(file, sourceRoot).generic_string();
+      CAPTURE(relativePath);
+      const auto contents = readTextFile(file);
+      CHECK_FALSE(contains(contents, "fluidsynth"));
+      CHECK_FALSE(contains(contents, "FluidSynth"));
+    }
+  }
+
+  const auto srcCmakeLists = readTextFile(sourceRoot / "src" / "CMakeLists.txt");
+  for (const auto targetName : std::vector<std::string>{
+         "keywave_midi", "keywave_render", "keywave_render_opengl", "keywave_ui"}) {
+    CAPTURE(targetName);
+    CHECK_FALSE(contains(targetLinkBlock(srcCmakeLists, targetName), "FluidSynth"));
+  }
+}
+
 } // namespace
