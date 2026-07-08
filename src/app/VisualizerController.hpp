@@ -18,6 +18,8 @@ class VisualizerController
 public:
   VisualizerController();
   explicit VisualizerController(DiagnosticSink& diagnostics);
+  explicit VisualizerController(PianoSynth& pianoSynth);
+  VisualizerController(AppSettings settings, DiagnosticSink& diagnostics, PianoSynth& pianoSynth);
 
   void setSettings(AppSettings settings);
   [[nodiscard]] const AppSettings& settings() const;

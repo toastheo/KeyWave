@@ -55,8 +55,27 @@ target_include_directories(keywave_audio
 
 target_link_libraries(keywave_audio
         PUBLIC
+        keywave_diagnostics
         keywave_midi
 )
+
+if (KEYWAVE_ENABLE_AUDIO)
+        target_sources(keywave_audio
+                PRIVATE
+                audio/FluidSynthPianoSynth.hpp
+                audio/FluidSynthPianoSynth.cpp
+        )
+
+        target_compile_definitions(keywave_audio
+                PUBLIC
+                KEYWAVE_ENABLE_AUDIO=1
+        )
+
+        target_link_libraries(keywave_audio
+                PRIVATE
+                FluidSynth::libfluidsynth
+        )
+endif ()
 
 add_library(keywave_render STATIC
         render/RendererBackend.hpp

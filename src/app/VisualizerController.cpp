@@ -27,7 +27,7 @@ VisualizerController::VisualizerController(DiagnosticSink& diagnostics)
     , m_playbackTransport(diagnostics)
     , m_audioScheduler(m_nullPianoSynth)
 {
-  setSettings(std::move(settings));
+  setSettings(AppSettings{});
 }
 
 VisualizerController::VisualizerController(PianoSynth& pianoSynth)
@@ -41,7 +41,7 @@ VisualizerController::VisualizerController(AppSettings settings,
     , m_playbackTransport(diagnostics)
     , m_audioScheduler(pianoSynth)
 {
-  setSettings(AppSettings{});
+  setSettings(std::move(settings));
 }
 
 void VisualizerController::setSettings(AppSettings settings)

@@ -49,6 +49,13 @@ add_executable(KeyWaveMidiTests
         render/RendererViewTests.cpp
 )
 
+if (KEYWAVE_ENABLE_AUDIO)
+        target_sources(KeyWaveMidiTests
+                PRIVATE
+                audio/FluidSynthPianoSynthTests.cpp
+        )
+endif ()
+
 set_target_properties(KeyWaveMidiTests
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
