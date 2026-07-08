@@ -17,6 +17,7 @@
 #include "ui/ImGuiLayer.hpp"
 
 enum class VisualizationSettingsPanelAction : std::uint8_t;
+class PianoSynth;
 struct VisualizationSettingsPanelResult;
 
 class Application
@@ -49,6 +50,7 @@ private:
   MidiLibraryStore m_midiLibraryStore;
   std::vector<ImportedMidiFile> m_importedMidiFiles;
   std::optional<std::string> m_activeImportedMidiId;
+  std::unique_ptr<PianoSynth> m_pianoSynth;
   VisualizerController m_visualizerController;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
