@@ -7,7 +7,7 @@
 
 #include "midi/MidiTypes.hpp"
 
-KeyboardState::KeyboardState(std::vector<ActiveKey> activeKeys)
+KeyboardState::KeyboardState(const std::vector<ActiveKey>& activeKeys)
 {
   m_maxVelocityByPitch.reserve(activeKeys.size());
 

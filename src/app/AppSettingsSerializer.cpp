@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 #include "app/AppSettings.hpp"
 #include "app/AppSettingsConstraints.hpp"

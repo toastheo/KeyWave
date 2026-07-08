@@ -8,6 +8,7 @@
 #include <system_error>
 #include <utility>
 
+#include "audio/PianoSynth.hpp"
 #include "diagnostics/Diagnostics.hpp"
 
 namespace {
@@ -45,7 +46,7 @@ struct FluidSynthPianoSynth::Handles
   fluid_audio_driver_t* audioDriver = nullptr;
 };
 
-FluidSynthPianoSynth::FluidSynthPianoSynth(std::filesystem::path soundFontPath,
+FluidSynthPianoSynth::FluidSynthPianoSynth(const std::filesystem::path& soundFontPath,
                                            DiagnosticSink& diagnostics)
     : m_diagnostics(diagnostics)
 {

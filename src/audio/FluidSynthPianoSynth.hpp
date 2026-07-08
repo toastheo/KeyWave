@@ -9,7 +9,7 @@
 class FluidSynthPianoSynth final : public PianoSynth
 {
 public:
-  explicit FluidSynthPianoSynth(std::filesystem::path soundFontPath,
+  explicit FluidSynthPianoSynth(const std::filesystem::path& soundFontPath,
                                 DiagnosticSink& diagnostics = nullDiagnosticSink());
   ~FluidSynthPianoSynth() override;
 
