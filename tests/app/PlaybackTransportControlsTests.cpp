@@ -1,14 +1,13 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-
 #include <string>
 #include <vector>
 
-#include "audio/PianoSynth.hpp"
-#include "audio/TimelineAudioScheduler.hpp"
 #include "app/AppSettings.hpp"
 #include "app/PlaybackTransportAction.hpp"
 #include "app/PlaybackTransportControls.hpp"
+#include "audio/PianoSynth.hpp"
+#include "audio/TimelineAudioScheduler.hpp"
 #include "diagnostics/RecordingDiagnosticSink.hpp"
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
@@ -81,7 +80,8 @@ TEST_CASE("Playback transport controls map keys to transport actions", "[app][pl
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
 }
 
-TEST_CASE("Playback transport actions clear audio on pause stop restart and seek", "[app][playback]")
+TEST_CASE("Playback transport actions clear audio on pause stop restart and seek",
+          "[app][playback]")
 {
   RecordingPianoSynth synth;
   TimelineAudioScheduler audioScheduler(synth);
@@ -96,47 +96,32 @@ TEST_CASE("Playback transport actions clear audio on pause stop restart and seek
   audioScheduler.update(0.0, transport.currentTimeSeconds());
   REQUIRE(synth.commands == std::vector<std::string>{"on:60:90"});
 
-  applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause,
-                               transport,
-                               audioScheduler,
-                               settings,
-                               defaultMidiBpm);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::TogglePlayPause, transport, audioScheduler, settings, defaultMidiBpm);
   CHECK(transport.state() == PlaybackState::Paused);
   CHECK(synth.commands.back() == "all-off");
 
-  applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause,
-                               transport,
-                               audioScheduler,
-                               settings,
-                               defaultMidiBpm);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::TogglePlayPause, transport, audioScheduler, settings, defaultMidiBpm);
   CHECK(transport.state() == PlaybackState::Playing);
   CHECK(synth.commands.size() == 2);
 
-  applyPlaybackTransportAction(PlaybackTransportAction::SeekForward,
-                               transport,
-                               audioScheduler,
-                               settings,
-                               defaultMidiBpm);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::SeekForward, transport, audioScheduler, settings, defaultMidiBpm);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(2.0));
   CHECK(synth.commands.back() == "all-off");
 
   audioScheduler.update(2.0, 2.5);
   CHECK(synth.commands.back() == "on:67:80");
 
-  applyPlaybackTransportAction(PlaybackTransportAction::Restart,
-                               transport,
-                               audioScheduler,
-                               settings,
-                               defaultMidiBpm);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::Restart, transport, audioScheduler, settings, defaultMidiBpm);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
   CHECK(transport.state() == PlaybackState::Playing);
   CHECK(synth.commands.back() == "all-off");
 
-  applyPlaybackTransportAction(PlaybackTransportAction::Stop,
-                               transport,
-                               audioScheduler,
-                               settings,
-                               defaultMidiBpm);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::Stop, transport, audioScheduler, settings, defaultMidiBpm);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
   CHECK(transport.state() == PlaybackState::Stopped);
   CHECK(synth.commands.back() == "all-off");
@@ -200,11 +185,8 @@ TEST_CASE("Playback transport controls ignore unmapped keys", "[app][playback]")
   transport.seek(13.0);
   transport.setEffectiveBpm(120.0, 180.0);
 
-  applyPlaybackTransportControl(static_cast<Key>(255),
-                                transport,
-                                diagnostics,
-                                audio.scheduler,
-                                PlaybackControlSettings{});
+  applyPlaybackTransportControl(
+    static_cast<Key>(255), transport, diagnostics, audio.scheduler, PlaybackControlSettings{});
 
   CHECK(transport.state() == PlaybackState::Playing);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(13.0));
@@ -218,29 +200,21 @@ TEST_CASE("Playback transport actions can be shared by keyboard and UI controls"
   PlaybackTransport transport;
   constexpr PlaybackControlSettings settings;
 
-  applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause,
-                               transport,
-                               audio.scheduler,
-                               settings);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::TogglePlayPause, transport, audio.scheduler, settings);
   CHECK(transport.state() == PlaybackState::Playing);
 
-  applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause,
-                               transport,
-                               audio.scheduler,
-                               settings);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::TogglePlayPause, transport, audio.scheduler, settings);
   CHECK(transport.state() == PlaybackState::Paused);
 
   transport.seek(12.0);
-  applyPlaybackTransportAction(PlaybackTransportAction::SeekBackward,
-                               transport,
-                               audio.scheduler,
-                               settings);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::SeekBackward, transport, audio.scheduler, settings);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(7.0));
 
-  applyPlaybackTransportAction(PlaybackTransportAction::SeekForward,
-                               transport,
-                               audio.scheduler,
-                               settings);
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::SeekForward, transport, audio.scheduler, settings);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(12.0));
 
   applyPlaybackTransportAction(PlaybackTransportAction::Stop, transport, audio.scheduler, settings);

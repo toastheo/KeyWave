@@ -109,7 +109,8 @@ void renderTransportControls(PlaybackTransport& transport,
 
   ImGui::SameLine();
   if (ImGui::Button("Stop")) {
-    applyTransportAction(PlaybackTransportAction::Stop, transport, sanitizedSettings, sourceBpm, audioScheduler);
+    applyTransportAction(
+      PlaybackTransportAction::Stop, transport, sanitizedSettings, sourceBpm, audioScheduler);
   }
 
   ImGui::SameLine();
