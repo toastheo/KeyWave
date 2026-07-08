@@ -12,11 +12,6 @@ struct IntSettingRange
   int maximum = 0;
 };
 
-struct PlaybackControlSettingsConstraints
-{
-  double minimumPositiveValue = 0.000001;
-};
-
 struct FallingNotesSettingsConstraints
 {
   IntSettingRange pitchRange{.minimum = 0, .maximum = 127};
@@ -41,7 +36,6 @@ struct KeyboardSettingsConstraints
 
 struct AppSettingsConstraints
 {
-  PlaybackControlSettingsConstraints playbackControls;
   FallingNotesSettingsConstraints fallingNotes;
   KeyboardSettingsConstraints keyboard;
 };
