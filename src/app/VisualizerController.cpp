@@ -87,11 +87,6 @@ bool VisualizerController::visualizationSettingsPanelVisible() const
   return m_visualizationSettingsPanelVisible;
 }
 
-void VisualizerController::setVisualizationSettingsPanelVisible(bool visible)
-{
-  m_visualizationSettingsPanelVisible = visible;
-}
-
 void VisualizerController::handleInput(const std::span<const Key> pressedKeys,
                                        const bool imguiWantsKeyboardCapture)
 {

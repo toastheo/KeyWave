@@ -8,11 +8,10 @@
 #include "midi/MidiTypes.hpp"
 
 KeyboardState::KeyboardState(std::vector<ActiveKey> activeKeys)
-    : m_activeKeys(std::move(activeKeys))
 {
-  m_maxVelocityByPitch.reserve(m_activeKeys.size());
+  m_maxVelocityByPitch.reserve(activeKeys.size());
 
-  for (const auto& key : m_activeKeys) {
+  for (const auto& key : activeKeys) {
     auto& maxVelocity = m_maxVelocityByPitch[key.pitch];
     maxVelocity = std::max(maxVelocity, key.velocity);
   }
@@ -33,16 +32,6 @@ int KeyboardState::velocityForPitch(const int pitch) const
   return velocity->second;
 }
 
-const std::vector<ActiveKey>& KeyboardState::keys() const
-{
-  return m_activeKeys;
-}
-
-bool KeyboardState::empty() const
-{
-  return m_activeKeys.empty();
-}
-
 KeyboardState KeyboardStateBuilder::build(const std::span<const Note> activeNotes)
 {
   std::vector<ActiveKey> activeKeys;
@@ -52,8 +41,6 @@ KeyboardState KeyboardStateBuilder::build(const std::span<const Note> activeNote
     activeKeys.push_back(ActiveKey{
       .pitch = note.pitch,
       .velocity = note.velocity,
-      .channel = note.channel,
-      .track = note.track,
     });
   }
 

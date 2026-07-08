@@ -142,57 +142,6 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
   return result;
 }
 
-std::vector<QueriedNote> MidiTimelineQuery::findNotesInTimeRange(const TimeRange& range) const
-{
-  if (!isValidTimeRange(range, m_diagnostics)) {
-    return {};
-  }
-
-  std::vector<QueriedNote> result;
-
-  for (const auto& note : m_timeline.notes()) {
-    if (!overlapsTimeRange(note, range)) {
-      continue;
-    }
-
-    const bool startsBeforeRange = note.startSeconds < range.startSeconds;
-    const bool endsAfterRange = note.startSeconds + note.durationSeconds > range.endSeconds;
-
-    result.push_back(QueriedNote{
-      .note = note,
-      .startsBeforeRange = startsBeforeRange,
-      .endsAfterRange = endsAfterRange,
-    });
-  }
-
-  sortQueriedNotes(result);
-  return result;
-}
-
-std::vector<QueriedNote> MidiTimelineQuery::findNotesInPitchRange(const PitchRange& range) const
-{
-  if (!isValidPitchRange(range, m_diagnostics)) {
-    return {};
-  }
-
-  std::vector<QueriedNote> result;
-
-  for (const auto& note : m_timeline.notes()) {
-    if (!isInPitchRange(note, range)) {
-      continue;
-    }
-
-    result.push_back(QueriedNote{
-      .note = note,
-      .startsBeforeRange = false,
-      .endsAfterRange = false,
-    });
-  }
-
-  sortQueriedNotes(result);
-  return result;
-}
-
 std::vector<Note> MidiTimelineQuery::findActiveNotesAt(const double timeSeconds) const
 {
   if (!std::isfinite(timeSeconds) || timeSeconds < 0.0) {
@@ -208,9 +157,4 @@ std::vector<Note> MidiTimelineQuery::findActiveNotesAt(const double timeSeconds)
 
   sortNotesByPitchChannelTrack(result);
   return result;
-}
-
-const MidiTimeline& MidiTimelineQuery::timeline() const
-{
-  return m_timeline;
 }

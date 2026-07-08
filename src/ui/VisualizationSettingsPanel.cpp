@@ -247,10 +247,10 @@ void renderKeyboardSettings(KeyboardSettings& settings)
   // Clamp parent dimensions before editing dependent black-key dimensions, since their maxima
   // are dynamic.
   settings.whiteKeyWidth =
-    std::max(constraints.minimumPositiveValue,
+    std::max(constraints.whiteKeyWidth.minimum,
              finiteOr(settings.whiteKeyWidth, KeyboardSettings{}.whiteKeyWidth));
   settings.whiteKeyHeight =
-    std::max(constraints.minimumPositiveValue,
+    std::max(constraints.whiteKeyHeight.minimum,
              finiteOr(settings.whiteKeyHeight, KeyboardSettings{}.whiteKeyHeight));
 
   editDoubleSlider("Black Key Width",
@@ -265,13 +265,13 @@ void renderKeyboardSettings(KeyboardSettings& settings)
   editDoubleSlider("Hit Line Height", settings.hitLineHeight, constraints.hitLineHeight);
 
   settings.blackKeyWidth =
-    clampRange(settings.blackKeyWidth, constraints.minimumPositiveValue, settings.whiteKeyWidth);
+    clampRange(settings.blackKeyWidth, constraints.blackKeyWidth.minimum, settings.whiteKeyWidth);
   settings.blackKeyHeight =
-    clampRange(settings.blackKeyHeight, constraints.minimumPositiveValue, settings.whiteKeyHeight);
+    clampRange(settings.blackKeyHeight, constraints.blackKeyHeight.minimum, settings.whiteKeyHeight);
   settings.separatorWidth =
     std::max(constraints.separatorWidth.minimum, finiteOr(settings.separatorWidth, 0.0));
   settings.hitLineHeight =
-    std::max(constraints.minimumPositiveValue,
+    std::max(constraints.hitLineHeight.minimum,
              finiteOr(settings.hitLineHeight, KeyboardSettings{}.hitLineHeight));
 }
 

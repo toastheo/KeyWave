@@ -23,7 +23,6 @@ class Application
 {
 public:
   explicit Application(AppConfig config = {});
-  Application(AppConfig config, DiagnosticSink& diagnostics);
   ~Application();
 
   Application(const Application&) = delete;
@@ -34,6 +33,8 @@ public:
   void shutdown();
 
 private:
+  Application(AppConfig config, DiagnosticSink& diagnostics);
+
   void applyWindowSettings();
   void refreshImportedMidiFiles();
   bool loadImportedMidiFile(std::string_view id);

@@ -83,7 +83,7 @@ OpenGLShader::~OpenGLShader()
   destroy();
 }
 
-bool OpenGLShader::create(const OpenGLShaderSources& sources)
+bool OpenGLShader::create(const Sources& sources)
 {
   destroy();
 
@@ -132,7 +132,7 @@ bool OpenGLShader::createFromFiles(const OpenGLShaderFilePaths& paths)
     return false;
   }
 
-  return create(OpenGLShaderSources{
+  return create(Sources{
     .vertex = vertex,
     .fragment = fragment,
   });

@@ -92,14 +92,14 @@ TEST_CASE("Playback transport controls ignore unmapped keys", "[app][playback]")
 
   transport.play();
   transport.seek(13.0);
-  transport.setPlaybackRate(1.5);
+  transport.setEffectiveBpm(120.0, 180.0);
 
   applyPlaybackTransportControl(
     static_cast<Key>(255), transport, diagnostics, PlaybackControlSettings{});
 
   CHECK(transport.state() == PlaybackState::Playing);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(13.0));
-  CHECK(transport.playbackRate() == Catch::Approx(1.5));
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(180.0));
   CHECK(diagnostics.messages.empty());
 }
 

@@ -29,7 +29,6 @@ public:
   [[nodiscard]] const PlaybackTransport& playbackTransport() const;
 
   [[nodiscard]] bool visualizationSettingsPanelVisible() const;
-  void setVisualizationSettingsPanelVisible(bool visible);
 
   void handleInput(std::span<const Key> pressedKeys, bool imguiWantsKeyboardCapture);
   void update(double elapsedSeconds);

@@ -28,8 +28,6 @@ TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]")
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
 
   REQUIRE(timeline.has_value());
-  CHECK(timeline->trackCount() == 2);
-  CHECK(timeline->ticksPerQuarterNote() == 480);
   CHECK(timeline->sourceBpmAt(0.0) == Catch::Approx(120.0));
   CHECK(timeline->sourceBpmAt(0.249) == Catch::Approx(120.0));
   CHECK(timeline->sourceBpmAt(0.25) == Catch::Approx(60.0));

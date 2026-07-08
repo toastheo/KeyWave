@@ -25,9 +25,6 @@ public:
   [[nodiscard]] double currentTimeSeconds() const;
   [[nodiscard]] PlaybackState state() const;
 
-  void setPlaybackRate(double rate);
-  [[nodiscard]] double playbackRate() const;
-
   void setEffectiveBpm(double sourceBpm, double targetBpm);
   [[nodiscard]] double effectiveBpm(double sourceBpm) const;
 

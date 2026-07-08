@@ -19,8 +19,6 @@ target_include_directories(keywave_diagnostics
 
 add_library(keywave_midi STATIC
         midi/MidiTypes.hpp
-        midi/MidiTrack.hpp
-        midi/MidiTrack.cpp
         midi/MidiTimeline.hpp
         midi/MidiTimeline.cpp
         midi/MidiTimelineQuery.hpp

@@ -163,23 +163,6 @@ TEST_CASE("MidiTimelineQuery active note end is exclusive", "[midi][query]")
   CHECK(query.findActiveNotesAt(-0.1).empty());
 }
 
-TEST_CASE("MidiTimelineQuery time-only and pitch-only helpers use inclusive filters",
-          "[midi][query]")
-{
-  const auto timeline = makeTimeline();
-  const MidiTimelineQuery query(timeline);
-
-  const auto timeNotes =
-    query.findNotesInTimeRange(TimeRange{.startSeconds = 0.75, .endSeconds = 1.0});
-  CHECK(timeNotes.size() == 2);
-
-  const auto pitchNotes = query.findNotesInPitchRange(PitchRange{.minPitch = 60, .maxPitch = 65});
-  REQUIRE(pitchNotes.size() == 3);
-  CHECK(pitchNotes[0].note.pitch == 64);
-  CHECK(pitchNotes[1].note.pitch == 60);
-  CHECK(pitchNotes[2].note.pitch == 65);
-}
-
 TEST_CASE("MidiTimelineQuery returns empty results for invalid ranges", "[midi][query]")
 {
   const auto timeline = makeTimeline();

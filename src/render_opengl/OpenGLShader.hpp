@@ -5,12 +5,6 @@
 
 #include "diagnostics/Diagnostics.hpp"
 
-struct OpenGLShaderSources
-{
-  std::string_view vertex;
-  std::string_view fragment;
-};
-
 struct OpenGLShaderFilePaths
 {
   std::filesystem::path vertex;
@@ -26,7 +20,6 @@ public:
   OpenGLShader(const OpenGLShader&) = delete;
   OpenGLShader& operator=(const OpenGLShader&) = delete;
 
-  [[nodiscard]] bool create(const OpenGLShaderSources& sources);
   [[nodiscard]] bool createFromFiles(const OpenGLShaderFilePaths& paths);
   void destroy();
 
@@ -34,6 +27,14 @@ public:
   [[nodiscard]] bool valid() const;
 
 private:
+  struct Sources
+  {
+    std::string_view vertex;
+    std::string_view fragment;
+  };
+
+  [[nodiscard]] bool create(const Sources& sources);
+
   DiagnosticSink& m_diagnostics;
   unsigned int m_program = 0;
 };

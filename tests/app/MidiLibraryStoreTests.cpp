@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iterator>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -73,6 +74,19 @@ bool hasDiagnosticContaining(const RecordingDiagnosticSink& diagnostics,
   return std::ranges::any_of(diagnostics.messages, [text](const RecordedDiagnostic& diagnostic) {
     return diagnostic.message.find(text) != std::string::npos;
   });
+}
+
+std::optional<ImportedMidiFile> findImportedById(const MidiLibraryStore& store,
+                                                 const std::string_view id)
+{
+  const auto files = store.listImportedFiles();
+  const auto iter =
+    std::ranges::find_if(files, [id](const ImportedMidiFile& file) { return file.id == id; });
+  if (iter == files.end()) {
+    return std::nullopt;
+  }
+
+  return *iter;
 }
 
 TEST_CASE("MidiLibraryStore imports a MIDI file into app-owned storage", "[app][midi-library]")
@@ -188,7 +202,7 @@ TEST_CASE("MidiLibraryStore renames imported MIDI display names without renaming
   CHECK(store.renameImportedMidiFile(imported->file.id, "  Better Name  "));
 
   MidiLibraryStore const reopenedStore(libraryRoot);
-  const auto renamed = reopenedStore.findById(imported->file.id);
+  const auto renamed = findImportedById(reopenedStore, imported->file.id);
   REQUIRE(renamed.has_value());
   CHECK(renamed->displayName == "Better Name");
   CHECK(renamed->storedFileName == imported->file.storedFileName);
@@ -207,7 +221,7 @@ TEST_CASE("MidiLibraryStore rejects invalid imported MIDI renames", "[app][midi-
   CHECK_FALSE(store.renameImportedMidiFile("missing-id", "Other Name"));
   CHECK_FALSE(store.renameImportedMidiFile(imported->file.id, "    "));
 
-  const auto unchanged = store.findById(imported->file.id);
+  const auto unchanged = findImportedById(store, imported->file.id);
   REQUIRE(unchanged.has_value());
   CHECK(unchanged->displayName == imported->file.displayName);
 }
@@ -228,7 +242,7 @@ TEST_CASE("MidiLibraryStore removes imported MIDI files and their copied files",
   CHECK(store.removeImportedMidiFile(imported->file.id));
 
   CHECK_FALSE(std::filesystem::exists(*copiedPath));
-  CHECK_FALSE(store.findById(imported->file.id).has_value());
+  CHECK_FALSE(findImportedById(store, imported->file.id).has_value());
   CHECK_FALSE(store.lastActiveMidiId().has_value());
 }
 
@@ -251,7 +265,7 @@ TEST_CASE("MidiLibraryStore keeps copied files when removal metadata save fails"
   CHECK_FALSE(store.removeImportedMidiFile(imported->file.id));
 
   CHECK(std::filesystem::exists(*copiedPath));
-  CHECK(store.findById(imported->file.id).has_value());
+  CHECK(findImportedById(store, imported->file.id).has_value());
   const auto lastActiveId = store.lastActiveMidiId();
   REQUIRE(lastActiveId.has_value());
   CHECK(*lastActiveId == imported->file.id);
@@ -274,7 +288,7 @@ TEST_CASE("MidiLibraryStore removes metadata when copied file cleanup fails", "[
 
   CHECK(store.removeImportedMidiFile(imported->file.id, diagnostics));
 
-  CHECK_FALSE(store.findById(imported->file.id).has_value());
+  CHECK_FALSE(findImportedById(store, imported->file.id).has_value());
   CHECK(std::filesystem::exists(*copiedPath));
   REQUIRE_FALSE(diagnostics.messages.empty());
   CHECK(diagnostics.messages.back().message.find("could not delete copied MIDI file") !=
@@ -291,7 +305,7 @@ TEST_CASE("MidiLibraryStore rejects unknown imported MIDI removals", "[app][midi
   REQUIRE(imported.has_value());
 
   CHECK_FALSE(store.removeImportedMidiFile("missing-id"));
-  CHECK(store.findById(imported->file.id).has_value());
+  CHECK(findImportedById(store, imported->file.id).has_value());
 }
 
 TEST_CASE("MidiLibraryStore returns stored paths only for existing copied files",

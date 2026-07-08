@@ -15,7 +15,7 @@ TEST_CASE("PlaybackTransport controls playback state and time", "[playback]")
 
   CHECK(transport.state() == PlaybackState::Stopped);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
-  CHECK(transport.playbackRate() == Catch::Approx(1.0));
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(120.0));
 
   transport.play();
   transport.update(0.25);
@@ -30,7 +30,7 @@ TEST_CASE("PlaybackTransport controls playback state and time", "[playback]")
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.25));
 
   transport.seek(2.0);
-  transport.setPlaybackRate(2.0);
+  transport.setEffectiveBpm(120.0, 240.0);
   transport.play();
   transport.update(0.5);
 
@@ -50,7 +50,6 @@ TEST_CASE("PlaybackTransport exposes effective BPM controls", "[playback]")
 
   transport.setEffectiveBpm(120.0, 180.0);
 
-  CHECK(transport.playbackRate() == Catch::Approx(1.5));
   CHECK(transport.effectiveBpm(120.0) == Catch::Approx(180.0));
 
   transport.play();
@@ -71,10 +70,10 @@ TEST_CASE("PlaybackTransport ignores invalid timing input safely", "[playback]")
 
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
 
-  transport.setPlaybackRate(-2.0);
+  transport.setEffectiveBpm(120.0, -2.0);
   transport.update(1.0);
 
-  CHECK(transport.playbackRate() == Catch::Approx(1.0));
+  CHECK(transport.effectiveBpm(120.0) == Catch::Approx(120.0));
   CHECK(transport.currentTimeSeconds() == Catch::Approx(1.0));
 }
 
@@ -85,7 +84,6 @@ TEST_CASE("PlaybackTransport does not print diagnostics directly", "[playback][d
   auto* const originalErrorBuffer = std::cerr.rdbuf(capturedError.rdbuf());
 
   transport.seek(std::numeric_limits<double>::infinity());
-  transport.setPlaybackRate(-1.0);
   transport.setEffectiveBpm(0.0, 120.0);
   transport.setEffectiveBpm(120.0, -1.0);
 
@@ -101,21 +99,17 @@ TEST_CASE("PlaybackTransport reports invalid timing input through diagnostics",
   PlaybackTransport transport(diagnostics);
 
   transport.seek(std::numeric_limits<double>::infinity());
-  transport.setPlaybackRate(-1.0);
   transport.setEffectiveBpm(0.0, 120.0);
   transport.setEffectiveBpm(120.0, -1.0);
 
-  REQUIRE(diagnostics.messages.size() == 4);
+  REQUIRE(diagnostics.messages.size() == 3);
   CHECK(diagnostics.messages[0].severity == DiagnosticSeverity::Warning);
   CHECK(diagnostics.messages[0].message == "Playback seek ignored: time must be finite.");
   CHECK(diagnostics.messages[1].severity == DiagnosticSeverity::Warning);
   CHECK(diagnostics.messages[1].message ==
-        "Playback BPM ignored: computed multiplier must be a finite positive value.");
+        "Playback BPM ignored: source BPM must be a finite positive value.");
   CHECK(diagnostics.messages[2].severity == DiagnosticSeverity::Warning);
   CHECK(diagnostics.messages[2].message ==
-        "Playback BPM ignored: source BPM must be a finite positive value.");
-  CHECK(diagnostics.messages[3].severity == DiagnosticSeverity::Warning);
-  CHECK(diagnostics.messages[3].message ==
         "Playback BPM ignored: target BPM must be a finite positive value.");
 }
 

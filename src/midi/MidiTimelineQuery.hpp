@@ -37,11 +37,7 @@ public:
                              DiagnosticSink& diagnostics = nullDiagnosticSink());
 
   [[nodiscard]] std::vector<QueriedNote> findNotes(const TimelineViewport& viewport) const;
-  [[nodiscard]] std::vector<QueriedNote> findNotesInTimeRange(const TimeRange& range) const;
-  [[nodiscard]] std::vector<QueriedNote> findNotesInPitchRange(const PitchRange& range) const;
   [[nodiscard]] std::vector<Note> findActiveNotesAt(double timeSeconds) const;
-
-  [[nodiscard]] const MidiTimeline& timeline() const;
 
 private:
   const MidiTimeline& m_timeline;

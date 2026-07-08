@@ -88,8 +88,6 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
   midiFile.linkNotePairsFIFO();
 
   MidiTimeline timeline;
-  timeline.setTrackCount(midiFile.getTrackCount());
-  timeline.setTicksPerQuarterNote(midiFile.getTicksPerQuarterNote());
   extractTempoEvents(midiFile, timeline);
 
   for (int track = 0; track < midiFile.getTrackCount(); ++track) {

@@ -30,7 +30,6 @@ struct FallingNotesSettingsConstraints
 
 struct KeyboardSettingsConstraints
 {
-  double minimumPositiveValue = 0.000001;
   DoubleSettingRange whiteKeyWidth{.minimum = 0.1, .maximum = 3.0};
   DoubleSettingRange whiteKeyHeight{.minimum = 0.2, .maximum = 6.0};
 
