@@ -3,6 +3,7 @@ imgui.ini
 
 assets/test-midi/**/*.mid
 assets/test-midi/**/*.midi
+assets/soundfonts/**/*.sf2
 
 build/
 build-tidy/

@@ -31,10 +31,22 @@ apt-get install -y libgl1-mesa-dev libwayland-dev libxkbcommon-dev libgtk-3-dev 
 
 ```sh
 cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
-cmake --build build --config Release --parallel
+cmake --build build --config Release
 ```
 
 The app executable is named `KeyWave`.
+
+### Audio SoundFont
+
+Audio playback uses a bring-your-own SoundFont file. Place your local piano
+SoundFont at:
+
+```
+assets/soundfonts/default.sd2
+```
+
+`*.sf2` files in this folder are ignored by Git. When audio is enabled, CMake
+copies `assets/soundfonts/` into the build output next to the executable.
 
 ## Run
 
