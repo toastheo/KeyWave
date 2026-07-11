@@ -33,7 +33,7 @@ if (KEYWAVE_ENABLE_AUDIO)
     if (TARGET PkgConfig::KEYWAVE_FLUIDSYNTH)
         add_library(FluidSynth::libfluidsynth ALIAS PkgConfig::KEYWAVE_FLUIDSYNTH)
     else()
-        # Keep the CMake config fallback for package managers such as vcpkg that may not expose pkg-config files.
+        # Fallback for package managers such as vcpkg that may not expose pkg-config files.
         find_package(FluidSynth CONFIG REQUIRED)
     endif()
 endif()
