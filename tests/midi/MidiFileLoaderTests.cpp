@@ -89,6 +89,29 @@ TEST_CASE("MidiFileLoader pairs overlapping notes using FIFO order", "[midi]")
   CHECK(second.durationSeconds == Catch::Approx(0.25).margin(kTimeTolerance));
 }
 
+TEST_CASE("MidiFileLoader loads sustain pedal events", "[midi]")
+{
+  auto fixture = midi_fixtures::sustainPedalMidi();
+
+  const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
+
+  REQUIRE(timeline.has_value());
+  REQUIRE(timeline->sustainPedalEvents().size() == 2);
+
+  const auto& pedalDown = timeline->sustainPedalEvents()[0];
+  CHECK(pedalDown.timeSeconds == Catch::Approx(0.0).margin(kTimeTolerance));
+  CHECK(pedalDown.pressed);
+  CHECK(pedalDown.channel == 0);
+  CHECK(pedalDown.track == 0);
+
+  const auto& pedalUp = timeline->sustainPedalEvents()[1];
+  CHECK(pedalUp.timeSeconds == Catch::Approx(0.5).margin(kTimeTolerance));
+  CHECK_FALSE(pedalUp.pressed);
+  CHECK(pedalUp.channel == 0);
+  CHECK(pedalUp.track == 0);
+  CHECK(timeline->lengthSeconds() == Catch::Approx(0.5).margin(kTimeTolerance));
+}
+
 TEST_CASE("MidiFileLoader returns nullopt for missing files", "[midi]")
 {
   const auto missingPath = std::filesystem::temp_directory_path() / "keywave-missing-midi-file.mid";

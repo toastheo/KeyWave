@@ -90,3 +90,25 @@ double MidiTimeline::sourceBpmAt(const double seconds) const
 
   return std::prev(nextTempo)->bpm;
 }
+
+void MidiTimeline::addSustainPedalEvent(const SustainPedalEvent& event)
+{
+  if (!std::isfinite(event.timeSeconds)) {
+    return;
+  }
+
+  m_sustainPedalEvents.push_back(SustainPedalEvent{
+    .timeSeconds = std::max(0.0, event.timeSeconds),
+    .pressed = event.pressed,
+    .channel = event.channel,
+    .track = event.track,
+  });
+
+  std::ranges::stable_sort(m_sustainPedalEvents, {}, &SustainPedalEvent::timeSeconds);
+  m_lengthSeconds = std::max(m_lengthSeconds, m_sustainPedalEvents.back().timeSeconds);
+}
+
+const std::vector<SustainPedalEvent>& MidiTimeline::sustainPedalEvents() const
+{
+  return m_sustainPedalEvents;
+}

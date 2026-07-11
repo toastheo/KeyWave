@@ -16,6 +16,8 @@ TEST_CASE("FluidSynthPianoSynth reports missing SoundFont and stays safely silen
 
   synth.noteOn(PianoNote{.pitch = 60, .velocity = 90});
   synth.noteOff(60);
+  synth.setSustainPedal(SustainPedalState::Down);
+  synth.setSustainPedal(SustainPedalState::Up);
   synth.allNotesOff();
 
   REQUIRE(diagnostics.messages.size() == 1);

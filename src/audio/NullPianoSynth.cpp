@@ -12,4 +12,9 @@ void NullPianoSynth::noteOff(const int pitch)
   (void)pitch;
 }
 
+void NullPianoSynth::setSustainPedal(const SustainPedalState state)
+{
+  (void)state;
+}
+
 void NullPianoSynth::allNotesOff() {}

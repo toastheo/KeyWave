@@ -21,6 +21,11 @@ public:
     commands.push_back("off:" + std::to_string(pitch));
   }
 
+  void setSustainPedal(const SustainPedalState state) override
+  {
+    commands.push_back(state == SustainPedalState::Down ? "sustain:down" : "sustain:up");
+  }
+
   void allNotesOff() override
   {
     commands.emplace_back("all-off");
@@ -107,6 +112,49 @@ TEST_CASE("TimelineAudioScheduler stop clears active notes and resets scheduling
   CHECK(synth.commands[0] == "on:60:96");
   CHECK(synth.commands[1] == "all-off");
   CHECK(synth.commands[2] == "on:60:96");
+}
+
+TEST_CASE("TimelineAudioScheduler forwards sustain pedal events around note-offs", "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.25, .pressed = true});
+  timeline.addNote(Note{.pitch = 60, .velocity = 96, .startSeconds = 0.5, .durationSeconds = 0.5});
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 1.5, .pressed = false});
+
+  scheduler.setTimeline(timeline);
+  scheduler.update(0.0, 0.5);
+  scheduler.update(0.5, 1.0);
+  scheduler.update(1.0, 1.5);
+
+  REQUIRE(synth.commands.size() == 4);
+  CHECK(synth.commands[0] == "sustain:down");
+  CHECK(synth.commands[1] == "on:60:96");
+  CHECK(synth.commands[2] == "off:60");
+  CHECK(synth.commands[3] == "sustain:up");
+}
+
+TEST_CASE("TimelineAudioScheduler seek releases sustain and clears active notes", "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.0, .pressed = true});
+  timeline.addNote(Note{.pitch = 60, .velocity = 96, .startSeconds = 0.5, .durationSeconds = 0.5});
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 2.0, .pressed = false});
+
+  scheduler.setTimeline(timeline);
+  scheduler.update(0.0, 1.0);
+  scheduler.seek(1.5);
+  scheduler.update(1.5, 2.0);
+
+  REQUIRE(synth.commands.size() == 5);
+  CHECK(synth.commands[0] == "sustain:down");
+  CHECK(synth.commands[1] == "on:60:96");
+  CHECK(synth.commands[2] == "off:60");
+  CHECK(synth.commands[3] == "sustain:up");
+  CHECK(synth.commands[4] == "all-off");
 }
 
 } // namespace

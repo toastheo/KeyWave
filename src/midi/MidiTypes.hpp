@@ -17,3 +17,11 @@ struct TempoEvent
   double timeSeconds = 0.0;
   double bpm = defaultMidiBpm;
 };
+
+struct SustainPedalEvent
+{
+  double timeSeconds = 0.0;
+  bool pressed = false;
+  int channel = 0;
+  int track = 0;
+};
