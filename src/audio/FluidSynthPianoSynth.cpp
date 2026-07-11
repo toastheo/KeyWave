@@ -21,10 +21,30 @@ constexpr int midiVelocityMax = 127;
 constexpr int sustainPedalController = 64;
 constexpr int sustainPedalOffValue = 0;
 constexpr int sustainPedalOnValue = 127;
+constexpr int audioPeriodSize = 256;
+constexpr int audioPeriods = 8;
 
 std::string pathString(const std::filesystem::path& path)
 {
   return path.string();
+}
+
+void setFluidSynthIntSetting(fluid_settings_t& settings,
+                             DiagnosticSink& diagnostics,
+                             const char* const name,
+                             const int value)
+{
+  if (fluid_settings_setint(&settings, name, value) == FLUID_FAILED) {
+    reportWarning(diagnostics, std::string{"FluidSynth setting ignored: "} + name);
+  }
+}
+
+void configureFluidSynthSettings(fluid_settings_t& settings, DiagnosticSink& diagnostics)
+{
+  // We normalize the driver buffer shape. Some platforms default to tiny periods, which
+  // are good for live input but can crackle on some audio backends.
+  setFluidSynthIntSetting(settings, diagnostics, "audio.period-size", audioPeriodSize);
+  setFluidSynthIntSetting(settings, diagnostics, "audio.periods", audioPeriods);
 }
 
 } // namespace
@@ -68,6 +88,7 @@ FluidSynthPianoSynth::FluidSynthPianoSynth(const std::filesystem::path& soundFon
     reportError(m_diagnostics, "FluidSynth initialization failed: Settings could not be created.");
     return;
   }
+  configureFluidSynthSettings(*handles->settings, m_diagnostics);
 
   handles->synth = new_fluid_synth(handles->settings);
   if (handles->synth == nullptr) {
@@ -125,7 +146,8 @@ void FluidSynthPianoSynth::setSustainPedal(const SustainPedalState state)
   }
 
   const auto value = state == SustainPedalState::Down ? sustainPedalOnValue : sustainPedalOffValue;
-  if (fluid_synth_cc(m_handles->synth, pianoMidiChannel, sustainPedalController, value) == FLUID_FAILED) {
+  if (fluid_synth_cc(m_handles->synth, pianoMidiChannel, sustainPedalController, value) ==
+      FLUID_FAILED) {
     reportWarning(m_diagnostics, "FluidSynth sustain pedal control failed.");
   }
 }
