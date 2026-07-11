@@ -18,6 +18,9 @@ constexpr int midiPitchMin = 0;
 constexpr int midiPitchMax = 127;
 constexpr int midiVelocityMin = 0;
 constexpr int midiVelocityMax = 127;
+constexpr int sustainPedalController = 64;
+constexpr int sustainPedalOffValue = 0;
+constexpr int sustainPedalOnValue = 127;
 
 std::string pathString(const std::filesystem::path& path)
 {
@@ -115,10 +118,28 @@ void FluidSynthPianoSynth::noteOff(const int pitch)
   }
 }
 
+void FluidSynthPianoSynth::setSustainPedal(const SustainPedalState state)
+{
+  if (m_handles == nullptr) {
+    return;
+  }
+
+  const auto value = state == SustainPedalState::Down ? sustainPedalOnValue : sustainPedalOffValue;
+  if (fluid_synth_cc(m_handles->synth, pianoMidiChannel, sustainPedalController, value) == FLUID_FAILED) {
+    reportWarning(m_diagnostics, "FluidSynth sustain pedal control failed.");
+  }
+}
+
 void FluidSynthPianoSynth::allNotesOff()
 {
   if (m_handles == nullptr) {
     return;
+  }
+
+  if (fluid_synth_cc(
+        m_handles->synth, pianoMidiChannel, sustainPedalController, sustainPedalOffValue) ==
+      FLUID_FAILED) {
+    reportWarning(m_diagnostics, "FluidSynth sustain pedal control failed.");
   }
 
   if (fluid_synth_all_notes_off(m_handles->synth, pianoMidiChannel) == FLUID_FAILED) {

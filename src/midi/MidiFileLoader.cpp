@@ -42,6 +42,25 @@ void extractTempoEvents(const smf::MidiFile& midifile, MidiTimeline& timeline)
   }
 }
 
+void extractSustainPedalEvents(const smf::MidiFile& midifile, MidiTimeline& timeline)
+{
+  for (int track = 0; track < midifile.getTrackCount(); ++track) {
+    for (int eventIndex = 0; eventIndex < midifile.getEventCount(track); ++eventIndex) {
+      const auto& event = midifile.getEvent(track, eventIndex);
+      if (!event.isSustain()) {
+        continue;
+      }
+
+      timeline.addSustainPedalEvent(SustainPedalEvent{
+        .timeSeconds = event.seconds,
+        .pressed = event.isSustainOn(),
+        .channel = event.getChannel(),
+        .track = track,
+      });
+    }
+  }
+}
+
 } // namespace
 
 std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::path& path,
@@ -89,6 +108,7 @@ std::optional<MidiTimeline> MidiFileLoader::loadFromFile(const std::filesystem::
 
   MidiTimeline timeline;
   extractTempoEvents(midiFile, timeline);
+  extractSustainPedalEvents(midiFile, timeline);
 
   for (int track = 0; track < midiFile.getTrackCount(); ++track) {
     for (int eventIndex = 0; eventIndex < midiFile.getEventCount(track); ++eventIndex) {

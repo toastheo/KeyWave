@@ -25,5 +25,6 @@ private:
 
 TemporaryMidiFile tempoChangeMidi();
 TemporaryMidiFile overlappingNotesMidi();
+TemporaryMidiFile sustainPedalMidi();
 
 } // namespace midi_fixtures

@@ -25,6 +25,7 @@ private:
 
   enum class EventType
   {
+    SustainPedal,
     NoteOff,
     NoteOn,
   };
@@ -35,11 +36,15 @@ private:
     EventType type = EventType::NoteOn;
     int pitch = 0;
     int velocity = 0;
+    bool sustainPedalDown = false;
   };
 
+  void handleSustainPedal(const Event& event);
+  void resetPlaybackState();
   void resetCursor(double timeSeconds, CursorBoundary boundary);
 
   PianoSynth& m_synth;
   std::vector<Event> m_events;
   std::size_t m_nextEventIndex = 0;
+  bool m_sustainPedalDown = false;
 };

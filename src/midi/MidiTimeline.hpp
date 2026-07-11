@@ -18,8 +18,12 @@ public:
   [[nodiscard]] const std::vector<TempoEvent>& tempoEvents() const;
   [[nodiscard]] double sourceBpmAt(double seconds) const;
 
+  void addSustainPedalEvent(const SustainPedalEvent& event);
+  [[nodiscard]] const std::vector<SustainPedalEvent>& sustainPedalEvents() const;
+
 private:
   std::vector<Note> m_notes;
   std::vector<TempoEvent> m_tempoEvents;
+  std::vector<SustainPedalEvent> m_sustainPedalEvents;
   double m_lengthSeconds = 0.0;
 };

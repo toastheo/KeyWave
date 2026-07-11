@@ -26,6 +26,11 @@ public:
     commands.push_back("off:" + std::to_string(pitch));
   }
 
+  void setSustainPedal(const SustainPedalState state) override
+  {
+    commands.push_back(state == SustainPedalState::Down ? "sustain:down" : "sustain:up");
+  }
+
   void allNotesOff() override
   {
     commands.emplace_back("all-off");
