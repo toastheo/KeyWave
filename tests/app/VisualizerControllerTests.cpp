@@ -152,6 +152,33 @@ TEST_CASE("VisualizerController schedules audio while loaded timeline is playing
   CHECK(synth.commands[1] == "off:60");
 }
 
+TEST_CASE("VisualizerController clears active audio before replacing the timeline",
+          "[app][visualizer][audio]")
+{
+  MidiTimeline original;
+  original.addNote(
+    Note{.pitch = 60, .velocity = 90, .startSeconds = 0.25, .durationSeconds = 2.0});
+
+  MidiTimeline replacement;
+  replacement.addNote(
+    Note{.pitch = 72, .velocity = 80, .startSeconds = 0.25, .durationSeconds = 0.5});
+
+  RecordingPianoSynth synth;
+  VisualizerController controller(synth);
+
+  controller.replaceTimelineAndPlayFromStart(std::move(original));
+  controller.update(0.1);
+  controller.update(0.25);
+  REQUIRE(synth.commands == std::vector<std::string>{"on:60:90"});
+
+  controller.replaceTimelineAndPlayFromStart(std::move(replacement));
+  REQUIRE(synth.commands == std::vector<std::string>{"on:60:90", "all-off"});
+
+  controller.update(0.1);
+  controller.update(0.25);
+  REQUIRE(synth.commands == std::vector<std::string>{"on:60:90", "all-off", "on:72:80"});
+}
+
 TEST_CASE("VisualizerController clears audio for keyboard playback controls",
           "[app][visualizer][audio]")
 {

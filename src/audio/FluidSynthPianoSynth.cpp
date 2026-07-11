@@ -145,6 +145,10 @@ void FluidSynthPianoSynth::allNotesOff()
   if (fluid_synth_all_notes_off(m_handles->synth, pianoMidiChannel) == FLUID_FAILED) {
     reportWarning(m_diagnostics, "FluidSynth all-notes-off failed.");
   }
+
+  if (fluid_synth_all_sounds_off(m_handles->synth, pianoMidiChannel) == FLUID_FAILED) {
+    reportWarning(m_diagnostics, "FluidSynth all-sounds-off failed.");
+  }
 }
 
 bool FluidSynthPianoSynth::available() const
