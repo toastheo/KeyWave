@@ -56,6 +56,10 @@ const AppSettings& VisualizerController::settings() const
 
 void VisualizerController::setTimeline(std::optional<MidiTimeline> timeline)
 {
+  if (m_timeline.has_value()) {
+    m_audioScheduler.stop();
+  }
+
   m_timeline = std::move(timeline);
 
   if (m_timeline.has_value()) {
