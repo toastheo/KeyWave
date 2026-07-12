@@ -151,7 +151,10 @@ bool Application::initialize()
 
   m_initialized = true;
   m_previousFrameTime = std::chrono::steady_clock::now();
-  m_window.setInteractiveFrameCallback([this]() { updateAndRenderFrame(std::chrono::steady_clock::now()); });
+  // Install the Win32 interactive-frame hook after ImGui so both hooks can be removed in reverse
+  // order during shutdown.
+  m_window.setInteractiveFrameCallback(
+    [this]() { updateAndRenderFrame(std::chrono::steady_clock::now()); }, m_diagnostics);
   return true;
 }
 
@@ -399,8 +402,7 @@ void Application::run()
 
 void Application::shutdown()
 {
-  // Prevent native resize timer messages from entering Application while ImGui, the renderer and
-  // the window are being torn down.
+  // Stop interactive frames and remove the native hook while its ImGui predecessor is still alive.
   m_window.setInteractiveFrameCallback({});
   if (!m_settingsSaved) {
     if (m_settingsStorage.save(m_visualizerController.settings(), m_diagnostics)) {

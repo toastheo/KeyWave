@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -10,7 +11,7 @@
 #include "render/RenderTypes.hpp"
 
 struct GLFWwindow;
-struct NativeWindowInteraction;
+struct InteractiveFrameDriver;
 
 enum class PlatformWindowDisplayMode : std::uint8_t
 {
@@ -69,11 +70,14 @@ public:
                                     DiagnosticSink& diagnostics = nullDiagnosticSink());
   void setWindowedSize(WindowedSize size);
   void setVsyncEnabled(bool enabled) const;
-  void setInteractiveFrameCallback(std::function<void()> callback);
+  // Supplies frames while native move/resize handling blocks the normal event loop. Passing an
+  // empty callback removes the native hook.
+  void setInteractiveFrameCallback(
+    std::function<void()> callback, DiagnosticSink& diagnostics = nullDiagnosticSink());
 
 private:
   std::unique_ptr<GLFWwindow, GlfwWindowDeleter> m_handle;
-  std::unique_ptr<NativeWindowInteraction> m_nativeInteraction;
+  std::unique_ptr<InteractiveFrameDriver> m_interactiveFrameDriver;
   std::vector<Key> m_pressedKeys;
   bool m_ownsGlfw = false;
   PlatformWindowDisplayMode m_displayMode = PlatformWindowDisplayMode::Windowed;

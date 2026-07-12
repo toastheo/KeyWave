@@ -12,6 +12,8 @@
 #include <windows.h>
 #endif
 
+#include <atomic>
+#include <chrono>
 #include <functional>
 #include <optional>
 #include <sstream>
@@ -23,129 +25,216 @@
 #include "input/Key.hpp"
 #include "render/RenderTypes.hpp"
 
-struct NativeWindowInteraction
+// Keeps animation running while Win32 owns the window thread inside its modal move/size loop.
+// The timer-queue worker only reads the HWND and coalesces sent notifications. Driver lifecycle and
+// the frame callback stay on the window thread, where the OpenGL context and ImGui already live.
+struct InteractiveFrameDriver
 {
 #if defined(_WIN32)
   HWND handle = nullptr;
   WNDPROC previousWindowProc = nullptr;
-  UINT_PTR updateTimerId = 0;
-  bool interactiveMoveOrResize = false;
+  HANDLE timerQueueTimer = nullptr;
+  std::atomic_bool frameNotificationPending = false;
+  std::chrono::steady_clock::time_point lastFrameTime;
+  bool active = false;
+  bool insideMoveSizeLoop = false;
 #endif
-  std::function<void()> updateCallback;
+  std::function<void()> frameCallback;
 };
 
 namespace {
 #if defined(_WIN32)
-constexpr wchar_t interactionPropertyName[] = L"KeyWave.NativeWindowInteraction";
-constexpr UINT interactiveUpdateIntervalMilliseconds = 16;
+constexpr wchar_t interactiveFrameDriverPropertyName[] = L"KeyWave.InteractiveFrameDriver";
+constexpr UINT interactiveFrameIntervalMilliseconds = 16;
+constexpr UINT interactiveFrameMessage = WM_APP + 1;
 
-// Windows runs a nested modal message loop while the user moves or resizes a decorated window.
-// During that time glfwPollEvents() does not return, so this procedure uses timer messages to keep
-// playback and rendering advancing on the window thread.
-LRESULT CALLBACK interactiveWindowProc(HWND handle,
-                                       const UINT message,
-                                       const WPARAM wParam,
-                                       const LPARAM lParam)
+void renderInteractiveFrameIfDue(InteractiveFrameDriver& driver)
 {
-  auto* interaction =
-    static_cast<NativeWindowInteraction*>(GetPropW(handle, interactionPropertyName));
-  if (interaction == nullptr || interaction->previousWindowProc == nullptr) {
+  if (!driver.active || !driver.frameCallback) {
+    return;
+  }
+
+  const auto now = std::chrono::steady_clock::now();
+  const auto frameInterval =
+    std::chrono::milliseconds{interactiveFrameIntervalMilliseconds};
+  if (driver.lastFrameTime != std::chrono::steady_clock::time_point{} &&
+      now - driver.lastFrameTime < frameInterval) {
+    return;
+  }
+
+  driver.lastFrameTime = now;
+  driver.frameCallback();
+}
+
+void CALLBACK requestInteractiveFrame(PVOID context, BOOLEAN)
+{
+  auto& driver = *static_cast<InteractiveFrameDriver*>(context);
+  if (driver.frameNotificationPending.exchange(true)) {
+    return;
+  }
+
+  // The caption loop can defer queued messages, including WM_TIMER. A sent notification is
+  // delivered during message retrieval, while SendNotifyMessage lets this worker return at once.
+  if (!SendNotifyMessageW(driver.handle, interactiveFrameMessage, 0, 0)) {
+    driver.frameNotificationPending.store(false);
+  }
+}
+
+void startInteractiveFrameTimer(InteractiveFrameDriver& driver)
+{
+  if (driver.timerQueueTimer != nullptr) {
+    return;
+  }
+
+  HANDLE timerQueueTimer = nullptr;
+  const auto timerCreated = CreateTimerQueueTimer(&timerQueueTimer,
+                                                   nullptr,
+                                                   requestInteractiveFrame,
+                                                   &driver,
+                                                   0,
+                                                   interactiveFrameIntervalMilliseconds,
+                                                   WT_EXECUTEDEFAULT);
+  if (timerCreated != 0) {
+    driver.timerQueueTimer = timerQueueTimer;
+  }
+}
+
+void stopInteractiveFrameTimer(InteractiveFrameDriver& driver)
+{
+  if (driver.timerQueueTimer != nullptr) {
+    // Waiting here guarantees that the worker no longer references the driver during teardown.
+    DeleteTimerQueueTimer(nullptr, driver.timerQueueTimer, INVALID_HANDLE_VALUE);
+    driver.timerQueueTimer = nullptr;
+  }
+  driver.frameNotificationPending.store(false);
+}
+
+void beginInteractiveFrames(InteractiveFrameDriver& driver)
+{
+  if (!driver.active) {
+    driver.active = true;
+    driver.lastFrameTime = {};
+  }
+  startInteractiveFrameTimer(driver);
+}
+
+void endInteractiveFrames(InteractiveFrameDriver& driver)
+{
+  stopInteractiveFrameTimer(driver);
+  driver.active = false;
+  driver.lastFrameTime = {};
+}
+
+LRESULT CALLBACK interactiveFrameWindowProc(HWND handle,
+                                            const UINT message,
+                                            const WPARAM wParam,
+                                            const LPARAM lParam)
+{
+  auto* driver = static_cast<InteractiveFrameDriver*>(
+    GetPropW(handle, interactiveFrameDriverPropertyName));
+  if (driver == nullptr || driver->previousWindowProc == nullptr) {
     return DefWindowProcW(handle, message, wParam, lParam);
   }
 
   switch (message) {
-    case WM_ENTERSIZEMOVE:
-      interaction->interactiveMoveOrResize = true;
-      interaction->updateTimerId = SetTimer(handle,
-                                            reinterpret_cast<UINT_PTR>(interaction),
-                                            interactiveUpdateIntervalMilliseconds,
-                                            nullptr);
+    case WM_NCLBUTTONDOWN:
+      if (wParam == HTCAPTION) {
+        // Caption tracking starts before WM_ENTERSIZEMOVE and can block even without mouse motion.
+        beginInteractiveFrames(*driver);
+      }
       break;
-    case WM_TIMER:
-      if (wParam == interaction->updateTimerId && interaction->interactiveMoveOrResize &&
-          interaction->updateCallback) {
-        // Do not poll GLFW events here because this handler already runs inside Windows nested
-        // message loop. The callback updates and renders one frame on the window thread.
-        interaction->updateCallback();
+    case WM_ENTERSIZEMOVE:
+      driver->insideMoveSizeLoop = true;
+      beginInteractiveFrames(*driver);
+      break;
+    case interactiveFrameMessage:
+      driver->frameNotificationPending.store(false);
+      renderInteractiveFrameIfDue(*driver);
+      break;
+    case WM_MOVING:
+      // Render directly from movement traffic instead of waiting for the next periodic request.
+      renderInteractiveFrameIfDue(*driver);
+      break;
+    case WM_NCLBUTTONUP:
+    case WM_LBUTTONUP:
+      if (!driver->insideMoveSizeLoop) {
+        endInteractiveFrames(*driver);
       }
       break;
     case WM_EXITSIZEMOVE:
-      if (interaction->updateTimerId != 0) {
-        KillTimer(handle, interaction->updateTimerId);
-        interaction->updateTimerId = 0;
-      }
-      interaction->interactiveMoveOrResize = false;
+      driver->insideMoveSizeLoop = false;
+      endInteractiveFrames(*driver);
       break;
     default:
       break;
   }
 
-  return CallWindowProcW(interaction->previousWindowProc, handle, message, wParam, lParam);
+  return CallWindowProcW(driver->previousWindowProc, handle, message, wParam, lParam);
 }
 
-std::unique_ptr<NativeWindowInteraction> createNativeWindowInteraction(GLFWwindow* window)
+std::unique_ptr<InteractiveFrameDriver> createInteractiveFrameDriver(
+  GLFWwindow* window, std::function<void()> frameCallback)
 {
-  auto interaction = std::make_unique<NativeWindowInteraction>();
-  interaction->handle = glfwGetWin32Window(window);
-  if (interaction->handle == nullptr) {
-    return interaction;
+  auto driver = std::make_unique<InteractiveFrameDriver>();
+  driver->frameCallback = std::move(frameCallback);
+  driver->handle = glfwGetWin32Window(window);
+  if (driver->handle == nullptr) {
+    return nullptr;
   }
 
-  interaction->previousWindowProc =
-    reinterpret_cast<WNDPROC>(GetWindowLongPtrW(interaction->handle, GWLP_WNDPROC));
-  if (interaction->previousWindowProc == nullptr) {
-    interaction->handle = nullptr;
-    return interaction;
-  }
-
-  SetLastError(ERROR_SUCCESS);
-  if (!SetPropW(interaction->handle, interactionPropertyName, interaction.get())) {
-    interaction->handle = nullptr;
-    interaction->previousWindowProc = nullptr;
-    return interaction;
+  driver->previousWindowProc =
+    reinterpret_cast<WNDPROC>(GetWindowLongPtrW(driver->handle, GWLP_WNDPROC));
+  if (driver->previousWindowProc == nullptr) {
+    return nullptr;
   }
 
   SetLastError(ERROR_SUCCESS);
+  // Keep this state separate from GLFW's user pointer, which belongs to Window input handling.
+  if (!SetPropW(driver->handle, interactiveFrameDriverPropertyName, driver.get())) {
+    return nullptr;
+  }
+
+  SetLastError(ERROR_SUCCESS);
+  // Install the property first so even reentrant window messages can resolve the driver.
   const auto previous = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
-    interaction->handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(interactiveWindowProc)));
+    driver->handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(interactiveFrameWindowProc)));
   if (previous == nullptr && GetLastError() != ERROR_SUCCESS) {
-    RemovePropW(interaction->handle, interactionPropertyName);
-    interaction->handle = nullptr;
-    interaction->previousWindowProc = nullptr;
+    RemovePropW(driver->handle, interactiveFrameDriverPropertyName);
+    return nullptr;
   }
   else if (previous != nullptr) {
-    interaction->previousWindowProc = previous;
+    driver->previousWindowProc = previous;
   }
 
-  return interaction;
+  return driver;
 }
 
-void destroyNativeWindowInteraction(NativeWindowInteraction& interaction)
+void destroyInteractiveFrameDriver(InteractiveFrameDriver& driver)
 {
-  if (interaction.handle == nullptr) {
+  if (driver.handle == nullptr) {
     return;
   }
 
-  if (interaction.updateTimerId != 0) {
-    KillTimer(interaction.handle, interaction.updateTimerId);
-    interaction.updateTimerId = 0;
+  stopInteractiveFrameTimer(driver);
+  if (driver.previousWindowProc != nullptr) {
+    // Restore the chain before removing the property or releasing the driver state.
+    SetWindowLongPtrW(
+      driver.handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(driver.previousWindowProc));
   }
-  if (interaction.previousWindowProc != nullptr) {
-    SetWindowLongPtrW(interaction.handle,
-                      GWLP_WNDPROC,
-                      reinterpret_cast<LONG_PTR>(interaction.previousWindowProc));
-  }
-  RemovePropW(interaction.handle, interactionPropertyName);
-  interaction.handle = nullptr;
-  interaction.previousWindowProc = nullptr;
+  RemovePropW(driver.handle, interactiveFrameDriverPropertyName);
+  driver.handle = nullptr;
+  driver.previousWindowProc = nullptr;
 }
 #else
-std::unique_ptr<NativeWindowInteraction> createNativeWindowInteraction(GLFWwindow*)
+std::unique_ptr<InteractiveFrameDriver> createInteractiveFrameDriver(
+  GLFWwindow*, std::function<void()> frameCallback)
 {
-  return std::make_unique<NativeWindowInteraction>();
+  auto driver = std::make_unique<InteractiveFrameDriver>();
+  driver->frameCallback = std::move(frameCallback);
+  return driver;
 }
 
-void destroyNativeWindowInteraction(NativeWindowInteraction&) {}
+void destroyInteractiveFrameDriver(InteractiveFrameDriver&) {}
 #endif
 
 void reportGlfwError(const char* fallbackMessage, DiagnosticSink& diagnostics)
@@ -170,10 +259,11 @@ NativeProcAddress loadOpenGLProcAddress(const char* name)
 
 GLFWmonitor* primaryMonitor(DiagnosticSink& diagnostics)
 {
-  if (glfwGetPrimaryMonitor() == nullptr) {
+  auto* monitor = glfwGetPrimaryMonitor();
+  if (monitor == nullptr) {
     reportError(diagnostics, "Failed to apply fullscreen mode: no primary monitor.");
   }
-  return glfwGetPrimaryMonitor();
+  return monitor;
 }
 
 const GLFWvidmode* currentVideoMode(GLFWmonitor* monitor, DiagnosticSink& diagnostics)
@@ -298,18 +388,15 @@ bool Window::initialize(const WindowConfig& config, DiagnosticSink& diagnostics)
 
   glfwMakeContextCurrent(window);
   glfwSwapInterval(config.vsyncEnabled ? 1 : 0);
-  m_nativeInteraction = createNativeWindowInteraction(window);
 
   return true;
 }
 
 void Window::shutdown()
 {
-  if (m_nativeInteraction != nullptr) {
-    destroyNativeWindowInteraction(*m_nativeInteraction);
-    m_nativeInteraction.reset();
-  }
+  setInteractiveFrameCallback({});
   m_handle.reset();
+  m_pressedKeys.clear();
 
   if (m_ownsGlfw) {
     glfwTerminate();
@@ -373,8 +460,7 @@ bool Window::setDisplayMode(const PlatformWindowDisplayMode mode,
   auto* window = m_handle.get();
   const bool wasWindowed = m_displayMode == PlatformWindowDisplayMode::Windowed;
 
-  // Requesting a window resize while the window is maximized leads to unexpected behavior, so we
-  // have to check if we have to restore the native window.
+  // GLFW window-size changes behave inconsistently while a native window is maximized.
   restoreNativeWindowBeforeChangingDisplayModeIfNeeded(window, m_displayMode);
   if (wasWindowed) {
     glfwGetWindowPos(window, &m_windowedX, &m_windowedY);
@@ -468,9 +554,29 @@ void Window::setVsyncEnabled(const bool enabled) const
   }
 }
 
-void Window::setInteractiveFrameCallback(std::function<void()> callback)
+void Window::setInteractiveFrameCallback(std::function<void()> callback,
+                                         DiagnosticSink& diagnostics)
 {
-  if (m_nativeInteraction != nullptr) {
-    m_nativeInteraction->updateCallback = std::move(callback);
+  if (!callback) {
+    if (m_interactiveFrameDriver != nullptr) {
+      m_interactiveFrameDriver->frameCallback = {};
+      destroyInteractiveFrameDriver(*m_interactiveFrameDriver);
+      m_interactiveFrameDriver.reset();
+    }
+    return;
+  }
+
+  if (m_interactiveFrameDriver != nullptr) {
+    m_interactiveFrameDriver->frameCallback = std::move(callback);
+    return;
+  }
+
+  if (m_handle != nullptr) {
+    m_interactiveFrameDriver =
+      createInteractiveFrameDriver(m_handle.get(), std::move(callback));
+    if (m_interactiveFrameDriver == nullptr) {
+      reportWarning(diagnostics,
+                    "Interactive window updates disabled: native hook could not be installed.");
+    }
   }
 }
