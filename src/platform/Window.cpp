@@ -2,19 +2,19 @@
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-
 #if defined(_WIN32)
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <windows.h>
+#include <windows.h> // NOLINT(misc-include-cleaner)
 #endif
 
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <utility>
@@ -31,9 +31,13 @@
 struct InteractiveFrameDriver
 {
 #if defined(_WIN32)
+  // windows.h is the supported Win32 umbrella header, but include-cleaner attributes these
+  // declarations to internal SDK headers.
+  // NOLINTBEGIN(misc-include-cleaner)
   HWND handle = nullptr;
   WNDPROC previousWindowProc = nullptr;
   HANDLE timerQueueTimer = nullptr;
+  // NOLINTEND(misc-include-cleaner)
   std::atomic_bool frameNotificationPending = false;
   std::chrono::steady_clock::time_point lastFrameTime;
   bool active = false;
@@ -44,9 +48,18 @@ struct InteractiveFrameDriver
 
 namespace {
 #if defined(_WIN32)
-constexpr wchar_t interactiveFrameDriverPropertyName[] = L"KeyWave.InteractiveFrameDriver";
+// windows.h is the supported Win32 umbrella header, but include-cleaner attributes these
+// declarations to internal SDK headers.
+// NOLINTBEGIN(misc-include-cleaner)
+constexpr auto interactiveFrameDriverPropertyName = L"KeyWave.InteractiveFrameDriver";
 constexpr UINT interactiveFrameIntervalMilliseconds = 16;
 constexpr UINT interactiveFrameMessage = WM_APP + 1;
+
+WNDPROC windowProcFromLongPtr(const LONG_PTR value)
+{
+  // GetWindowLongPtrW returns window procedures through Win32's documented integer-sized type.
+  return reinterpret_cast<WNDPROC>(value); // NOLINT(performance-no-int-to-ptr)
+}
 
 void renderInteractiveFrameIfDue(InteractiveFrameDriver& driver)
 {
@@ -55,8 +68,7 @@ void renderInteractiveFrameIfDue(InteractiveFrameDriver& driver)
   }
 
   const auto now = std::chrono::steady_clock::now();
-  const auto frameInterval =
-    std::chrono::milliseconds{interactiveFrameIntervalMilliseconds};
+  const auto frameInterval = std::chrono::milliseconds{interactiveFrameIntervalMilliseconds};
   if (driver.lastFrameTime != std::chrono::steady_clock::time_point{} &&
       now - driver.lastFrameTime < frameInterval) {
     return;
@@ -88,12 +100,12 @@ void startInteractiveFrameTimer(InteractiveFrameDriver& driver)
 
   HANDLE timerQueueTimer = nullptr;
   const auto timerCreated = CreateTimerQueueTimer(&timerQueueTimer,
-                                                   nullptr,
-                                                   requestInteractiveFrame,
-                                                   &driver,
-                                                   0,
-                                                   interactiveFrameIntervalMilliseconds,
-                                                   WT_EXECUTEDEFAULT);
+                                                  nullptr,
+                                                  requestInteractiveFrame,
+                                                  &driver,
+                                                  0,
+                                                  interactiveFrameIntervalMilliseconds,
+                                                  WT_EXECUTEDEFAULT);
   if (timerCreated != 0) {
     driver.timerQueueTimer = timerQueueTimer;
   }
@@ -130,8 +142,8 @@ LRESULT CALLBACK interactiveFrameWindowProc(HWND handle,
                                             const WPARAM wParam,
                                             const LPARAM lParam)
 {
-  auto* driver = static_cast<InteractiveFrameDriver*>(
-    GetPropW(handle, interactiveFrameDriverPropertyName));
+  auto* driver =
+    static_cast<InteractiveFrameDriver*>(GetPropW(handle, interactiveFrameDriverPropertyName));
   if (driver == nullptr || driver->previousWindowProc == nullptr) {
     return DefWindowProcW(handle, message, wParam, lParam);
   }
@@ -183,7 +195,7 @@ std::unique_ptr<InteractiveFrameDriver> createInteractiveFrameDriver(
   }
 
   driver->previousWindowProc =
-    reinterpret_cast<WNDPROC>(GetWindowLongPtrW(driver->handle, GWLP_WNDPROC));
+    windowProcFromLongPtr(GetWindowLongPtrW(driver->handle, GWLP_WNDPROC));
   if (driver->previousWindowProc == nullptr) {
     return nullptr;
   }
@@ -196,7 +208,7 @@ std::unique_ptr<InteractiveFrameDriver> createInteractiveFrameDriver(
 
   SetLastError(ERROR_SUCCESS);
   // Install the property first so even reentrant window messages can resolve the driver.
-  const auto previous = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
+  const auto previous = windowProcFromLongPtr(SetWindowLongPtrW(
     driver->handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(interactiveFrameWindowProc)));
   if (previous == nullptr && GetLastError() != ERROR_SUCCESS) {
     RemovePropW(driver->handle, interactiveFrameDriverPropertyName);
@@ -218,13 +230,15 @@ void destroyInteractiveFrameDriver(InteractiveFrameDriver& driver)
   stopInteractiveFrameTimer(driver);
   if (driver.previousWindowProc != nullptr) {
     // Restore the chain before removing the property or releasing the driver state.
-    SetWindowLongPtrW(
-      driver.handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(driver.previousWindowProc));
+    SetWindowLongPtrW(driver.handle,
+                      GWLP_WNDPROC,
+                      reinterpret_cast<LONG_PTR>(driver.previousWindowProc));
   }
   RemovePropW(driver.handle, interactiveFrameDriverPropertyName);
   driver.handle = nullptr;
   driver.previousWindowProc = nullptr;
 }
+// NOLINTEND(misc-include-cleaner)
 #else
 std::unique_ptr<InteractiveFrameDriver> createInteractiveFrameDriver(
   GLFWwindow*, std::function<void()> frameCallback)
@@ -572,8 +586,7 @@ void Window::setInteractiveFrameCallback(std::function<void()> callback,
   }
 
   if (m_handle != nullptr) {
-    m_interactiveFrameDriver =
-      createInteractiveFrameDriver(m_handle.get(), std::move(callback));
+    m_interactiveFrameDriver = createInteractiveFrameDriver(m_handle.get(), std::move(callback));
     if (m_interactiveFrameDriver == nullptr) {
       reportWarning(diagnostics,
                     "Interactive window updates disabled: native hook could not be installed.");

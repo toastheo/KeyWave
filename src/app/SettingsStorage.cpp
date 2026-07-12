@@ -79,7 +79,7 @@ std::optional<AppSettings> SettingsStorage::load(const std::filesystem::path& pa
       return std::nullopt;
     }
 
-    std::ifstream input(path);
+    const std::ifstream input(path);
     if (!input) {
       reportWarning(diagnostics,
                     "Warning: could not open settings file, using defaults: " + path.string());

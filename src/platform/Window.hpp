@@ -72,8 +72,8 @@ public:
   void setVsyncEnabled(bool enabled) const;
   // Supplies frames while native move/resize handling blocks the normal event loop. Passing an
   // empty callback removes the native hook.
-  void setInteractiveFrameCallback(
-    std::function<void()> callback, DiagnosticSink& diagnostics = nullDiagnosticSink());
+  void setInteractiveFrameCallback(std::function<void()> callback,
+                                   DiagnosticSink& diagnostics = nullDiagnosticSink());
 
 private:
   std::unique_ptr<GLFWwindow, GlfwWindowDeleter> m_handle;

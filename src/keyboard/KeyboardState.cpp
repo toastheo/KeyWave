@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <span>
-#include <utility>
 #include <vector>
 
 #include "midi/MidiTypes.hpp"
@@ -44,5 +43,5 @@ KeyboardState KeyboardStateBuilder::build(const std::span<const Note> activeNote
     });
   }
 
-  return KeyboardState(std::move(activeKeys));
+  return KeyboardState(activeKeys);
 }
