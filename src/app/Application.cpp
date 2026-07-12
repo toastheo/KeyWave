@@ -150,6 +150,8 @@ bool Application::initialize()
   }
 
   m_initialized = true;
+  m_previousFrameTime = std::chrono::steady_clock::now();
+  m_window.setInteractiveFrameCallback([this]() { updateAndRenderFrame(std::chrono::steady_clock::now()); });
   return true;
 }
 
@@ -327,61 +329,79 @@ void Application::paceFrame(const std::chrono::steady_clock::time_point frameSta
   }
 }
 
+void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_point frameTime)
+{
+  // Native window calls can dispatch messages recursively. Ignore nested timer ticks because ImGui
+  // and the window's single OpenGL context cannot render overlapping frames safely.
+  if (!m_initialized || m_frameInProgress) {
+    return;
+  }
+
+  m_frameInProgress = true;
+  const std::chrono::duration<double> elapsed = frameTime - m_previousFrameTime;
+  m_previousFrameTime = frameTime;
+
+  const auto pressedKeys = m_window.consumePressedKeys();
+  const auto imguiWantsKeyboardCapture = m_imguiLayer.wantsKeyboardCapture();
+  m_visualizerController.handleInput(pressedKeys, imguiWantsKeyboardCapture);
+
+  m_renderer->setFramebufferSize(m_window.framebufferSize());
+  m_visualizerController.update(elapsed.count());
+
+  m_imguiLayer.beginFrame();
+  TransportControls::render(m_visualizerController.playbackTransport(),
+                            m_visualizerController.durationSeconds(),
+                            m_visualizerController.audioScheduler(),
+                            m_visualizerController.settings().playbackControls,
+                            m_visualizerController.sourceBpmAtPlaybackPosition());
+  if (m_visualizerController.visualizationSettingsPanelVisible()) {
+    auto editedSettings = m_visualizerController.settings();
+    const auto settingsAction =
+      VisualizationSettingsPanel::render(editedSettings,
+                                         m_visualizerController.playbackTransport(),
+                                         m_importedMidiFiles,
+                                         m_activeImportedMidiId.value_or(""),
+                                         m_visualizerController.sourceBpmAtPlaybackPosition());
+    m_visualizerController.setSettings(std::move(editedSettings));
+    handleVisualizationSettingsPanelAction(settingsAction);
+  }
+  applyWindowSettings();
+  m_renderer->setClearColor(m_visualizerController.settings().renderer.clearColor);
+
+  const auto scene = m_visualizerController.buildScene();
+
+  m_renderer->setView(scene.view);
+  m_renderer->beginFrame();
+  m_renderer->submit(scene.commands);
+  m_renderer->endFrame();
+  m_imguiLayer.endFrame();
+  m_window.swapBuffers();
+  m_frameInProgress = false;
+}
+
 void Application::run()
 {
   if (!m_initialized) {
     return;
   }
 
-  auto previousFrameTime = std::chrono::steady_clock::now();
-
+  m_previousFrameTime = std::chrono::steady_clock::now();
   while (!m_window.shouldClose()) {
-    const auto frameStartTime = std::chrono::steady_clock::now();
-    const std::chrono::duration<double> elapsed = frameStartTime - previousFrameTime;
-    previousFrameTime = frameStartTime;
-
     Window::pollEvents();
-    const auto pressedKeys = m_window.consumePressedKeys();
-    const auto imguiWantsKeyboardCapture = m_imguiLayer.wantsKeyboardCapture();
-    m_visualizerController.handleInput(pressedKeys, imguiWantsKeyboardCapture);
 
-    m_renderer->setFramebufferSize(m_window.framebufferSize());
-    m_visualizerController.update(elapsed.count());
-
-    m_imguiLayer.beginFrame();
-    TransportControls::render(m_visualizerController.playbackTransport(),
-                              m_visualizerController.durationSeconds(),
-                              m_visualizerController.audioScheduler(),
-                              m_visualizerController.settings().playbackControls,
-                              m_visualizerController.sourceBpmAtPlaybackPosition());
-    if (m_visualizerController.visualizationSettingsPanelVisible()) {
-      auto editedSettings = m_visualizerController.settings();
-      const auto settingsAction =
-        VisualizationSettingsPanel::render(editedSettings,
-                                           m_visualizerController.playbackTransport(),
-                                           m_importedMidiFiles,
-                                           m_activeImportedMidiId.value_or(""),
-                                           m_visualizerController.sourceBpmAtPlaybackPosition());
-      m_visualizerController.setSettings(std::move(editedSettings));
-      handleVisualizationSettingsPanelAction(settingsAction);
-    }
-    applyWindowSettings();
-    m_renderer->setClearColor(m_visualizerController.settings().renderer.clearColor);
-
-    const auto scene = m_visualizerController.buildScene();
-
-    m_renderer->setView(scene.view);
-    m_renderer->beginFrame();
-    m_renderer->submit(scene.commands);
-    m_renderer->endFrame();
-    m_imguiLayer.endFrame();
-    m_window.swapBuffers();
+    // Capture the time after polling: interactive resize timer callbacks may already have rendered
+    // frames and advanced m_previousFrameTime while glfwPollEvents() was blocked.
+    const auto frameStartTime = std::chrono::steady_clock::now();
+    updateAndRenderFrame(frameStartTime);
     paceFrame(frameStartTime);
   }
 }
 
 void Application::shutdown()
 {
+  // Prevent native resize timer messages from entering Application while ImGui, the renderer and
+  // the window are being torn down.
+  m_window.setInteractiveFrameCallback({});
   if (!m_settingsSaved) {
     if (m_settingsStorage.save(m_visualizerController.settings(), m_diagnostics)) {
       reportInfo(m_diagnostics, "Settings saved: " + m_settingsStorage.path().string());

@@ -42,6 +42,7 @@ private:
   void renameImportedMidiFile(std::string_view id, std::string_view displayName);
   void removeImportedMidiFile(std::string_view id);
   void handleVisualizationSettingsPanelAction(const VisualizationSettingsPanelResult& result);
+  void updateAndRenderFrame(std::chrono::steady_clock::time_point frameTime);
   void paceFrame(std::chrono::steady_clock::time_point frameStart);
 
   AppConfig m_config;
@@ -56,6 +57,8 @@ private:
   std::unique_ptr<RendererBackend> m_renderer;
   ImGuiLayer m_imguiLayer;
   WindowSettings m_appliedWindowSettings;
+  std::chrono::steady_clock::time_point m_previousFrameTime;
+  bool m_frameInProgress = false;
   bool m_initialized = false;
   bool m_settingsSaved = false;
 };

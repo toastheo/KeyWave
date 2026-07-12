@@ -2,8 +2,20 @@
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
+#if defined(_WIN32)
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
+#include <functional>
 #include <optional>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 #include "core/CoreTypes.hpp"
@@ -11,7 +23,131 @@
 #include "input/Key.hpp"
 #include "render/RenderTypes.hpp"
 
+struct NativeWindowInteraction
+{
+#if defined(_WIN32)
+  HWND handle = nullptr;
+  WNDPROC previousWindowProc = nullptr;
+  UINT_PTR updateTimerId = 0;
+  bool interactiveMoveOrResize = false;
+#endif
+  std::function<void()> updateCallback;
+};
+
 namespace {
+#if defined(_WIN32)
+constexpr wchar_t interactionPropertyName[] = L"KeyWave.NativeWindowInteraction";
+constexpr UINT interactiveUpdateIntervalMilliseconds = 16;
+
+// Windows runs a nested modal message loop while the user moves or resizes a decorated window.
+// During that time glfwPollEvents() does not return, so this procedure uses timer messages to keep
+// playback and rendering advancing on the window thread.
+LRESULT CALLBACK interactiveWindowProc(HWND handle,
+                                       const UINT message,
+                                       const WPARAM wParam,
+                                       const LPARAM lParam)
+{
+  auto* interaction =
+    static_cast<NativeWindowInteraction*>(GetPropW(handle, interactionPropertyName));
+  if (interaction == nullptr || interaction->previousWindowProc == nullptr) {
+    return DefWindowProcW(handle, message, wParam, lParam);
+  }
+
+  switch (message) {
+    case WM_ENTERSIZEMOVE:
+      interaction->interactiveMoveOrResize = true;
+      interaction->updateTimerId = SetTimer(handle,
+                                            reinterpret_cast<UINT_PTR>(interaction),
+                                            interactiveUpdateIntervalMilliseconds,
+                                            nullptr);
+      break;
+    case WM_TIMER:
+      if (wParam == interaction->updateTimerId && interaction->interactiveMoveOrResize &&
+          interaction->updateCallback) {
+        // Do not poll GLFW events here because this handler already runs inside Windows nested
+        // message loop. The callback updates and renders one frame on the window thread.
+        interaction->updateCallback();
+      }
+      break;
+    case WM_EXITSIZEMOVE:
+      if (interaction->updateTimerId != 0) {
+        KillTimer(handle, interaction->updateTimerId);
+        interaction->updateTimerId = 0;
+      }
+      interaction->interactiveMoveOrResize = false;
+      break;
+    default:
+      break;
+  }
+
+  return CallWindowProcW(interaction->previousWindowProc, handle, message, wParam, lParam);
+}
+
+std::unique_ptr<NativeWindowInteraction> createNativeWindowInteraction(GLFWwindow* window)
+{
+  auto interaction = std::make_unique<NativeWindowInteraction>();
+  interaction->handle = glfwGetWin32Window(window);
+  if (interaction->handle == nullptr) {
+    return interaction;
+  }
+
+  interaction->previousWindowProc =
+    reinterpret_cast<WNDPROC>(GetWindowLongPtrW(interaction->handle, GWLP_WNDPROC));
+  if (interaction->previousWindowProc == nullptr) {
+    interaction->handle = nullptr;
+    return interaction;
+  }
+
+  SetLastError(ERROR_SUCCESS);
+  if (!SetPropW(interaction->handle, interactionPropertyName, interaction.get())) {
+    interaction->handle = nullptr;
+    interaction->previousWindowProc = nullptr;
+    return interaction;
+  }
+
+  SetLastError(ERROR_SUCCESS);
+  const auto previous = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
+    interaction->handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(interactiveWindowProc)));
+  if (previous == nullptr && GetLastError() != ERROR_SUCCESS) {
+    RemovePropW(interaction->handle, interactionPropertyName);
+    interaction->handle = nullptr;
+    interaction->previousWindowProc = nullptr;
+  }
+  else if (previous != nullptr) {
+    interaction->previousWindowProc = previous;
+  }
+
+  return interaction;
+}
+
+void destroyNativeWindowInteraction(NativeWindowInteraction& interaction)
+{
+  if (interaction.handle == nullptr) {
+    return;
+  }
+
+  if (interaction.updateTimerId != 0) {
+    KillTimer(interaction.handle, interaction.updateTimerId);
+    interaction.updateTimerId = 0;
+  }
+  if (interaction.previousWindowProc != nullptr) {
+    SetWindowLongPtrW(interaction.handle,
+                      GWLP_WNDPROC,
+                      reinterpret_cast<LONG_PTR>(interaction.previousWindowProc));
+  }
+  RemovePropW(interaction.handle, interactionPropertyName);
+  interaction.handle = nullptr;
+  interaction.previousWindowProc = nullptr;
+}
+#else
+std::unique_ptr<NativeWindowInteraction> createNativeWindowInteraction(GLFWwindow*)
+{
+  return std::make_unique<NativeWindowInteraction>();
+}
+
+void destroyNativeWindowInteraction(NativeWindowInteraction&) {}
+#endif
+
 void reportGlfwError(const char* fallbackMessage, DiagnosticSink& diagnostics)
 {
   const char* description = nullptr;
@@ -95,6 +231,8 @@ std::optional<Key> keyFromGlfwKey(const int key)
 }
 } // namespace
 
+Window::Window() = default;
+
 void GlfwWindowDeleter::operator()(GLFWwindow* window) const
 {
   if (window != nullptr) {
@@ -160,12 +298,17 @@ bool Window::initialize(const WindowConfig& config, DiagnosticSink& diagnostics)
 
   glfwMakeContextCurrent(window);
   glfwSwapInterval(config.vsyncEnabled ? 1 : 0);
+  m_nativeInteraction = createNativeWindowInteraction(window);
 
   return true;
 }
 
 void Window::shutdown()
 {
+  if (m_nativeInteraction != nullptr) {
+    destroyNativeWindowInteraction(*m_nativeInteraction);
+    m_nativeInteraction.reset();
+  }
   m_handle.reset();
 
   if (m_ownsGlfw) {
@@ -322,5 +465,12 @@ void Window::setVsyncEnabled(const bool enabled) const
     auto* window = m_handle.get();
     glfwMakeContextCurrent(window);
     glfwSwapInterval(enabled ? 1 : 0);
+  }
+}
+
+void Window::setInteractiveFrameCallback(std::function<void()> callback)
+{
+  if (m_nativeInteraction != nullptr) {
+    m_nativeInteraction->updateCallback = std::move(callback);
   }
 }

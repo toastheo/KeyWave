@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -9,6 +10,7 @@
 #include "render/RenderTypes.hpp"
 
 struct GLFWwindow;
+struct NativeWindowInteraction;
 
 enum class PlatformWindowDisplayMode : std::uint8_t
 {
@@ -45,7 +47,7 @@ struct GlfwWindowDeleter
 class Window
 {
 public:
-  Window() = default;
+  Window();
   ~Window();
 
   Window(const Window&) = delete;
@@ -67,9 +69,11 @@ public:
                                     DiagnosticSink& diagnostics = nullDiagnosticSink());
   void setWindowedSize(WindowedSize size);
   void setVsyncEnabled(bool enabled) const;
+  void setInteractiveFrameCallback(std::function<void()> callback);
 
 private:
   std::unique_ptr<GLFWwindow, GlfwWindowDeleter> m_handle;
+  std::unique_ptr<NativeWindowInteraction> m_nativeInteraction;
   std::vector<Key> m_pressedKeys;
   bool m_ownsGlfw = false;
   PlatformWindowDisplayMode m_displayMode = PlatformWindowDisplayMode::Windowed;
