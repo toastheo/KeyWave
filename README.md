@@ -8,10 +8,11 @@ keyboard with OpenGL.
 
 ## Core Features
 
-- Load a midi file from the command line.
+- Load a midi file.
 - Render a falling-notes piano-roll view.
 - Playback controls.
 - Adjust visualization.
+- Audio playback.
 
 ## Requirements
 
