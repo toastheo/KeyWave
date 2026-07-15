@@ -9,6 +9,7 @@ class MidiTimeline
 public:
   void addNote(const Note& note);
   [[nodiscard]] const std::vector<Note>& notes() const;
+  [[nodiscard]] double firstNoteStartSeconds() const;
   [[nodiscard]] double lengthSeconds() const;
   [[nodiscard]] bool empty() const;
   [[nodiscard]] int minPitch() const;
@@ -22,6 +23,9 @@ public:
   [[nodiscard]] const std::vector<SustainPedalEvent>& sustainPedalEvents() const;
 
 private:
+  [[nodiscard]] double audibleEndSeconds(const Note& note) const;
+  void updateLength();
+
   std::vector<Note> m_notes;
   std::vector<TempoEvent> m_tempoEvents;
   std::vector<SustainPedalEvent> m_sustainPedalEvents;

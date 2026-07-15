@@ -11,7 +11,7 @@ class TimelineAudioScheduler
 public:
   explicit TimelineAudioScheduler(PianoSynth& synth);
 
-  void setTimeline(const MidiTimeline& timeline);
+  void setTimeline(const MidiTimeline& timeline, double timelineOffsetSeconds = 0.0);
   void update(double previousTimeSeconds, double currentTimeSeconds);
   void seek(double timeSeconds);
   void stop();

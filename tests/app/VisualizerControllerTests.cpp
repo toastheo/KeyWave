@@ -79,7 +79,7 @@ TEST_CASE("VisualizerController updates playback and builds the current scene", 
   controller.setTimeline(std::move(timeline));
   controller.playbackTransport().play();
 
-  CHECK(controller.durationSeconds() == Catch::Approx(3.0));
+  CHECK(controller.durationSeconds() == Catch::Approx(11.0));
   CHECK(controller.sourceBpmAtPlaybackPosition() == Catch::Approx(120.0));
 
   controller.update(1.5);
@@ -89,9 +89,9 @@ TEST_CASE("VisualizerController updates playback and builds the current scene", 
   const auto rects = styledRectsForScene(scene);
 
   REQUIRE_FALSE(rects.empty());
-  CHECK(rects.front().rect.y == Catch::Approx(0.5));
+  CHECK(rects.front().rect.y == Catch::Approx(8.5));
 
-  controller.update(0.5);
+  controller.update(8.5);
   CHECK(controller.sourceBpmAtPlaybackPosition() == Catch::Approx(60.0));
 }
 
@@ -120,7 +120,7 @@ TEST_CASE("VisualizerController replaces the timeline and starts playback from t
 
   controller.replaceTimelineAndPlayFromStart(std::move(replacement));
 
-  CHECK(controller.durationSeconds() == Catch::Approx(2.0));
+  CHECK(controller.durationSeconds() == Catch::Approx(12.0));
   CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(0.0));
   CHECK(controller.playbackTransport().state() == PlaybackState::Playing);
 
@@ -129,6 +129,63 @@ TEST_CASE("VisualizerController replaces the timeline and starts playback from t
 
   controller.update(0.25);
   CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(0.25));
+}
+
+TEST_CASE("VisualizerController starts with the first note at the top of the falling-notes view",
+          "[app][visualizer]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(
+    Note{.pitch = 60, .velocity = 90, .startSeconds = 42.0, .durationSeconds = 1.0});
+
+  VisualizerController controller;
+  controller.replaceTimelineAndPlayFromStart(std::move(timeline));
+
+  CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(0.0));
+  CHECK(controller.durationSeconds() == Catch::Approx(11.0));
+
+  // At exactly zero the note's leading edge only touches the viewport. One tiny step later it must
+  // be visible immediately below the upper edge, regardless of the MIDI's 42-second pre-roll.
+  controller.update(0.0);
+  controller.update(0.001);
+  const auto scene = controller.buildScene();
+  const auto rects = styledRectsForScene(scene);
+
+  REQUIRE_FALSE(rects.empty());
+  CHECK(rects.front().rect.y == Catch::Approx(scene.view.visibleWorldRect.height -
+                                              controller.settings().keyboard.whiteKeyHeight -
+                                              0.001));
+}
+
+TEST_CASE("VisualizerController finishes only after the final sustained note is released",
+          "[app][visualizer][audio]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(
+    Note{.pitch = 60, .velocity = 90, .channel = 0, .startSeconds = 3.0, .durationSeconds = 1.0});
+  timeline.addSustainPedalEvent(
+    SustainPedalEvent{.timeSeconds = 3.5, .pressed = true, .channel = 0});
+  timeline.addSustainPedalEvent(
+    SustainPedalEvent{.timeSeconds = 6.0, .pressed = false, .channel = 0});
+
+  RecordingPianoSynth synth;
+  VisualizerController controller(synth);
+  controller.replaceTimelineAndPlayFromStart(std::move(timeline));
+
+  CHECK(controller.durationSeconds() == Catch::Approx(13.0));
+
+  controller.update(0.0);
+  controller.update(12.9);
+  CHECK(controller.playbackTransport().state() == PlaybackState::Playing);
+
+  controller.update(0.2);
+  CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
+  CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(13.0));
+  REQUIRE(synth.commands.size() >= 4);
+  CHECK(synth.commands[0] == "on:60:90");
+  CHECK(synth.commands[1] == "sustain:down");
+  CHECK(synth.commands[2] == "off:60");
+  CHECK(synth.commands[3] == "sustain:up");
 }
 
 TEST_CASE("VisualizerController schedules audio while loaded timeline is playing",
@@ -144,10 +201,10 @@ TEST_CASE("VisualizerController schedules audio while loaded timeline is playing
   controller.update(0.1);
   CHECK(synth.commands.empty());
 
-  controller.update(0.25);
+  controller.update(10.15);
   controller.update(0.5);
 
-  REQUIRE(synth.commands.size() == 2);
+  REQUIRE(synth.commands.size() >= 2);
   CHECK(synth.commands[0] == "on:60:90");
   CHECK(synth.commands[1] == "off:60");
 }
@@ -168,14 +225,14 @@ TEST_CASE("VisualizerController clears active audio before replacing the timelin
 
   controller.replaceTimelineAndPlayFromStart(std::move(original));
   controller.update(0.1);
-  controller.update(0.25);
+  controller.update(10.15);
   REQUIRE(synth.commands == std::vector<std::string>{"on:60:90"});
 
   controller.replaceTimelineAndPlayFromStart(std::move(replacement));
   REQUIRE(synth.commands == std::vector<std::string>{"on:60:90", "all-off"});
 
   controller.update(0.1);
-  controller.update(0.25);
+  controller.update(10.15);
   REQUIRE(synth.commands == std::vector<std::string>{"on:60:90", "all-off", "on:72:80"});
 }
 
@@ -192,7 +249,7 @@ TEST_CASE("VisualizerController clears audio for keyboard playback controls",
   controller.update(0.25);
   CHECK(synth.commands.empty());
 
-  controller.update(0.25);
+  controller.update(10.0);
   REQUIRE(synth.commands == std::vector<std::string>{"on:60:90"});
 
   constexpr auto pauseKeys = std::array{Key::Space};

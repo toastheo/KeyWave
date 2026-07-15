@@ -42,12 +42,17 @@ public:
   [[nodiscard]] RenderScene buildScene() const;
 
 private:
+  void configurePlaybackTimeline();
+  [[nodiscard]] double timelineTimeSeconds(double playbackTimeSeconds) const;
+
   DiagnosticSink& m_diagnostics;
   AppSettings m_settings;
   std::optional<MidiTimeline> m_timeline;
   PlaybackTransport m_playbackTransport;
   NullPianoSynth m_nullPianoSynth;
   TimelineAudioScheduler m_audioScheduler;
+  double m_timelineOffsetSeconds = 0.0;
+  double m_timelineLookAheadSeconds = 0.0;
   bool m_visualizationSettingsPanelVisible = true;
   bool m_skipNextPlaybackUpdate = false;
 };

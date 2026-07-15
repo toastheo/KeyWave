@@ -12,23 +12,26 @@ TimelineAudioScheduler::TimelineAudioScheduler(PianoSynth& synth)
     : m_synth(synth)
 {}
 
-void TimelineAudioScheduler::setTimeline(const MidiTimeline& timeline)
+void TimelineAudioScheduler::setTimeline(const MidiTimeline& timeline,
+                                         const double timelineOffsetSeconds)
 {
+  const auto safeOffsetSeconds = std::isfinite(timelineOffsetSeconds) ? timelineOffsetSeconds : 0.0;
   m_events.clear();
   m_events.reserve(timeline.notes().size() * 2 + timeline.sustainPedalEvents().size());
 
   for (const auto& note : timeline.notes()) {
-    m_events.push_back(Event{.timeSeconds = note.startSeconds,
+    m_events.push_back(Event{.timeSeconds = note.startSeconds - safeOffsetSeconds,
                              .type = EventType::NoteOn,
                              .pitch = note.pitch,
                              .velocity = note.velocity});
-    m_events.push_back(Event{.timeSeconds = note.startSeconds + note.durationSeconds,
-                             .type = EventType::NoteOff,
-                             .pitch = note.pitch});
+    m_events.push_back(
+      Event{.timeSeconds = note.startSeconds + note.durationSeconds - safeOffsetSeconds,
+            .type = EventType::NoteOff,
+            .pitch = note.pitch});
   }
 
   for (const auto& sustainPedalEvent : timeline.sustainPedalEvents()) {
-    m_events.push_back(Event{.timeSeconds = sustainPedalEvent.timeSeconds,
+    m_events.push_back(Event{.timeSeconds = sustainPedalEvent.timeSeconds - safeOffsetSeconds,
                              .type = EventType::SustainPedal,
                              .sustainPedalDown = sustainPedalEvent.pressed});
   }

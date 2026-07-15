@@ -11,12 +11,29 @@
 void MidiTimeline::addNote(const Note& note)
 {
   m_notes.push_back(note);
-  m_lengthSeconds = std::max(m_lengthSeconds, note.startSeconds + note.durationSeconds);
+  m_lengthSeconds = std::max(m_lengthSeconds, audibleEndSeconds(note));
 }
 
 const std::vector<Note>& MidiTimeline::notes() const
 {
   return m_notes;
+}
+
+double MidiTimeline::firstNoteStartSeconds() const
+{
+  double firstStartSeconds = 0.0;
+  bool foundNote = false;
+  for (const auto& note : m_notes) {
+    if (!std::isfinite(note.startSeconds)) {
+      continue;
+    }
+
+    if (!foundNote || note.startSeconds < firstStartSeconds) {
+      firstStartSeconds = note.startSeconds;
+      foundNote = true;
+    }
+  }
+  return foundNote ? firstStartSeconds : 0.0;
 }
 
 double MidiTimeline::lengthSeconds() const
@@ -105,10 +122,49 @@ void MidiTimeline::addSustainPedalEvent(const SustainPedalEvent& event)
   });
 
   std::ranges::stable_sort(m_sustainPedalEvents, {}, &SustainPedalEvent::timeSeconds);
-  m_lengthSeconds = std::max(m_lengthSeconds, m_sustainPedalEvents.back().timeSeconds);
+  updateLength();
 }
 
 const std::vector<SustainPedalEvent>& MidiTimeline::sustainPedalEvents() const
 {
   return m_sustainPedalEvents;
+}
+
+void MidiTimeline::updateLength()
+{
+  m_lengthSeconds = 0.0;
+
+  for (const auto& note : m_notes) {
+    m_lengthSeconds = std::max(m_lengthSeconds, audibleEndSeconds(note));
+  }
+}
+
+double MidiTimeline::audibleEndSeconds(const Note& note) const
+{
+  const auto noteEndSeconds = note.startSeconds + note.durationSeconds;
+  if (!std::isfinite(noteEndSeconds)) {
+    return 0.0;
+  }
+
+  auto endSeconds = noteEndSeconds;
+  bool sustainPressedAtNoteEnd = false;
+  for (const auto& event : m_sustainPedalEvents) {
+    if (event.channel != note.channel) {
+      continue;
+    }
+    if (event.timeSeconds <= noteEndSeconds) {
+      sustainPressedAtNoteEnd = event.pressed;
+      continue;
+    }
+
+    if (!sustainPressedAtNoteEnd) {
+      break;
+    }
+    if (!event.pressed) {
+      endSeconds = event.timeSeconds;
+      break;
+    }
+  }
+
+  return endSeconds;
 }

@@ -1,5 +1,6 @@
 #include "app/VisualizerController.hpp"
 
+#include <algorithm>
 #include <optional>
 #include <span>
 #include <utility>
@@ -63,10 +64,12 @@ void VisualizerController::setTimeline(std::optional<MidiTimeline> timeline)
   m_timeline = std::move(timeline);
 
   if (m_timeline.has_value()) {
-    m_audioScheduler.setTimeline(*m_timeline);
+    configurePlaybackTimeline();
     return;
   }
 
+  m_timelineOffsetSeconds = 0.0;
+  m_timelineLookAheadSeconds = 0.0;
   m_audioScheduler.setTimeline(MidiTimeline{});
 }
 
@@ -89,7 +92,9 @@ bool VisualizerController::hasTimeline() const
 
 double VisualizerController::durationSeconds() const
 {
-  return m_timeline.has_value() ? m_timeline->lengthSeconds() : 0.0;
+  return m_timeline.has_value() && !m_timeline->empty()
+           ? std::max(0.0, m_timeline->lengthSeconds() - m_timelineOffsetSeconds)
+           : 0.0;
 }
 
 double VisualizerController::sourceBpmAtPlaybackPosition() const
@@ -98,7 +103,7 @@ double VisualizerController::sourceBpmAtPlaybackPosition() const
     return defaultMidiBpm;
   }
 
-  return m_timeline->sourceBpmAt(m_playbackTransport.currentTimeSeconds());
+  return m_timeline->sourceBpmAt(timelineTimeSeconds(m_playbackTransport.currentTimeSeconds()));
 }
 
 PlaybackTransport& VisualizerController::playbackTransport()
@@ -142,6 +147,14 @@ void VisualizerController::handleInput(const std::span<const Key> pressedKeys,
 
 void VisualizerController::update(const double elapsedSeconds)
 {
+  // Apply changed look-ahead timing only when playback starts from the beginning,
+  // so changing visualization settings does not shift an already running song.
+  if (m_timeline.has_value() && m_playbackTransport.state() == PlaybackState::Playing &&
+      m_playbackTransport.currentTimeSeconds() == 0.0 &&
+      m_timelineLookAheadSeconds != m_settings.fallingNotes.lookAheadSeconds) {
+    configurePlaybackTimeline();
+  }
+
   if (m_skipNextPlaybackUpdate) {
     m_skipNextPlaybackUpdate = false;
     return;
@@ -150,7 +163,18 @@ void VisualizerController::update(const double elapsedSeconds)
   const auto previousTimeSeconds = m_playbackTransport.currentTimeSeconds();
   m_playbackTransport.update(elapsedSeconds);
   if (m_playbackTransport.state() == PlaybackState::Playing) {
-    m_audioScheduler.update(previousTimeSeconds, m_playbackTransport.currentTimeSeconds());
+    const auto playbackEndSeconds = durationSeconds();
+    const auto currentTimeSeconds =
+      std::min(m_playbackTransport.currentTimeSeconds(), playbackEndSeconds);
+    m_audioScheduler.update(previousTimeSeconds, currentTimeSeconds);
+
+    if (m_timeline.has_value() && m_playbackTransport.currentTimeSeconds() >= playbackEndSeconds) {
+      m_playbackTransport.seek(playbackEndSeconds);
+      // Keep the transport on the final frame while releasing sustained notes
+      // and positioning the audio scheduler at the end.
+      m_playbackTransport.pause();
+      m_audioScheduler.seek(playbackEndSeconds);
+    }
   }
 }
 
@@ -166,8 +190,25 @@ RenderScene VisualizerController::buildScene() const
   }
 
   return PianoRollSceneBuilder::build(*m_timeline,
-                                      m_playbackTransport.currentTimeSeconds(),
+                                      timelineTimeSeconds(m_playbackTransport.currentTimeSeconds()),
                                       pianoRollSceneConfigFromSettings(m_settings.fallingNotes,
                                                                        m_settings.keyboard),
                                       m_diagnostics);
+}
+
+void VisualizerController::configurePlaybackTimeline()
+{
+  if (!m_timeline.has_value()) {
+    return;
+  }
+
+  m_timelineLookAheadSeconds = m_settings.fallingNotes.lookAheadSeconds;
+  m_timelineOffsetSeconds =
+    m_timeline->empty() ? 0.0 : m_timeline->firstNoteStartSeconds() - m_timelineLookAheadSeconds;
+  m_audioScheduler.setTimeline(*m_timeline, m_timelineOffsetSeconds);
+}
+
+double VisualizerController::timelineTimeSeconds(const double playbackTimeSeconds) const
+{
+  return playbackTimeSeconds + m_timelineOffsetSeconds;
 }
