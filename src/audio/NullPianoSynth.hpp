@@ -8,5 +8,6 @@ public:
   void noteOn(PianoNote note) override;
   void noteOff(int pitch) override;
   void setSustainPedal(SustainPedalState state) override;
+  void setPlaybackPaused(bool paused) override;
   void allNotesOff() override;
 };

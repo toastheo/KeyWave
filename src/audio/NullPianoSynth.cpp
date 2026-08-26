@@ -17,4 +17,9 @@ void NullPianoSynth::setSustainPedal(const SustainPedalState state)
   (void)state;
 }
 
+void NullPianoSynth::setPlaybackPaused(const bool paused)
+{
+  (void)paused;
+}
+
 void NullPianoSynth::allNotesOff() {}

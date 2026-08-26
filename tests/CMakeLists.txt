@@ -52,6 +52,7 @@ add_executable(KeyWaveMidiTests
 if (KEYWAVE_ENABLE_AUDIO)
         target_sources(KeyWaveMidiTests
                 PRIVATE
+                audio/FluidSynthAudioCallbackTests.cpp
                 audio/FluidSynthPianoSynthTests.cpp
         )
 endif ()

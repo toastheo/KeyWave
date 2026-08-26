@@ -8,6 +8,7 @@
 #include <system_error>
 #include <utility>
 
+#include "audio/FluidSynthAudioCallback.hpp"
 #include "audio/PianoSynth.hpp"
 #include "diagnostics/Diagnostics.hpp"
 
@@ -47,6 +48,21 @@ void configureFluidSynthSettings(fluid_settings_t& settings, DiagnosticSink& dia
   setFluidSynthIntSetting(settings, diagnostics, "audio.periods", audioPeriods);
 }
 
+int processFluidSynth(void* const synth,
+                      const int frameCount,
+                      const int effectBufferCount,
+                      float* effectBuffers[],
+                      const int outputBufferCount,
+                      float* outputBuffers[])
+{
+  return fluid_synth_process(static_cast<fluid_synth_t*>(synth),
+                             frameCount,
+                             effectBufferCount,
+                             effectBuffers,
+                             outputBufferCount,
+                             outputBuffers);
+}
+
 } // namespace
 
 struct FluidSynthPianoSynth::Handles
@@ -66,6 +82,7 @@ struct FluidSynthPianoSynth::Handles
 
   fluid_settings_t* settings = nullptr;
   fluid_synth_t* synth = nullptr;
+  FluidSynthAudioRenderState renderState;
   fluid_audio_driver_t* audioDriver = nullptr;
 };
 
@@ -102,7 +119,10 @@ FluidSynthPianoSynth::FluidSynthPianoSynth(const std::filesystem::path& soundFon
     return;
   }
 
-  handles->audioDriver = new_fluid_audio_driver(handles->settings, handles->synth);
+  handles->renderState.synth = handles->synth;
+  handles->renderState.process = & processFluidSynth;
+  handles->audioDriver =
+    new_fluid_audio_driver2(handles->settings, &renderFluidSynthAudio, &handles->renderState);
   if (handles->audioDriver == nullptr) {
     reportError(m_diagnostics,
                 "FluidSynth initialization failed: Audio driver could not be created.");
@@ -150,6 +170,15 @@ void FluidSynthPianoSynth::setSustainPedal(const SustainPedalState state)
       FLUID_FAILED) {
     reportWarning(m_diagnostics, "FluidSynth sustain pedal control failed.");
   }
+}
+
+void FluidSynthPianoSynth::setPlaybackPaused(const bool paused)
+{
+  if (m_handles == nullptr) {
+    return;
+  }
+
+  m_handles->renderState.playbackPaused.store(paused, std::memory_order_relaxed);
 }
 
 void FluidSynthPianoSynth::allNotesOff()

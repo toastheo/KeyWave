@@ -13,6 +13,8 @@ TEST_CASE("NullPianoSynth implements the piano synth interface as a no-op", "[au
   synth.noteOff(60);
   synth.setSustainPedal(SustainPedalState::Down);
   synth.setSustainPedal(SustainPedalState::Up);
+  synth.setPlaybackPaused(true);
+  synth.setPlaybackPaused(false);
   synth.allNotesOff();
 
   SUCCEED("NullPianoSynth accepts piano synth commands without observable side effects");

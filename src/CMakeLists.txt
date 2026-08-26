@@ -62,6 +62,8 @@ target_link_libraries(keywave_audio
 if (KEYWAVE_ENABLE_AUDIO)
         target_sources(keywave_audio
                 PRIVATE
+                audio/FluidSynthAudioCallback.hpp
+                audio/FluidSynthAudioCallback.cpp
                 audio/FluidSynthPianoSynth.hpp
                 audio/FluidSynthPianoSynth.cpp
         )

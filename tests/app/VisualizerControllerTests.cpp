@@ -31,6 +31,11 @@ public:
     commands.push_back(state == SustainPedalState::Down ? "sustain:down" : "sustain:up");
   }
 
+  void setPlaybackPaused(const bool paused) override
+  {
+    (void)paused;
+  }
+
   void allNotesOff() override
   {
     commands.emplace_back("all-off");
