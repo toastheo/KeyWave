@@ -35,7 +35,7 @@ public:
 
   void setPlaybackPaused(const bool paused) override
   {
-    (void)paused;
+    commands.push_back(paused ? "playback:paused" : "playback:resumed");
   }
 
   void allNotesOff() override
@@ -90,8 +90,38 @@ TEST_CASE("Playback transport controls map keys to transport actions", "[app][pl
   CHECK(transport.currentTimeSeconds() == Catch::Approx(0.0));
 }
 
-TEST_CASE("Playback transport actions clear audio on pause stop restart and seek",
-          "[app][playback]")
+TEST_CASE("Playback transport actions preserve audio on pause and resume", "[app][playback]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler audioScheduler(synth);
+  auto timeline = makeTimelineWithTwoNotes();
+  audioScheduler.setTimeline(timeline);
+
+  PlaybackTransport transport;
+  constexpr PlaybackControlSettings settings;
+
+  transport.play();
+  transport.update(1.0);
+  audioScheduler.update(0.0, transport.currentTimeSeconds());
+  REQUIRE(synth.commands == std::vector<std::string>{"on:60:90"});
+
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::TogglePlayPause, transport, audioScheduler, settings, defaultMidiBpm);
+  CHECK(transport.state() == PlaybackState::Paused);
+  CHECK(synth.commands == std::vector<std::string>{"on:60:90", "playback:paused"});
+
+  applyPlaybackTransportAction(
+    PlaybackTransportAction::TogglePlayPause, transport, audioScheduler, settings, defaultMidiBpm);
+  CHECK(transport.state() == PlaybackState::Playing);
+  CHECK(synth.commands ==
+        std::vector<std::string>{"on:60:90", "playback:paused", "playback:resumed"});
+
+  transport.update(1.0);
+  audioScheduler.update(1.0, transport.currentTimeSeconds());
+  CHECK(synth.commands.back() == "off:60");
+}
+
+TEST_CASE("Playback transport actions clear audio on stop restart and seek", "[app][playback]")
 {
   RecordingPianoSynth synth;
   TimelineAudioScheduler audioScheduler(synth);
@@ -104,18 +134,6 @@ TEST_CASE("Playback transport actions clear audio on pause stop restart and seek
   transport.play();
   transport.update(1.0);
   audioScheduler.update(0.0, transport.currentTimeSeconds());
-  REQUIRE(synth.commands == std::vector<std::string>{"on:60:90"});
-
-  applyPlaybackTransportAction(
-    PlaybackTransportAction::TogglePlayPause, transport, audioScheduler, settings, defaultMidiBpm);
-  CHECK(transport.state() == PlaybackState::Paused);
-  CHECK(synth.commands.back() == "all-off");
-
-  applyPlaybackTransportAction(
-    PlaybackTransportAction::TogglePlayPause, transport, audioScheduler, settings, defaultMidiBpm);
-  CHECK(transport.state() == PlaybackState::Playing);
-  CHECK(synth.commands.size() == 2);
-
   applyPlaybackTransportAction(
     PlaybackTransportAction::SeekForward, transport, audioScheduler, settings, defaultMidiBpm);
   CHECK(transport.currentTimeSeconds() == Catch::Approx(2.0));

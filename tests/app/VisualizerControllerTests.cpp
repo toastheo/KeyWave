@@ -33,7 +33,7 @@ public:
 
   void setPlaybackPaused(const bool paused) override
   {
-    (void)paused;
+    commands.push_back(paused ? "playback:paused" : "playback:resumed");
   }
 
   void allNotesOff() override
@@ -241,7 +241,7 @@ TEST_CASE("VisualizerController clears active audio before replacing the timelin
   REQUIRE(synth.commands == std::vector<std::string>{"on:60:90", "all-off", "on:72:80"});
 }
 
-TEST_CASE("VisualizerController clears audio for keyboard playback controls",
+TEST_CASE("VisualizerController preserves audio for keyboard pause and resume",
           "[app][visualizer][audio]")
 {
   MidiTimeline timeline;
@@ -260,7 +260,15 @@ TEST_CASE("VisualizerController clears audio for keyboard playback controls",
   constexpr auto pauseKeys = std::array{Key::Space};
   controller.handleInput(pauseKeys, false);
   CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
-  CHECK(synth.commands.back() == "all-off");
+  CHECK(synth.commands == std::vector<std::string>{"on:60:90", "playback:paused"});
+
+  controller.handleInput(pauseKeys, false);
+  CHECK(controller.playbackTransport().state() == PlaybackState::Playing);
+  CHECK(synth.commands ==
+        std::vector<std::string>{"on:60:90", "playback:paused", "playback:resumed"});
+
+  controller.update(1.5);
+  CHECK(synth.commands.size() == 3);
 
   constexpr auto restartKeys = std::array{Key::R};
   controller.handleInput(restartKeys, false);

@@ -37,10 +37,11 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
   switch (action) {
     case PlaybackTransportAction::TogglePlayPause:
       if (transport.state() == PlaybackState::Playing) {
+        audioScheduler.pause();
         transport.pause();
-        audioScheduler.seek(transport.currentTimeSeconds());
       }
       else {
+        audioScheduler.resume();
         transport.play();
       }
       break;
@@ -63,6 +64,7 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
 
     case PlaybackTransportAction::SeekForward:
       transport.seek(transport.currentTimeSeconds() + sanitizedSettings.seekStepSeconds);
+      audioScheduler.seek(transport.currentTimeSeconds());
       break;
 
     case PlaybackTransportAction::IncreasePlaybackBpm:
