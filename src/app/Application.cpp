@@ -68,7 +68,7 @@ std::unique_ptr<PianoSynth> createPianoSynth(DiagnosticSink& diagnostics)
   reportInfo(diagnostics, "Audio enabled: " + soundFontPath.string());
   return synth;
 #else
-  void(diagnostics);
+  (void)diagnostics;
   return std::make_unique<NullPianoSynth>();
 #endif
 }
