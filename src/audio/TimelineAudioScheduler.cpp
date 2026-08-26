@@ -47,6 +47,7 @@ void TimelineAudioScheduler::setTimeline(const MidiTimeline& timeline,
   });
   resetPlaybackState();
   resetCursor(0.0, CursorBoundary::IncludeEventsAtTime);
+  resume();
 }
 
 void TimelineAudioScheduler::update(const double previousTimeSeconds,
@@ -75,6 +76,26 @@ void TimelineAudioScheduler::update(const double previousTimeSeconds,
   }
 }
 
+void TimelineAudioScheduler::pause()
+{
+  if (m_playbackPaused) {
+    return;
+  }
+
+  m_playbackPaused = true;
+  m_synth.setPlaybackPaused(true);
+}
+
+void TimelineAudioScheduler::resume()
+{
+  if (!m_playbackPaused) {
+    return;
+  }
+
+  m_playbackPaused = false;
+  m_synth.setPlaybackPaused(false);
+}
+
 void TimelineAudioScheduler::seek(double timeSeconds)
 {
   resetPlaybackState();
@@ -87,6 +108,7 @@ void TimelineAudioScheduler::stop()
   resetPlaybackState();
   m_synth.allNotesOff();
   resetCursor(0.0, CursorBoundary::IncludeEventsAtTime);
+  resume();
 }
 
 void TimelineAudioScheduler::handleSustainPedal(const Event& event)

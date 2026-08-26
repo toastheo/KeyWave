@@ -13,6 +13,8 @@ public:
 
   void setTimeline(const MidiTimeline& timeline, double timelineOffsetSeconds = 0.0);
   void update(double previousTimeSeconds, double currentTimeSeconds);
+  void pause();
+  void resume();
   void seek(double timeSeconds);
   void stop();
 
@@ -47,4 +49,5 @@ private:
   std::vector<Event> m_events;
   std::size_t m_nextEventIndex = 0;
   bool m_sustainPedalDown = false;
+  bool m_playbackPaused = false;
 };

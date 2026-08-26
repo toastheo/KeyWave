@@ -28,7 +28,7 @@ public:
 
   void setPlaybackPaused(const bool paused) override
   {
-    (void)paused;
+    commands.push_back(paused ? "playback:paused" : "playback:resumed");
   }
 
   void allNotesOff() override
@@ -81,6 +81,40 @@ TEST_CASE("TimelineAudioScheduler sends note-off when playback crosses note end"
   REQUIRE(synth.commands.size() == 2);
   CHECK(synth.commands[0] == "on:64:72");
   CHECK(synth.commands[1] == "off:64");
+}
+
+TEST_CASE("TimelineAudioScheduler preserves notes sustain and cursor across pause and resume",
+          "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.0, .pressed = true});
+  timeline.addNote(Note{.pitch = 60, .velocity = 96, .startSeconds = 0.5, .durationSeconds = 1.5});
+
+  scheduler.setTimeline(timeline);
+  scheduler.update(0.0, 1.0);
+  scheduler.pause();
+  scheduler.pause();
+  scheduler.resume();
+  scheduler.resume();
+  scheduler.update(1.0, 2.0);
+
+  CHECK(synth.commands ==
+        std::vector<std::string>{
+          "sustain:down", "on:60:96", "playback:paused", "playback:resumed", "off:60"});
+}
+
+TEST_CASE("TimelineAudioScheduler stop clears audio and leaves rendering resumed", "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+
+  scheduler.pause();
+  scheduler.stop();
+
+  CHECK(synth.commands ==
+        std::vector<std::string>{"playback:paused", "all-off", "playback:resumed"});
 }
 
 TEST_CASE("TimelineAudioScheduler seek skips old events and clears active notes", "[audio]")
