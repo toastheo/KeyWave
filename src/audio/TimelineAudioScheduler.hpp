@@ -41,12 +41,23 @@ private:
     bool sustainPedalDown = false;
   };
 
+  struct RestorableNote
+  {
+    double startSeconds = 0.0;
+    double endSeconds = 0.0;
+    int pitch = 0;
+    int velocity = 0;
+  };
+
   void handleSustainPedal(const Event& event);
+  void restoreSustainAt(double timeSeconds);
+  void chaseHeldNotesAt(double timeSeconds);
   void resetPlaybackState();
   void resetCursor(double timeSeconds, CursorBoundary boundary);
 
   PianoSynth& m_synth;
   std::vector<Event> m_events;
+  std::vector<RestorableNote> m_restorableNotes;
   std::size_t m_nextEventIndex = 0;
   bool m_sustainPedalDown = false;
   bool m_playbackPaused = false;

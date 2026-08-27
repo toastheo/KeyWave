@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -136,6 +137,65 @@ TEST_CASE("TimelineAudioScheduler seek skips old events and clears active notes"
   CHECK(synth.commands[2] == "on:67:80");
 }
 
+TEST_CASE("TimelineAudioScheduler restores sustain and held notes at a seek destination",
+          "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.25, .pressed = true});
+  timeline.addNote(Note{.pitch = 55, .velocity = 60, .startSeconds = 0.1, .durationSeconds = 0.4});
+  timeline.addNote(Note{.pitch = 60, .velocity = 96, .startSeconds = 0.5, .durationSeconds = 2.0});
+  timeline.addNote(Note{.pitch = 64, .velocity = 80, .startSeconds = 1.0, .durationSeconds = 1.0});
+  timeline.addNote(Note{.pitch = 67, .velocity = 88, .startSeconds = 2.0, .durationSeconds = 1.0});
+  timeline.addNote(Note{.pitch = 72, .velocity = 72, .startSeconds = 2.5, .durationSeconds = 1.0});
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 3.0, .pressed = false});
+
+  scheduler.setTimeline(timeline);
+  scheduler.seek(2.0);
+
+  CHECK(synth.commands ==
+        std::vector<std::string>{"all-off", "sustain:down", "on:60:96", "on:67:88"});
+
+  scheduler.update(2.0, 2.5);
+  CHECK(synth.commands[synth.commands.size() - 2] == "off:60");
+  CHECK(synth.commands.back() == "on:72:72");
+
+  scheduler.update(2.5, 3.0);
+  CHECK(synth.commands[synth.commands.size() - 2] == "sustain:up");
+  CHECK(synth.commands.back() == "off:67");
+}
+
+TEST_CASE("TimelineAudioScheduler seek restores the latest sustain state only", "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.25, .pressed = true});
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.75, .pressed = false});
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.5, .durationSeconds = 2.0});
+
+  scheduler.setTimeline(timeline);
+  scheduler.seek(1.0);
+
+  CHECK(synth.commands == std::vector<std::string>{"all-off", "on:60:90"});
+}
+
+TEST_CASE("TimelineAudioScheduler seek restoration uses playback-relative timing", "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 43.0, .pressed = true});
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 42.0, .durationSeconds = 4.0});
+
+  scheduler.setTimeline(timeline, 40.0);
+  scheduler.seek(3.0);
+
+  CHECK(synth.commands ==
+        std::vector<std::string>{"all-off", "sustain:down", "on:60:90"});
+}
+
 TEST_CASE("TimelineAudioScheduler stop clears active notes and resets scheduling", "[audio]")
 {
   RecordingPianoSynth synth;
@@ -174,7 +234,7 @@ TEST_CASE("TimelineAudioScheduler forwards sustain pedal events around note-offs
   CHECK(synth.commands[3] == "sustain:up");
 }
 
-TEST_CASE("TimelineAudioScheduler seek releases sustain and clears active notes", "[audio]")
+TEST_CASE("TimelineAudioScheduler seek clears old voices before restoring sustain", "[audio]")
 {
   RecordingPianoSynth synth;
   TimelineAudioScheduler scheduler(synth);
@@ -188,12 +248,15 @@ TEST_CASE("TimelineAudioScheduler seek releases sustain and clears active notes"
   scheduler.seek(1.5);
   scheduler.update(1.5, 2.0);
 
-  REQUIRE(synth.commands.size() == 5);
-  CHECK(synth.commands[0] == "sustain:down");
-  CHECK(synth.commands[1] == "on:60:96");
-  CHECK(synth.commands[2] == "off:60");
-  CHECK(synth.commands[3] == "sustain:up");
-  CHECK(synth.commands[4] == "all-off");
+  CHECK(synth.commands == std::vector<std::string>{
+                            "sustain:down",
+                            "on:60:96",
+                            "off:60",
+                            "sustain:up",
+                            "all-off",
+                            "sustain:down",
+                            "sustain:up",
+                          });
 }
 
 } // namespace

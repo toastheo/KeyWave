@@ -18,16 +18,29 @@ void TimelineAudioScheduler::setTimeline(const MidiTimeline& timeline,
   const auto safeOffsetSeconds = std::isfinite(timelineOffsetSeconds) ? timelineOffsetSeconds : 0.0;
   m_events.clear();
   m_events.reserve(timeline.notes().size() * 2 + timeline.sustainPedalEvents().size());
+  m_restorableNotes.clear();
+  m_restorableNotes.reserve(timeline.notes().size());
 
   for (const auto& note : timeline.notes()) {
-    m_events.push_back(Event{.timeSeconds = note.startSeconds - safeOffsetSeconds,
+    const auto startSeconds = note.startSeconds - safeOffsetSeconds;
+    const auto endSeconds = startSeconds + note.durationSeconds;
+
+    if (std::isfinite(startSeconds) && std::isfinite(endSeconds) && note.durationSeconds > 0.0) {
+      m_restorableNotes.push_back(RestorableNote{
+        .startSeconds = startSeconds,
+        .endSeconds = endSeconds,
+        .pitch = note.pitch,
+        .velocity = note.velocity,
+      });
+    }
+
+    m_events.push_back(Event{.timeSeconds = startSeconds,
                              .type = EventType::NoteOn,
                              .pitch = note.pitch,
                              .velocity = note.velocity});
-    m_events.push_back(
-      Event{.timeSeconds = note.startSeconds + note.durationSeconds - safeOffsetSeconds,
-            .type = EventType::NoteOff,
-            .pitch = note.pitch});
+    m_events.push_back(Event{.timeSeconds = endSeconds,
+                             .type = EventType::NoteOff,
+                             .pitch = note.pitch});
   }
 
   for (const auto& sustainPedalEvent : timeline.sustainPedalEvents()) {
@@ -44,6 +57,12 @@ void TimelineAudioScheduler::setTimeline(const MidiTimeline& timeline,
     // Sustain changes run before same-tick note-offs so pedal-down can catch a release,
     // and pedal-up can release it before a same-tick retrigger.
     return lhs.type < rhs.type;
+  });
+  std::ranges::sort(m_restorableNotes, [](const RestorableNote& lhs, const RestorableNote& rhs) {
+    if (lhs.startSeconds != rhs.startSeconds) {
+      return lhs.startSeconds < rhs.startSeconds;
+    }
+    return lhs.pitch < rhs.pitch;
   });
   resetPlaybackState();
   resetCursor(0.0, CursorBoundary::IncludeEventsAtTime);
@@ -96,11 +115,16 @@ void TimelineAudioScheduler::resume()
   m_synth.setPlaybackPaused(false);
 }
 
-void TimelineAudioScheduler::seek(double timeSeconds)
+void TimelineAudioScheduler::seek(const double timeSeconds)
 {
+  const auto safeTimeSeconds =
+    std::isfinite(timeSeconds) ? std::max(0.0, timeSeconds) : 0.0;
+
   resetPlaybackState();
   m_synth.allNotesOff();
-  resetCursor(std::max(0.0, timeSeconds), CursorBoundary::SkipEventsAtTime);
+  resetCursor(safeTimeSeconds, CursorBoundary::SkipEventsAtTime);
+  restoreSustainAt(safeTimeSeconds);
+  chaseHeldNotesAt(safeTimeSeconds);
 }
 
 void TimelineAudioScheduler::stop()
@@ -119,6 +143,35 @@ void TimelineAudioScheduler::handleSustainPedal(const Event& event)
 
   m_sustainPedalDown = event.sustainPedalDown;
   m_synth.setSustainPedal(m_sustainPedalDown ? SustainPedalState::Down : SustainPedalState::Up);
+}
+
+void TimelineAudioScheduler::restoreSustainAt(const double timeSeconds)
+{
+  bool sustainPedalDown = false;
+  for (const auto& event : m_events) {
+    if (event.timeSeconds > timeSeconds) {
+      break;
+    }
+    if (event.type == EventType::SustainPedal) {
+      sustainPedalDown = event.sustainPedalDown;
+    }
+  }
+
+  if (sustainPedalDown) {
+    handleSustainPedal(Event{.type = EventType::SustainPedal, .sustainPedalDown = true});
+  }
+}
+
+void TimelineAudioScheduler::chaseHeldNotesAt(const double timeSeconds)
+{
+  for (const auto& note : m_restorableNotes) {
+    if (note.startSeconds > timeSeconds) {
+      break;
+    }
+    if (note.endSeconds > timeSeconds) {
+      m_synth.noteOn(PianoNote{.pitch = note.pitch, .velocity = note.velocity});
+    }
+  }
 }
 
 void TimelineAudioScheduler::resetPlaybackState()

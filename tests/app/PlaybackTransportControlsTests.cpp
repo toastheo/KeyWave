@@ -155,6 +155,27 @@ TEST_CASE("Playback transport actions clear audio on stop restart and seek", "[a
   CHECK(synth.commands.back() == "all-off");
 }
 
+TEST_CASE("Playback keyboard seek restores MIDI state immediately", "[app][playback][audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.25, .pressed = true});
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.5, .durationSeconds = 3.0});
+  scheduler.setTimeline(timeline);
+
+  PlaybackTransport transport;
+  transport.seek(0.75);
+  RecordingDiagnosticSink diagnostics;
+  constexpr PlaybackControlSettings settings{.seekStepSeconds = 0.5};
+
+  applyPlaybackTransportControl(Key::Right, transport, diagnostics, scheduler, settings);
+
+  CHECK(transport.currentTimeSeconds() == Catch::Approx(1.25));
+  CHECK(synth.commands ==
+        std::vector<std::string>{"all-off", "sustain:down", "on:60:90"});
+}
+
 TEST_CASE("Playback transport controls clamp playback BPM", "[app][playback]")
 {
   AudioFixture audio;
