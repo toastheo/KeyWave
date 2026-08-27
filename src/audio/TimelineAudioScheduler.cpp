@@ -115,7 +115,7 @@ void TimelineAudioScheduler::resume()
   m_synth.setPlaybackPaused(false);
 }
 
-void TimelineAudioScheduler::seek(const double timeSeconds)
+void TimelineAudioScheduler::seek(const double timeSeconds, const SeekMode mode)
 {
   const auto safeTimeSeconds =
     std::isfinite(timeSeconds) ? std::max(0.0, timeSeconds) : 0.0;
@@ -123,8 +123,11 @@ void TimelineAudioScheduler::seek(const double timeSeconds)
   resetPlaybackState();
   m_synth.allNotesOff();
   resetCursor(safeTimeSeconds, CursorBoundary::SkipEventsAtTime);
-  restoreSustainAt(safeTimeSeconds);
-  chaseHeldNotesAt(safeTimeSeconds);
+
+  if (mode == SeekMode::RestoreState) {
+    restoreSustainAt(safeTimeSeconds);
+    chaseHeldNotesAt(safeTimeSeconds);
+  }
 }
 
 void TimelineAudioScheduler::stop()

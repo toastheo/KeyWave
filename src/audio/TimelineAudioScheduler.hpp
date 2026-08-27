@@ -9,13 +9,19 @@
 class TimelineAudioScheduler
 {
 public:
+  enum class SeekMode
+  {
+    RestoreState,
+    PositionOnly,
+  };
+
   explicit TimelineAudioScheduler(PianoSynth& synth);
 
   void setTimeline(const MidiTimeline& timeline, double timelineOffsetSeconds = 0.0);
   void update(double previousTimeSeconds, double currentTimeSeconds);
   void pause();
   void resume();
-  void seek(double timeSeconds);
+  void seek(double timeSeconds, SeekMode mode = SeekMode::RestoreState);
   void stop();
 
 private:

@@ -193,6 +193,25 @@ TEST_CASE("VisualizerController finishes only after the final sustained note is 
   CHECK(synth.commands[3] == "sustain:up");
 }
 
+TEST_CASE("VisualizerController does not restore MIDI state after reaching the song end",
+          "[app][visualizer][audio]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 1.0});
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.5, .pressed = true});
+
+  RecordingPianoSynth synth;
+  VisualizerController controller(synth);
+  controller.replaceTimelineAndPlayFromStart(std::move(timeline));
+
+  controller.update(0.0);
+  controller.update(11.1);
+
+  CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
+  CHECK(synth.commands == std::vector<std::string>{
+                            "on:60:90", "sustain:down", "off:60", "sustain:up", "all-off"});
+}
+
 TEST_CASE("VisualizerController schedules audio while loaded timeline is playing",
           "[app][visualizer][audio]")
 {

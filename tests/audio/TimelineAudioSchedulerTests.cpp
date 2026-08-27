@@ -196,6 +196,41 @@ TEST_CASE("TimelineAudioScheduler seek restoration uses playback-relative timing
         std::vector<std::string>{"all-off", "sustain:down", "on:60:90"});
 }
 
+TEST_CASE("TimelineAudioScheduler position-only seek stays silent and preserves pause", "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.25, .pressed = true});
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.5, .durationSeconds = 2.0});
+
+  scheduler.setTimeline(timeline);
+  scheduler.pause();
+  scheduler.seek(1.0, TimelineAudioScheduler::SeekMode::PositionOnly);
+
+  CHECK(synth.commands == std::vector<std::string>{"playback:paused", "all-off"});
+
+  scheduler.resume();
+  CHECK(synth.commands.back() == "playback:resumed");
+}
+
+TEST_CASE("TimelineAudioScheduler resolves invalid seek positions to zero", "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 1.0});
+
+  scheduler.setTimeline(timeline);
+  for (const auto position : {-1.0,
+                              std::numeric_limits<double>::infinity(),
+                              std::numeric_limits<double>::quiet_NaN()}) {
+    synth.commands.clear();
+    scheduler.seek(position);
+    CHECK(synth.commands == std::vector<std::string>{"all-off", "on:60:90"});
+  }
+}
+
 TEST_CASE("TimelineAudioScheduler stop clears active notes and resets scheduling", "[audio]")
 {
   RecordingPianoSynth synth;
