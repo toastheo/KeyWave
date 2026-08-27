@@ -120,7 +120,7 @@ FluidSynthPianoSynth::FluidSynthPianoSynth(const std::filesystem::path& soundFon
   }
 
   handles->renderState.synth = handles->synth;
-  handles->renderState.process = & processFluidSynth;
+  handles->renderState.process = &processFluidSynth;
   handles->audioDriver =
     new_fluid_audio_driver2(handles->settings, &renderFluidSynthAudio, &handles->renderState);
   if (handles->audioDriver == nullptr) {

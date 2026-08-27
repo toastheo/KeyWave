@@ -38,9 +38,8 @@ void TimelineAudioScheduler::setTimeline(const MidiTimeline& timeline,
                              .type = EventType::NoteOn,
                              .pitch = note.pitch,
                              .velocity = note.velocity});
-    m_events.push_back(Event{.timeSeconds = endSeconds,
-                             .type = EventType::NoteOff,
-                             .pitch = note.pitch});
+    m_events.push_back(
+      Event{.timeSeconds = endSeconds, .type = EventType::NoteOff, .pitch = note.pitch});
   }
 
   for (const auto& sustainPedalEvent : timeline.sustainPedalEvents()) {
@@ -117,8 +116,7 @@ void TimelineAudioScheduler::resume()
 
 void TimelineAudioScheduler::seek(const double timeSeconds, const SeekMode mode)
 {
-  const auto safeTimeSeconds =
-    std::isfinite(timeSeconds) ? std::max(0.0, timeSeconds) : 0.0;
+  const auto safeTimeSeconds = std::isfinite(timeSeconds) ? std::max(0.0, timeSeconds) : 0.0;
 
   resetPlaybackState();
   m_synth.allNotesOff();

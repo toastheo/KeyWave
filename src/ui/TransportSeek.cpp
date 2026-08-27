@@ -12,8 +12,7 @@ void previewTransportSeek(PlaybackTransport& transport,
                       TimelineAudioScheduler::SeekMode::PositionOnly);
 }
 
-void commitTransportSeek(const PlaybackTransport& transport,
-                         TimelineAudioScheduler& audioScheduler)
+void commitTransportSeek(const PlaybackTransport& transport, TimelineAudioScheduler& audioScheduler)
 {
   audioScheduler.seek(transport.currentTimeSeconds());
 }

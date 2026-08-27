@@ -132,16 +132,13 @@ void renderTransportControls(PlaybackTransport& transport,
   }
 
   ImGui::SetNextItemWidth(360.0f);
-  const bool seekPositionChanged = ImGui::SliderScalar("##PlaybackPosition",
-                                                        ImGuiDataType_Double,
-                                                        &currentTime,
-                                                        &minimumTime,
-                                                        &maximumTime,
-                                                        "%.2f s");
+  const bool seekPositionChanged = ImGui::SliderScalar(
+    "##PlaybackPosition", ImGuiDataType_Double, &currentTime, &minimumTime, &maximumTime, "%.2f s");
 
   if (seekPositionChanged) {
-    previewTransportSeek(
-      transport, clampTransportPosition(currentTime, durationSeconds), audioScheduler);
+    previewTransportSeek(transport,
+                         clampTransportPosition(currentTime, durationSeconds),
+                         audioScheduler);
   }
 
   if (ImGui::IsItemDeactivatedAfterEdit()) {
