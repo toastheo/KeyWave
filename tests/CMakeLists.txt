@@ -34,6 +34,7 @@ add_executable(KeyWaveMidiTests
         app/VisualizationSettingsAdaptersTests.cpp
         app/VisualizationSettingsPanelControlsTests.cpp
         ui/TransportControlsConfigTests.cpp
+        ui/TransportSeekTests.cpp
         ui/TransportTimeTests.cpp
         midi/MidiFileLoaderTests.cpp
         midi/MidiTimelineQueryTests.cpp

@@ -263,6 +263,8 @@ add_library(keywave_ui STATIC
         ui/ImGuiLayer.cpp
         ui/TransportControls.hpp
         ui/TransportControls.cpp
+        ui/TransportSeek.hpp
+        ui/TransportSeek.cpp
         ui/TransportControlsConfig.hpp
         ui/TransportControlsConfig.cpp
         ui/TransportTime.hpp

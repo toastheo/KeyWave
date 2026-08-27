@@ -9,6 +9,7 @@
 #include "audio/TimelineAudioScheduler.hpp"
 #include "playback/PlaybackTransport.hpp"
 #include "ui/TransportControlsConfig.hpp"
+#include "ui/TransportSeek.hpp"
 #include "ui/TransportTime.hpp"
 
 namespace {
@@ -55,14 +56,6 @@ void applyTransportAction(const PlaybackTransportAction& action,
                           TimelineAudioScheduler& audioScheduler)
 {
   applyPlaybackTransportAction(action, transport, audioScheduler, settings, sourceBpm);
-}
-
-void seekTransport(PlaybackTransport& transport,
-                   const double timeSeconds,
-                   TimelineAudioScheduler& audioScheduler)
-{
-  transport.seek(timeSeconds);
-  audioScheduler.seek(transport.currentTimeSeconds());
 }
 
 void renderTransportControls(PlaybackTransport& transport,
@@ -139,13 +132,20 @@ void renderTransportControls(PlaybackTransport& transport,
   }
 
   ImGui::SetNextItemWidth(360.0f);
-  if (ImGui::SliderScalar("##PlaybackPosition",
-                          ImGuiDataType_Double,
-                          &currentTime,
-                          &minimumTime,
-                          &maximumTime,
-                          "%.2f s")) {
-    seekTransport(transport, clampTransportPosition(currentTime, durationSeconds), audioScheduler);
+  const bool seekPositionChanged = ImGui::SliderScalar("##PlaybackPosition",
+                                                        ImGuiDataType_Double,
+                                                        &currentTime,
+                                                        &minimumTime,
+                                                        &maximumTime,
+                                                        "%.2f s");
+
+  if (seekPositionChanged) {
+    previewTransportSeek(
+      transport, clampTransportPosition(currentTime, durationSeconds), audioScheduler);
+  }
+
+  if (ImGui::IsItemDeactivatedAfterEdit()) {
+    commitTransportSeek(transport, audioScheduler);
   }
 
   if (durationSeconds <= 0.0) {
