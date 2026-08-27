@@ -137,8 +137,7 @@ TEST_CASE("TimelineAudioScheduler seek skips old events and clears active notes"
   CHECK(synth.commands[2] == "on:67:80");
 }
 
-TEST_CASE("TimelineAudioScheduler restores sustain and held notes at a seek destination",
-          "[audio]")
+TEST_CASE("TimelineAudioScheduler restores sustain and held notes at a seek destination", "[audio]")
 {
   RecordingPianoSynth synth;
   TimelineAudioScheduler scheduler(synth);
@@ -209,8 +208,7 @@ TEST_CASE("TimelineAudioScheduler seek restoration uses playback-relative timing
   scheduler.setTimeline(timeline, 40.0);
   scheduler.seek(3.0);
 
-  CHECK(synth.commands ==
-        std::vector<std::string>{"all-off", "sustain:down", "on:60:90"});
+  CHECK(synth.commands == std::vector<std::string>{"all-off", "sustain:down", "on:60:90"});
 }
 
 TEST_CASE("TimelineAudioScheduler position-only seek stays silent and preserves pause", "[audio]")
@@ -239,9 +237,8 @@ TEST_CASE("TimelineAudioScheduler resolves invalid seek positions to zero", "[au
   timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 1.0});
 
   scheduler.setTimeline(timeline);
-  for (const auto position : {-1.0,
-                              std::numeric_limits<double>::infinity(),
-                              std::numeric_limits<double>::quiet_NaN()}) {
+  for (const auto position :
+       {-1.0, std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()}) {
     synth.commands.clear();
     scheduler.seek(position);
     CHECK(synth.commands == std::vector<std::string>{"all-off", "on:60:90"});

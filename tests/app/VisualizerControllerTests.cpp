@@ -140,8 +140,7 @@ TEST_CASE("VisualizerController starts with the first note at the top of the fal
           "[app][visualizer]")
 {
   MidiTimeline timeline;
-  timeline.addNote(
-    Note{.pitch = 60, .velocity = 90, .startSeconds = 42.0, .durationSeconds = 1.0});
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 42.0, .durationSeconds = 1.0});
 
   VisualizerController controller;
   controller.replaceTimelineAndPlayFromStart(std::move(timeline));
@@ -157,9 +156,9 @@ TEST_CASE("VisualizerController starts with the first note at the top of the fal
   const auto rects = styledRectsForScene(scene);
 
   REQUIRE_FALSE(rects.empty());
-  CHECK(rects.front().rect.y == Catch::Approx(scene.view.visibleWorldRect.height -
-                                              controller.settings().keyboard.whiteKeyHeight -
-                                              0.001));
+  CHECK(rects.front().rect.y ==
+        Catch::Approx(scene.view.visibleWorldRect.height -
+                      controller.settings().keyboard.whiteKeyHeight - 0.001));
 }
 
 TEST_CASE("VisualizerController finishes only after the final sustained note is released",
@@ -208,8 +207,9 @@ TEST_CASE("VisualizerController does not restore MIDI state after reaching the s
   controller.update(11.1);
 
   CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
-  CHECK(synth.commands == std::vector<std::string>{
-                            "on:60:90", "sustain:down", "off:60", "playback:paused", "sustain:up", "all-off"});
+  CHECK(synth.commands ==
+        std::vector<std::string>{
+          "on:60:90", "sustain:down", "off:60", "playback:paused", "sustain:up", "all-off"});
 }
 
 TEST_CASE("VisualizerController keeps restored notes paused after seeking backward from song end",
@@ -266,8 +266,7 @@ TEST_CASE("VisualizerController clears active audio before replacing the timelin
           "[app][visualizer][audio]")
 {
   MidiTimeline original;
-  original.addNote(
-    Note{.pitch = 60, .velocity = 90, .startSeconds = 0.25, .durationSeconds = 2.0});
+  original.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.25, .durationSeconds = 2.0});
 
   MidiTimeline replacement;
   replacement.addNote(

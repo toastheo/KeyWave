@@ -172,8 +172,7 @@ TEST_CASE("Playback keyboard seek restores MIDI state immediately", "[app][playb
   applyPlaybackTransportControl(Key::Right, transport, diagnostics, scheduler, settings);
 
   CHECK(transport.currentTimeSeconds() == Catch::Approx(1.25));
-  CHECK(synth.commands ==
-        std::vector<std::string>{"all-off", "sustain:down", "on:60:90"});
+  CHECK(synth.commands == std::vector<std::string>{"all-off", "sustain:down", "on:60:90"});
 }
 
 TEST_CASE("Playback transport controls clamp playback BPM", "[app][playback]")

@@ -16,8 +16,7 @@ class RecordingPianoSynth final : public PianoSynth
 public:
   void noteOn(const PianoNote note) override
   {
-    commands.push_back("on:" + std::to_string(note.pitch) + ":" +
-                       std::to_string(note.velocity));
+    commands.push_back("on:" + std::to_string(note.pitch) + ":" + std::to_string(note.velocity));
   }
 
   void noteOff(const int pitch) override
@@ -60,8 +59,8 @@ TEST_CASE("Transport seek preview stays silent and commit restores MIDI state", 
 
   commitTransportSeek(transport, scheduler);
 
-  CHECK(synth.commands == std::vector<std::string>{
-                            "all-off", "all-off", "sustain:down", "on:60:90"});
+  CHECK(synth.commands ==
+        std::vector<std::string>{"all-off", "all-off", "sustain:down", "on:60:90"});
 }
 
 } // namespace
