@@ -48,7 +48,7 @@ void TimelineAudioScheduler::setTimeline(const MidiTimeline& timeline,
                              .sustainPedalDown = sustainPedalEvent.pressed});
   }
 
-  std::ranges::sort(m_events, [](const Event& lhs, const Event& rhs) {
+  std::ranges::stable_sort(m_events, [](const Event& lhs, const Event& rhs) {
     if (lhs.timeSeconds != rhs.timeSeconds) {
       return lhs.timeSeconds < rhs.timeSeconds;
     }

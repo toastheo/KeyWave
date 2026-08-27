@@ -173,6 +173,7 @@ void VisualizerController::update(const double elapsedSeconds)
       // Keep the transport on the final frame while releasing sustained notes
       // and positioning the audio scheduler at the end.
       m_playbackTransport.pause();
+      m_audioScheduler.pause();
       m_audioScheduler.seek(playbackEndSeconds, TimelineAudioScheduler::SeekMode::PositionOnly);
     }
   }

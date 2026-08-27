@@ -181,6 +181,23 @@ TEST_CASE("TimelineAudioScheduler seek restores the latest sustain state only", 
   CHECK(synth.commands == std::vector<std::string>{"all-off", "on:60:90"});
 }
 
+TEST_CASE("TimelineAudioScheduler preserves source order for simultaneous sustain events",
+          "[audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  for (auto eventIndex = 0; eventIndex < 19; ++eventIndex) {
+    timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.25, .pressed = false});
+  }
+  timeline.addSustainPedalEvent(SustainPedalEvent{.timeSeconds = 0.25, .pressed = true});
+
+  scheduler.setTimeline(timeline);
+  scheduler.seek(0.25);
+
+  CHECK(synth.commands == std::vector<std::string>{"all-off", "sustain:down"});
+}
+
 TEST_CASE("TimelineAudioScheduler seek restoration uses playback-relative timing", "[audio]")
 {
   RecordingPianoSynth synth;

@@ -209,7 +209,36 @@ TEST_CASE("VisualizerController does not restore MIDI state after reaching the s
 
   CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
   CHECK(synth.commands == std::vector<std::string>{
-                            "on:60:90", "sustain:down", "off:60", "sustain:up", "all-off"});
+                            "on:60:90", "sustain:down", "off:60", "playback:paused", "sustain:up", "all-off"});
+}
+
+TEST_CASE("VisualizerController keeps restored notes paused after seeking backward from song end",
+          "[app][visualizer][audio]")
+{
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 8.0});
+
+  RecordingPianoSynth synth;
+  VisualizerController controller(synth);
+  controller.replaceTimelineAndPlayFromStart(std::move(timeline));
+
+  controller.update(0.0);
+  controller.update(18.1);
+
+  CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
+
+  constexpr auto seekBackwardKeys = std::array{Key::Left};
+  controller.handleInput(seekBackwardKeys, false);
+
+  CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(13.0));
+  CHECK(synth.commands == std::vector<std::string>{
+                            "on:60:90",
+                            "off:60",
+                            "playback:paused",
+                            "all-off",
+                            "all-off",
+                            "on:60:90",
+                          });
 }
 
 TEST_CASE("VisualizerController schedules audio while loaded timeline is playing",
