@@ -21,6 +21,7 @@ public:
   void update(double previousTimeSeconds, double currentTimeSeconds);
   void pause();
   void resume();
+  void finish();
   void seek(double timeSeconds, SeekMode mode = SeekMode::RestoreState);
   void stop();
 

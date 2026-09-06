@@ -14,5 +14,8 @@ void previewTransportSeek(PlaybackTransport& transport,
 
 void commitTransportSeek(const PlaybackTransport& transport, TimelineAudioScheduler& audioScheduler)
 {
+  if (transport.state() == PlaybackState::Paused) {
+    audioScheduler.pause();
+  }
   audioScheduler.seek(transport.currentTimeSeconds());
 }

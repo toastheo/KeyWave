@@ -63,4 +63,24 @@ TEST_CASE("Transport seek preview stays silent and commit restores MIDI state", 
         std::vector<std::string>{"all-off", "all-off", "sustain:down", "on:60:90"});
 }
 
+TEST_CASE("Transport seek after natural completion pauses restored notes", "[ui][audio]")
+{
+  RecordingPianoSynth synth;
+  TimelineAudioScheduler scheduler(synth);
+  MidiTimeline timeline;
+  timeline.addNote(Note{.pitch = 60, .velocity = 90, .startSeconds = 0.0, .durationSeconds = 2.0});
+  scheduler.setTimeline(timeline);
+  scheduler.update(0.0, 2.0);
+  scheduler.finish();
+  synth.commands.clear();
+
+  PlaybackTransport transport;
+  transport.pause();
+  previewTransportSeek(transport, 1.0, scheduler);
+  commitTransportSeek(transport, scheduler);
+
+  CHECK(synth.commands == std::vector<std::string>{
+                            "all-off", "playback:paused", "all-off", "on:60:90"});
+}
+
 } // namespace

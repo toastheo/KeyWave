@@ -192,7 +192,7 @@ TEST_CASE("VisualizerController finishes only after the final sustained note is 
   CHECK(synth.commands[3] == "sustain:up");
 }
 
-TEST_CASE("VisualizerController does not restore MIDI state after reaching the song end",
+TEST_CASE("VisualizerController lets audio delay after reaching the song end",
           "[app][visualizer][audio]")
 {
   MidiTimeline timeline;
@@ -209,7 +209,11 @@ TEST_CASE("VisualizerController does not restore MIDI state after reaching the s
   CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
   CHECK(synth.commands ==
         std::vector<std::string>{
-          "on:60:90", "sustain:down", "off:60", "playback:paused", "sustain:up", "all-off"});
+          "on:60:90", "sustain:down", "off:60", "sustain:up"});
+
+  controller.update(30.0);
+  CHECK(synth.commands.size() == 4);
+  CHECK(controller.playbackTransport().currentTimeSeconds() == Catch::Approx(11.0));
 }
 
 TEST_CASE("VisualizerController keeps restored notes paused after seeking backward from song end",
@@ -235,7 +239,6 @@ TEST_CASE("VisualizerController keeps restored notes paused after seeking backwa
                             "on:60:90",
                             "off:60",
                             "playback:paused",
-                            "all-off",
                             "all-off",
                             "on:60:90",
                           });

@@ -58,11 +58,17 @@ void applyPlaybackTransportAction(const PlaybackTransportAction action,
       break;
 
     case PlaybackTransportAction::SeekBackward:
+      if (transport.state() == PlaybackState::Paused) {
+        audioScheduler.pause();
+      }
       transport.seek(transport.currentTimeSeconds() - sanitizedSettings.seekStepSeconds);
       audioScheduler.seek(transport.currentTimeSeconds());
       break;
 
     case PlaybackTransportAction::SeekForward:
+      if (transport.state() == PlaybackState::Paused) {
+        audioScheduler.pause();
+      }
       transport.seek(transport.currentTimeSeconds() + sanitizedSettings.seekStepSeconds);
       audioScheduler.seek(transport.currentTimeSeconds());
       break;

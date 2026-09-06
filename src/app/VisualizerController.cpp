@@ -170,11 +170,9 @@ void VisualizerController::update(const double elapsedSeconds)
 
     if (m_timeline.has_value() && m_playbackTransport.currentTimeSeconds() >= playbackEndSeconds) {
       m_playbackTransport.seek(playbackEndSeconds);
-      // Keep the transport on the final frame while releasing sustained notes
-      // and positioning the audio scheduler at the end.
+      // Keep the final frame while the synth continues its natural release.
       m_playbackTransport.pause();
-      m_audioScheduler.pause();
-      m_audioScheduler.seek(playbackEndSeconds, TimelineAudioScheduler::SeekMode::PositionOnly);
+      m_audioScheduler.finish();
     }
   }
 }

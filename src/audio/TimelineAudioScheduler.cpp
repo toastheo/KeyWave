@@ -114,6 +114,14 @@ void TimelineAudioScheduler::resume()
   m_synth.setPlaybackPaused(false);
 }
 
+void TimelineAudioScheduler::finish()
+{
+  // Final note-offs have already been dispatched. Release an dangling pedal,
+  // but keep rendering the synth's release envelopes and reverb.
+  resetPlaybackState();
+  resume();
+}
+
 void TimelineAudioScheduler::seek(const double timeSeconds, const SeekMode mode)
 {
   const auto safeTimeSeconds = std::isfinite(timeSeconds) ? std::max(0.0, timeSeconds) : 0.0;
