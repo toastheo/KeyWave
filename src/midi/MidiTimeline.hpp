@@ -12,8 +12,6 @@ public:
   [[nodiscard]] double firstNoteStartSeconds() const;
   [[nodiscard]] double lengthSeconds() const;
   [[nodiscard]] bool empty() const;
-  [[nodiscard]] int minPitch() const;
-  [[nodiscard]] int maxPitch() const;
 
   void addTempoEvent(double timeSeconds, double bpm);
   [[nodiscard]] const std::vector<TempoEvent>& tempoEvents() const;

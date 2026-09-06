@@ -14,7 +14,6 @@ TEST_CASE("KeyboardGeometry builds an 88-key piano range without assuming C star
   CHECK(geometry.containsPitch(108));
   CHECK_FALSE(geometry.containsPitch(20));
   CHECK_FALSE(geometry.containsPitch(109));
-  CHECK(geometry.whiteKeyCount() == 52);
   CHECK(geometry.width() == Catch::Approx(52.0));
   CHECK(geometry.height() == Catch::Approx(2.5));
 
@@ -69,7 +68,6 @@ TEST_CASE("KeyboardGeometry handles partial ranges and missing neighboring black
     .pitchRange = PitchRange{.minPitch = 61, .maxPitch = 61},
   });
 
-  CHECK(geometry.whiteKeyCount() == 0);
   CHECK(geometry.width() == Catch::Approx(0.0));
   CHECK(geometry.keyRectForPitch(61).width == Catch::Approx(0.0));
   CHECK(geometry.noteRectForPitch(61).width == Catch::Approx(0.0));

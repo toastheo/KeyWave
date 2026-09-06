@@ -7,7 +7,6 @@
 #include "core/CoreTypes.hpp"
 #include "fallingnotes/FallingNotesTypes.hpp"
 #include "keyboard/KeyboardGeometry.hpp"
-#include "midi/MidiTimelineQuery.hpp"
 #include "midi/MidiTypes.hpp"
 
 namespace {
@@ -78,23 +77,12 @@ Rect shapedNoteRect(Rect rect, const int pitch, const FallingNotesLayoutStyle& s
 
 } // namespace
 
-bool FallingNotesLayoutResult::empty() const
-{
-  return notes.empty();
-}
-
-FallingNotesLayoutResult FallingNotesLayout::build(const std::span<const QueriedNote> queriedNotes,
+FallingNotesLayoutResult FallingNotesLayout::build(const std::span<const Note> queriedNotes,
                                                    const FallingNotesViewport& viewport,
                                                    const KeyboardGeometry& geometry,
                                                    const FallingNotesLayoutStyle& style)
 {
-  FallingNotesLayoutResult result{
-    .pitchRange = viewport.pitchRange,
-    .currentTimeSeconds = viewport.currentTimeSeconds,
-    .lookAheadSeconds = viewport.lookAheadSeconds,
-    .visiblePastSeconds = viewport.visiblePastSeconds,
-    .displayHeight = displayHeightFor(viewport),
-  };
+  FallingNotesLayoutResult result;
 
   if (!isValidViewport(viewport)) {
     return result;
@@ -105,16 +93,12 @@ FallingNotesLayoutResult FallingNotesLayout::build(const std::span<const Queried
   // notes.
   const auto minY = -viewport.visiblePastSeconds;
   const auto maxY = viewport.lookAheadSeconds;
-  const auto secondsToWorldScale = result.displayHeight / viewport.lookAheadSeconds;
+  const auto secondsToWorldScale = displayHeightFor(viewport) / viewport.lookAheadSeconds;
 
-  result.pitchLaneCount = geometry.whiteKeyCount();
-  result.contentWidth = geometry.width();
-  result.contentHeight = result.displayHeight;
   result.notes.reserve(queriedNotes.size());
   const auto shapedStyle = sanitizedStyle(style);
 
-  for (const auto& queriedNote : queriedNotes) {
-    const auto& note = queriedNote.note;
+  for (const auto& note : queriedNotes) {
     const auto noteEnd = noteEndSeconds(note);
     if (!std::isfinite(note.startSeconds) || !std::isfinite(note.durationSeconds) ||
         !std::isfinite(noteEnd)) {
@@ -145,15 +129,10 @@ FallingNotesLayoutResult FallingNotesLayout::build(const std::span<const Queried
     }
 
     result.notes.push_back(FallingNoteLayout{
-      .note = note,
       .x = noteRect.x,
       .y = noteStartOffset * secondsToWorldScale,
       .width = noteRect.width,
       .height = note.durationSeconds * secondsToWorldScale,
-      .visibleStartOffsetSeconds = visibleStartOffset,
-      .visibleEndOffsetSeconds = visibleEndOffset,
-      .clippedBottom = (noteStartOffset < minY),
-      .clippedTop = (noteEndOffset > maxY),
     });
   }
 

@@ -9,9 +9,4 @@ struct RenderScene
 {
   std::vector<RenderCommand> commands;
   RendererView view;
-
-  [[nodiscard]] bool empty() const
-  {
-    return commands.empty();
-  }
 };

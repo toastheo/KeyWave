@@ -113,7 +113,7 @@ RenderScene PianoRollSceneBuilder::build(const MidiTimeline& timeline,
     .displayHeight = sanitized.displayHeight,
   };
 
-  std::vector<QueriedNote> notes;
+  std::vector<Note> notes;
   std::vector<Note> activeNotes;
   if (std::isfinite(currentTimeSeconds)) {
     const MidiTimelineQuery query(timeline, diagnostics);
@@ -130,7 +130,7 @@ RenderScene PianoRollSceneBuilder::build(const MidiTimeline& timeline,
 
   const auto fallingNotesLayout =
     FallingNotesLayout::build(notes, viewport, keyboardGeometry, sanitized.fallingNotesLayout);
-  const auto keyboardState = KeyboardStateBuilder::build(activeNotes);
+  const auto keyboardState = KeyboardState(activeNotes);
   const auto keyboardLayout = KeyboardLayout::build(keyboardGeometry, keyboardState);
 
   std::vector<RenderCommand> commands;

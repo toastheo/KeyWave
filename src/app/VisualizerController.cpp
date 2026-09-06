@@ -111,11 +111,6 @@ PlaybackTransport& VisualizerController::playbackTransport()
   return m_playbackTransport;
 }
 
-const PlaybackTransport& VisualizerController::playbackTransport() const
-{
-  return m_playbackTransport;
-}
-
 TimelineAudioScheduler& VisualizerController::audioScheduler()
 {
   return m_audioScheduler;
@@ -197,10 +192,6 @@ RenderScene VisualizerController::buildScene() const
 
 void VisualizerController::configurePlaybackTimeline()
 {
-  if (!m_timeline.has_value()) {
-    return;
-  }
-
   m_timelineLookAheadSeconds = m_settings.fallingNotes.lookAheadSeconds;
   m_timelineOffsetSeconds =
     m_timeline->empty() ? 0.0 : m_timeline->firstNoteStartSeconds() - m_timelineLookAheadSeconds;

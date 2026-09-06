@@ -23,7 +23,6 @@ public:
   [[nodiscard]] static bool isBlackKey(int pitch);
   [[nodiscard]] static bool isWhiteKey(int pitch);
 
-  [[nodiscard]] int whiteKeyCount() const;
   [[nodiscard]] double width() const;
   [[nodiscard]] double height() const;
 
@@ -33,6 +32,5 @@ private:
   KeyboardLayoutConfig m_config;
   std::unordered_map<int, Rect> m_keyRects;
   std::unordered_map<int, Rect> m_noteRects;
-  int m_whiteKeyCount = 0;
   double m_width = 0.0;
 };

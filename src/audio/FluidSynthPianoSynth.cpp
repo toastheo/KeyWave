@@ -25,11 +25,6 @@ constexpr int sustainPedalOnValue = 127;
 constexpr int audioPeriodSize = 256;
 constexpr int audioPeriods = 8;
 
-std::string pathString(const std::filesystem::path& path)
-{
-  return path.string();
-}
-
 void setFluidSynthIntSetting(fluid_settings_t& settings,
                              DiagnosticSink& diagnostics,
                              const char* const name,
@@ -90,7 +85,7 @@ FluidSynthPianoSynth::FluidSynthPianoSynth(const std::filesystem::path& soundFon
                                            DiagnosticSink& diagnostics)
     : m_diagnostics(diagnostics)
 {
-  const auto soundFontString = pathString(soundFontPath);
+  const auto soundFontString = soundFontPath.string();
   std::error_code existsError;
   if (!std::filesystem::exists(soundFontPath, existsError)) {
     const auto messagePrefix = existsError ? "FluidSynth SoundFont path could not be checked: "

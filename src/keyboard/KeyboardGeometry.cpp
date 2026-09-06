@@ -23,11 +23,6 @@ bool isBlackPitchClass(const int pitchClass)
          pitchClass == 10;
 }
 
-bool isWhitePitchClass(const int pitchClass)
-{
-  return !isBlackPitchClass(pitchClass);
-}
-
 bool isValidRange(const PitchRange& range)
 {
   return range.minPitch <= range.maxPitch;
@@ -52,11 +47,6 @@ KeyboardLayoutConfig sanitizedConfig(KeyboardLayoutConfig config)
   return config;
 }
 
-Rect invalidRect()
-{
-  return {};
-}
-
 bool hasPositiveArea(const Rect& rect)
 {
   return rect.width > 0.0 && rect.height > 0.0;
@@ -72,12 +62,13 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
   }
 
   std::unordered_map<int, double> whiteKeyXByPitch;
+  int whiteKeyCount = 0;
   for (auto pitch = m_config.pitchRange.minPitch; pitch <= m_config.pitchRange.maxPitch; ++pitch) {
     if (!isWhiteKey(pitch)) {
       continue;
     }
 
-    const auto x = static_cast<double>(m_whiteKeyCount) * m_config.whiteKeyWidth;
+    const auto x = static_cast<double>(whiteKeyCount) * m_config.whiteKeyWidth;
     const Rect keyRect{
       .x = x,
       .y = -m_config.whiteKeyHeight,
@@ -85,8 +76,7 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
       .height = m_config.whiteKeyHeight,
     };
 
-    const auto noteGap =
-      std::min(m_config.whiteKeyGap, std::max(0.0, m_config.whiteKeyWidth - kMinimumPositiveWidth));
+    const auto noteGap = m_config.whiteKeyGap;
     const Rect noteRect{
       .x = x + noteGap * 0.5,
       .y = 0.0,      // (come from time layout later)
@@ -97,10 +87,10 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
     m_keyRects.emplace(pitch, keyRect);
     m_noteRects.emplace(pitch, noteRect);
     whiteKeyXByPitch.emplace(pitch, x);
-    ++m_whiteKeyCount;
+    ++whiteKeyCount;
   }
 
-  m_width = static_cast<double>(m_whiteKeyCount) * m_config.whiteKeyWidth;
+  m_width = static_cast<double>(whiteKeyCount) * m_config.whiteKeyWidth;
 
   // Black keys are positioned from the surrounding white keys, so a black key at a clipped
   // pitch-range edge is omitted unless both neighboring white-key anchors exist.
@@ -139,13 +129,13 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
 Rect KeyboardGeometry::keyRectForPitch(const int pitch) const
 {
   const auto it = m_keyRects.find(pitch);
-  return it == m_keyRects.end() ? invalidRect() : it->second;
+  return it == m_keyRects.end() ? Rect{} : it->second;
 }
 
 Rect KeyboardGeometry::noteRectForPitch(const int pitch) const
 {
   const auto it = m_noteRects.find(pitch);
-  return it == m_noteRects.end() ? invalidRect() : it->second;
+  return it == m_noteRects.end() ? Rect{} : it->second;
 }
 
 bool KeyboardGeometry::containsPitch(const int pitch) const
@@ -161,12 +151,7 @@ bool KeyboardGeometry::isBlackKey(const int pitch)
 
 bool KeyboardGeometry::isWhiteKey(const int pitch)
 {
-  return isWhitePitchClass(pitchClass(pitch));
-}
-
-int KeyboardGeometry::whiteKeyCount() const
-{
-  return m_whiteKeyCount;
+  return !isBlackKey(pitch);
 }
 
 double KeyboardGeometry::width() const

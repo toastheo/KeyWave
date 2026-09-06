@@ -105,7 +105,7 @@ TEST_CASE("VisualizerController builds an empty scene without a timeline", "[app
   VisualizerController const controller;
 
   CHECK(controller.durationSeconds() == Catch::Approx(0.0));
-  CHECK(controller.buildScene().empty());
+  CHECK(controller.buildScene().commands.empty());
 }
 
 TEST_CASE("VisualizerController replaces the timeline and starts playback from the beginning",
@@ -208,8 +208,7 @@ TEST_CASE("VisualizerController lets audio delay after reaching the song end",
 
   CHECK(controller.playbackTransport().state() == PlaybackState::Paused);
   CHECK(synth.commands ==
-        std::vector<std::string>{
-          "on:60:90", "sustain:down", "off:60", "sustain:up"});
+        std::vector<std::string>{"on:60:90", "sustain:down", "off:60", "sustain:up"});
 
   controller.update(30.0);
   CHECK(synth.commands.size() == 4);

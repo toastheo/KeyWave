@@ -14,21 +14,16 @@ bool isValidKeyRect(const Rect& rect)
 
 } // namespace
 
-bool KeyboardLayoutResult::empty() const
-{
-  return whiteKeys.empty() && blackKeys.empty();
-}
-
 KeyboardLayoutResult KeyboardLayout::build(const KeyboardGeometry& geometry,
                                            const KeyboardState& state)
 {
   KeyboardLayoutResult result{
-    .pitchRange = geometry.config().pitchRange,
     .width = geometry.width(),
     .height = geometry.height(),
   };
 
-  for (auto pitch = result.pitchRange.minPitch; pitch <= result.pitchRange.maxPitch; ++pitch) {
+  const auto pitchRange = geometry.config().pitchRange;
+  for (auto pitch = pitchRange.minPitch; pitch <= pitchRange.maxPitch; ++pitch) {
     const auto rect = geometry.keyRectForPitch(pitch);
     if (!isValidKeyRect(rect)) {
       continue;
@@ -36,21 +31,15 @@ KeyboardLayoutResult KeyboardLayout::build(const KeyboardGeometry& geometry,
 
     if (KeyboardGeometry::isWhiteKey(pitch)) {
       result.whiteKeys.push_back(PianoKeyLayout{
-        .pitch = pitch,
-        .kind = PianoKeyKind::White,
         .rect = rect,
         .active = state.isActive(pitch),
-        .velocity = state.velocityForPitch(pitch),
       });
       continue;
     }
 
     result.blackKeys.push_back(PianoKeyLayout{
-      .pitch = pitch,
-      .kind = PianoKeyKind::Black,
       .rect = rect,
       .active = state.isActive(pitch),
-      .velocity = state.velocityForPitch(pitch),
     });
   }
 

@@ -265,8 +265,6 @@ add_library(keywave_ui STATIC
         ui/TransportControls.cpp
         ui/TransportSeek.hpp
         ui/TransportSeek.cpp
-        ui/TransportControlsConfig.hpp
-        ui/TransportControlsConfig.cpp
         ui/TransportTime.hpp
         ui/TransportTime.cpp
         ui/VisualizationSettingsPanel.hpp

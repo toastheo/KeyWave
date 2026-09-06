@@ -19,13 +19,6 @@ struct TimelineViewport
   PitchRange pitchRange;
 };
 
-struct QueriedNote
-{
-  Note note;
-  bool startsBeforeRange = false;
-  bool endsAfterRange = false;
-};
-
 /**
  * Renderer-independent query helper for selecting notes from a MidiTimeline
  * by time and pitch ranges.
@@ -36,7 +29,7 @@ public:
   explicit MidiTimelineQuery(const MidiTimeline& timeline,
                              DiagnosticSink& diagnostics = nullDiagnosticSink());
 
-  [[nodiscard]] std::vector<QueriedNote> findNotes(const TimelineViewport& viewport) const;
+  [[nodiscard]] std::vector<Note> findNotes(const TimelineViewport& viewport) const;
   [[nodiscard]] std::vector<Note> findActiveNotesAt(double timeSeconds) const;
 
 private:

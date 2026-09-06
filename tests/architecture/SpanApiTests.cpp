@@ -43,7 +43,7 @@ TEST_CASE("render and layout APIs accept contiguous spans", "[architecture]")
   CHECK(renderer.submittedCommandCount == commands.size());
 
   const std::array queriedNotes{
-    QueriedNote{.note = Note{.pitch = 60, .velocity = 100, .durationSeconds = 1.0}},
+    Note{.pitch = 60, .velocity = 100, .durationSeconds = 1.0},
   };
   const auto layout =
     FallingNotesLayout::build(queriedNotes,
@@ -54,7 +54,7 @@ TEST_CASE("render and layout APIs accept contiguous spans", "[architecture]")
   const std::array activeNotes{
     Note{.pitch = 64, .velocity = 90, .channel = 1, .track = 2},
   };
-  const auto state = KeyboardStateBuilder::build(activeNotes);
+  const auto state = KeyboardState(activeNotes);
   CHECK(state.isActive(activeNotes.front().pitch));
 }
 

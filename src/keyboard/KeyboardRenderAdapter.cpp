@@ -1,6 +1,5 @@
 #include "keyboard/KeyboardRenderAdapter.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -63,8 +62,8 @@ void appendWhiteKeyCutMasks(std::vector<RenderCommand>& commands, const Rect& re
     return;
   }
 
-  const auto cutWidth = std::min(rect.width * kWhiteKeyCutWidthRatio, rect.width * 0.45);
-  const auto cutHeight = std::min(rect.height * kWhiteKeyCutHeightRatio, rect.height * 0.45);
+  const auto cutWidth = rect.width * kWhiteKeyCutWidthRatio;
+  const auto cutHeight = rect.height * kWhiteKeyCutHeightRatio;
   if (cutWidth <= 0.0 || cutHeight <= 0.0) {
     return;
   }

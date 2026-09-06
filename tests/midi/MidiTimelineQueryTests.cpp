@@ -52,15 +52,9 @@ TEST_CASE("MidiTimelineQuery finds notes overlapping time and pitch ranges", "[m
   });
 
   REQUIRE(notes.size() == 3);
-  CHECK(notes[0].note.pitch == 21);
-  CHECK(notes[0].startsBeforeRange);
-  CHECK(notes[0].endsAfterRange);
-  CHECK(notes[1].note.pitch == 64);
-  CHECK(notes[1].startsBeforeRange);
-  CHECK_FALSE(notes[1].endsAfterRange);
-  CHECK(notes[2].note.pitch == 60);
-  CHECK_FALSE(notes[2].startsBeforeRange);
-  CHECK_FALSE(notes[2].endsAfterRange);
+  CHECK(notes[0].pitch == 21);
+  CHECK(notes[1].pitch == 64);
+  CHECK(notes[2].pitch == 60);
 }
 
 TEST_CASE("MidiTimelineQuery sorts returned notes deterministically", "[midi][query]")
@@ -84,16 +78,16 @@ TEST_CASE("MidiTimelineQuery sorts returned notes deterministically", "[midi][qu
   });
 
   REQUIRE(notes.size() == 5);
-  CHECK(notes[0].note.startSeconds == 0.5);
-  CHECK(notes[1].note.pitch == 60);
-  CHECK(notes[1].note.channel == 0);
-  CHECK(notes[1].note.track == 1);
-  CHECK(notes[2].note.pitch == 60);
-  CHECK(notes[2].note.channel == 0);
-  CHECK(notes[2].note.track == 2);
-  CHECK(notes[3].note.pitch == 60);
-  CHECK(notes[3].note.channel == 1);
-  CHECK(notes[4].note.pitch == 62);
+  CHECK(notes[0].startSeconds == 0.5);
+  CHECK(notes[1].pitch == 60);
+  CHECK(notes[1].channel == 0);
+  CHECK(notes[1].track == 1);
+  CHECK(notes[2].pitch == 60);
+  CHECK(notes[2].channel == 0);
+  CHECK(notes[2].track == 2);
+  CHECK(notes[3].pitch == 60);
+  CHECK(notes[3].channel == 1);
+  CHECK(notes[4].pitch == 62);
 }
 
 TEST_CASE("MidiTimelineQuery finds notes active at playback time", "[midi][query]")
@@ -183,18 +177,13 @@ TEST_CASE("MidiTimelineQuery returns empty results for invalid ranges", "[midi][
           .empty());
 }
 
-TEST_CASE("MidiTimeline exposes safe pitch helpers for empty and populated timelines",
-          "[midi][query]")
+TEST_CASE("MidiTimeline reports whether notes are present", "[midi][query]")
 {
   MidiTimeline const emptyTimeline;
   CHECK(emptyTimeline.empty());
-  CHECK(emptyTimeline.minPitch() == 0);
-  CHECK(emptyTimeline.maxPitch() == 0);
 
   const auto timeline = makeTimeline();
   CHECK_FALSE(timeline.empty());
-  CHECK(timeline.minPitch() == 21);
-  CHECK(timeline.maxPitch() == 109);
 }
 
 } // namespace

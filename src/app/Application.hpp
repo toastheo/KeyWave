@@ -16,7 +16,6 @@
 #include "render/RendererBackend.hpp"
 #include "ui/ImGuiLayer.hpp"
 
-enum class VisualizationSettingsPanelAction : std::uint8_t;
 class PianoSynth;
 struct VisualizationSettingsPanelResult;
 
@@ -38,7 +37,7 @@ private:
 
   void applyWindowSettings();
   void refreshImportedMidiFiles();
-  bool loadImportedMidiFile(std::string_view id);
+  void loadImportedMidiFile(std::string_view id);
   void renameImportedMidiFile(std::string_view id, std::string_view displayName);
   void removeImportedMidiFile(std::string_view id);
   void handleVisualizationSettingsPanelAction(const VisualizationSettingsPanelResult& result);

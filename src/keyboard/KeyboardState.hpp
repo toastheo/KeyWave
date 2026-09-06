@@ -1,31 +1,17 @@
 #pragma once
 
 #include <span>
-#include <unordered_map>
-#include <vector>
+#include <unordered_set>
 
 #include "midi/MidiTypes.hpp"
-
-struct ActiveKey
-{
-  int pitch = 0;
-  int velocity = 0;
-};
 
 struct KeyboardState
 {
   KeyboardState() = default;
-  explicit KeyboardState(const std::vector<ActiveKey>& activeKeys);
+  explicit KeyboardState(std::span<const Note> activeNotes);
 
   [[nodiscard]] bool isActive(int pitch) const;
-  [[nodiscard]] int velocityForPitch(int pitch) const;
 
 private:
-  std::unordered_map<int, int> m_maxVelocityByPitch;
-};
-
-class KeyboardStateBuilder
-{
-public:
-  [[nodiscard]] static KeyboardState build(std::span<const Note> activeNotes);
+  std::unordered_set<int> m_activePitches;
 };

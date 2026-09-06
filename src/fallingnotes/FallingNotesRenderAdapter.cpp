@@ -65,7 +65,7 @@ double borderThicknessFor(const FallingNotesRenderStyle& style)
   return positiveOrZero(style.outlineThicknessPixels);
 }
 
-CornerRadiiPixels cornerRadiiForNote(const FallingNoteLayout&, const FallingNotesRenderStyle& style)
+CornerRadiiPixels cornerRadiiForStyle(const FallingNotesRenderStyle& style)
 {
   const auto radius = positiveOrZero(style.cornerRadiusPixels);
   return CornerRadiiPixels{
@@ -77,22 +77,17 @@ CornerRadiiPixels cornerRadiiForNote(const FallingNoteLayout&, const FallingNote
 }
 
 void appendStyledRect(std::vector<RenderCommand>& commands,
-                      const FallingNoteLayout& noteLayout,
+                      const Rect& rect,
                       const Color& topColor,
                       const FallingNotesRenderStyle& style)
 {
-  const auto rect = rectForNote(noteLayout);
-  if (!isValidRect(rect)) {
-    return;
-  }
-
   commands.emplace_back(DrawStyledRectCommand{
     .rect = rect,
     .topColor = topColor,
     .bottomColor = bottomGradientColorFor(topColor),
     .borderColor = style.outlineColor,
     .borderThicknessPixels = borderThicknessFor(style),
-    .cornerRadiiPixels = cornerRadiiForNote(noteLayout, style),
+    .cornerRadiiPixels = cornerRadiiForStyle(style),
   });
 }
 
@@ -110,7 +105,7 @@ std::vector<RenderCommand> FallingNotesRenderAdapter::buildCommands(
       continue;
     }
 
-    appendStyledRect(commands, noteLayout, colorForNote(noteLayout, style), style);
+    appendStyledRect(commands, rect, colorForNote(noteLayout, style), style);
   }
 
   return commands;

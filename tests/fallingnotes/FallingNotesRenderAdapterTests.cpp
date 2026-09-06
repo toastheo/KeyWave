@@ -11,17 +11,13 @@ namespace {
 FallingNoteLayout makeNoteLayout(const double x,
                                  const double y,
                                  const double width,
-                                 const double height,
-                                 const bool clippedBottom = false,
-                                 const bool clippedTop = false)
+                                 const double height)
 {
   return FallingNoteLayout{
     .x = x,
     .y = y,
     .width = width,
     .height = height,
-    .clippedBottom = clippedBottom,
-    .clippedTop = clippedTop,
   };
 }
 
@@ -62,10 +58,8 @@ TEST_CASE("FallingNotesRenderAdapter converts falling note layouts into styled r
       {
         makeNoteLayout(0.0, 2.0, 0.9, 1.0),
         makeNoteLayout(1.0, -0.5, 0.9, 1.0),
-        makeNoteLayout(2.0, 9.5, 0.9, 0.5, false, true),
+        makeNoteLayout(2.0, 9.5, 0.9, 0.5),
       },
-    .contentWidth = 3.0,
-    .contentHeight = 10.0,
   };
   constexpr FallingNotesRenderStyle style{
     .noteColor = Color{.r = 0.1f, .g = 0.2f, .b = 0.3f, .a = 0.4f},
@@ -111,8 +105,8 @@ TEST_CASE("FallingNotesRenderAdapter highlights notes intersecting the keyboard 
   const FallingNotesLayoutResult layout{
     .notes =
       {
-        makeNoteLayout(0.0, 9.5, 0.9, 0.5, false, true),
-        makeNoteLayout(1.0, 0.0, 0.9, 1.0, true, false),
+        makeNoteLayout(0.0, 9.5, 0.9, 0.5),
+        makeNoteLayout(1.0, 0.0, 0.9, 1.0),
       },
   };
   constexpr FallingNotesRenderStyle style{
@@ -168,8 +162,8 @@ TEST_CASE("FallingNotesRenderAdapter keeps clipped note corners rounded", "[fall
     .notes =
       {
         makeNoteLayout(1.0, 2.0, 3.0, 4.0),
-        makeNoteLayout(1.0, 8.0, 3.0, 2.0, false, true),
-        makeNoteLayout(1.0, 0.0, 3.0, 2.0, true, false),
+        makeNoteLayout(1.0, 8.0, 3.0, 2.0),
+        makeNoteLayout(1.0, 0.0, 3.0, 2.0),
       },
   };
   constexpr FallingNotesRenderStyle style{

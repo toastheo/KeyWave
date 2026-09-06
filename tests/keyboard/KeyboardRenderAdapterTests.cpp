@@ -1,6 +1,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <variant>
+#include <vector>
 
 #include "keyboard/KeyboardLayout.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
@@ -85,15 +86,11 @@ TEST_CASE("KeyboardRenderAdapter emits aligned black bottom cut masks for white 
     .whiteKeys =
       {
         PianoKeyLayout{
-          .pitch = 60,
-          .kind = PianoKeyKind::White,
           .rect = Rect{.x = 2.0, .y = -2.5, .width = 1.0, .height = 2.5},
           .active = false,
-          .velocity = 0,
         },
       },
     .blackKeys = {},
-    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
     .width = 1.0,
     .height = 2.5,
   };
@@ -134,15 +131,11 @@ TEST_CASE("KeyboardRenderAdapter skips bottom cut masks for invalid white key re
     .whiteKeys =
       {
         PianoKeyLayout{
-          .pitch = 60,
-          .kind = PianoKeyKind::White,
           .rect = Rect{.x = 2.0, .y = -2.5, .width = 0.0, .height = 2.5},
           .active = false,
-          .velocity = 0,
         },
       },
     .blackKeys = {},
-    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 60},
     .width = 1.0,
     .height = 2.5,
   };
@@ -162,24 +155,17 @@ TEST_CASE("KeyboardRenderAdapter uses active colors for active keys", "[keyboard
     .whiteKeys =
       {
         PianoKeyLayout{
-          .pitch = 60,
-          .kind = PianoKeyKind::White,
           .rect = Rect{.x = 0.0, .y = -2.5, .width = 1.0, .height = 2.5},
           .active = true,
-          .velocity = 90,
         },
       },
     .blackKeys =
       {
         PianoKeyLayout{
-          .pitch = 61,
-          .kind = PianoKeyKind::Black,
           .rect = Rect{.x = 0.7, .y = -1.55, .width = 0.6, .height = 1.55},
           .active = true,
-          .velocity = 80,
         },
       },
-    .pitchRange = PitchRange{.minPitch = 60, .maxPitch = 61},
     .width = 1.0,
     .height = 2.5,
   };

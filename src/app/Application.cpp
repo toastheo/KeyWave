@@ -208,20 +208,20 @@ void Application::refreshImportedMidiFiles()
                     });
 }
 
-bool Application::loadImportedMidiFile(const std::string_view id)
+void Application::loadImportedMidiFile(const std::string_view id)
 {
   const auto storedMidiPath = m_midiLibraryStore.importedFilePath(id, m_diagnostics);
   if (!storedMidiPath.has_value()) {
     reportWarning(m_diagnostics,
                   "Warning: imported MIDI file is unavailable. Keeping the current MIDI file.");
-    return false;
+    return;
   }
 
   reportInfo(m_diagnostics, "Loading MIDI file: " + storedMidiPath->string());
   auto timeline = MidiFileLoader::loadFromFile(*storedMidiPath, m_diagnostics);
   if (!timeline.has_value()) {
     reportWarning(m_diagnostics, "Warning: MIDI loading failed. Keeping the current MIDI file.");
-    return false;
+    return;
   }
 
   if (!m_midiLibraryStore.setLastActiveMidiId(id, m_diagnostics)) {
@@ -236,7 +236,6 @@ bool Application::loadImportedMidiFile(const std::string_view id)
   m_activeImportedMidiId = std::string(id);
   refreshImportedMidiFiles();
   m_visualizerController.replaceTimelineAndPlayFromStart(std::move(timeline));
-  return true;
 }
 
 void Application::renameImportedMidiFile(const std::string_view id,

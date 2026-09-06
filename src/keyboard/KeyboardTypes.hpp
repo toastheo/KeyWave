@@ -1,23 +1,13 @@
 #pragma once
 
-#include <cstdint>
 #include <vector>
 
 #include "core/CoreTypes.hpp"
 
-enum class PianoKeyKind : std::uint8_t
-{
-  White,
-  Black,
-};
-
 struct PianoKeyLayout
 {
-  int pitch = 0;
-  PianoKeyKind kind = PianoKeyKind::White;
   Rect rect;
   bool active = false;
-  int velocity = 0;
 };
 
 struct KeyboardLayoutConfig
@@ -38,9 +28,6 @@ struct KeyboardLayoutResult
   std::vector<PianoKeyLayout> whiteKeys;
   std::vector<PianoKeyLayout> blackKeys;
 
-  PitchRange pitchRange;
   double width = 0.0;
   double height = 0.0;
-
-  [[nodiscard]] bool empty() const;
 };

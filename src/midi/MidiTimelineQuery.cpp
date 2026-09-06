@@ -57,23 +57,23 @@ bool isInPitchRange(const Note& note, const PitchRange& range)
   return note.pitch >= range.minPitch && note.pitch <= range.maxPitch;
 }
 
-void sortQueriedNotes(std::vector<QueriedNote>& notes)
+void sortNotes(std::vector<Note>& notes)
 {
   // This is necessary so rendering and tests do not depend on source MIDI event ordering.
-  std::ranges::sort(notes, [](const QueriedNote& left, const QueriedNote& right) {
-    if (left.note.startSeconds != right.note.startSeconds) {
-      return left.note.startSeconds < right.note.startSeconds;
+  std::ranges::sort(notes, [](const Note& left, const Note& right) {
+    if (left.startSeconds != right.startSeconds) {
+      return left.startSeconds < right.startSeconds;
     }
 
-    if (left.note.pitch != right.note.pitch) {
-      return left.note.pitch < right.note.pitch;
+    if (left.pitch != right.pitch) {
+      return left.pitch < right.pitch;
     }
 
-    if (left.note.channel != right.note.channel) {
-      return left.note.channel < right.note.channel;
+    if (left.channel != right.channel) {
+      return left.channel < right.channel;
     }
 
-    return left.note.track < right.note.track;
+    return left.track < right.track;
   });
 }
 
@@ -112,14 +112,14 @@ MidiTimelineQuery::MidiTimelineQuery(const MidiTimeline& timeline, DiagnosticSin
     , m_diagnostics(diagnostics)
 {}
 
-std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& viewport) const
+std::vector<Note> MidiTimelineQuery::findNotes(const TimelineViewport& viewport) const
 {
   if (!isValidTimeRange(viewport.timeRange, m_diagnostics) ||
       !isValidPitchRange(viewport.pitchRange, m_diagnostics)) {
     return {};
   }
 
-  std::vector<QueriedNote> result;
+  std::vector<Note> result;
 
   for (const auto& note : m_timeline.notes()) {
     if (!overlapsTimeRange(note, viewport.timeRange) ||
@@ -127,18 +127,10 @@ std::vector<QueriedNote> MidiTimelineQuery::findNotes(const TimelineViewport& vi
       continue;
     }
 
-    const bool startsBeforeRange = note.startSeconds < viewport.timeRange.startSeconds;
-    const bool endsAfterRange = note.startSeconds + note.durationSeconds >
-                                viewport.timeRange.endSeconds;
-
-    result.push_back(QueriedNote{
-      .note = note,
-      .startsBeforeRange = startsBeforeRange,
-      .endsAfterRange = endsAfterRange,
-    });
+    result.push_back(note);
   }
 
-  sortQueriedNotes(result);
+  sortNotes(result);
   return result;
 }
 

@@ -8,7 +8,6 @@
 #include "app/PlaybackTransportAction.hpp"
 #include "audio/TimelineAudioScheduler.hpp"
 #include "playback/PlaybackTransport.hpp"
-#include "ui/TransportControlsConfig.hpp"
 #include "ui/TransportSeek.hpp"
 #include "ui/TransportTime.hpp"
 
@@ -21,48 +20,13 @@ std::string formatSeekStepLabel(const double seekStepSeconds)
   return output.str();
 }
 
-ImGuiWindowFlags toImGuiWindowFlags(const TransportControlsWindowFlags flags)
-{
-  ImGuiWindowFlags imguiFlags = 0;
-  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoDecoration)) {
-    imguiFlags |= ImGuiWindowFlags_NoDecoration;
-  }
-  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::AlwaysAutoResize)) {
-    imguiFlags |= ImGuiWindowFlags_AlwaysAutoResize;
-  }
-  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoSavedSettings)) {
-    imguiFlags |= ImGuiWindowFlags_NoSavedSettings;
-  }
-  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoMove)) {
-    imguiFlags |= ImGuiWindowFlags_NoMove;
-  }
-  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoFocusOnAppearing)) {
-    imguiFlags |= ImGuiWindowFlags_NoFocusOnAppearing;
-  }
-  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoNavFocus)) {
-    imguiFlags |= ImGuiWindowFlags_NoNavFocus;
-  }
-  if (hasTransportControlsWindowFlag(flags, TransportControlsWindowFlag::NoMouseInputs)) {
-    imguiFlags |= ImGuiWindowFlags_NoMouseInputs;
-  }
+} // namespace
 
-  return imguiFlags;
-}
-
-void applyTransportAction(const PlaybackTransportAction& action,
-                          PlaybackTransport& transport,
-                          const PlaybackControlSettings& settings,
-                          const double sourceBpm,
-                          TimelineAudioScheduler& audioScheduler)
-{
-  applyPlaybackTransportAction(action, transport, audioScheduler, settings, sourceBpm);
-}
-
-void renderTransportControls(PlaybackTransport& transport,
-                             const double durationSeconds,
-                             const PlaybackControlSettings& settings,
-                             const double sourceBpm,
-                             TimelineAudioScheduler& audioScheduler)
+void TransportControls::render(PlaybackTransport& transport,
+                               const double durationSeconds,
+                               TimelineAudioScheduler& audioScheduler,
+                               const PlaybackControlSettings& settings,
+                               const double sourceBpm)
 {
   const auto sanitizedSettings = sanitizePlaybackControlSettings(settings);
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -72,8 +36,11 @@ void renderTransportControls(PlaybackTransport& transport,
   ImGui::SetNextWindowPos(position, ImGuiCond_Always);
   ImGui::SetNextWindowBgAlpha(0.88f);
 
-  if (!ImGui::Begin(
-        "Transport Controls", nullptr, toImGuiWindowFlags(transportControlsWindowFlags()))) {
+  constexpr ImGuiWindowFlags windowFlags =
+    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove |
+    ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavFocus;
+  if (!ImGui::Begin("Transport Controls", nullptr, windowFlags)) {
     ImGui::End();
     return;
   }
@@ -83,36 +50,36 @@ void renderTransportControls(PlaybackTransport& transport,
   const auto seekForwardLabel = seekLabel + " >>";
 
   if (ImGui::Button(seekBackwardLabel.c_str())) {
-    applyTransportAction(PlaybackTransportAction::SeekBackward,
-                         transport,
-                         sanitizedSettings,
-                         sourceBpm,
-                         audioScheduler);
+    applyPlaybackTransportAction(PlaybackTransportAction::SeekBackward,
+                                 transport,
+                                 audioScheduler,
+                                 sanitizedSettings,
+                                 sourceBpm);
   }
 
   ImGui::SameLine();
   const char* playPauseLabel = transport.state() == PlaybackState::Playing ? "Pause" : "Play";
   if (ImGui::Button(playPauseLabel)) {
-    applyTransportAction(PlaybackTransportAction::TogglePlayPause,
-                         transport,
-                         sanitizedSettings,
-                         sourceBpm,
-                         audioScheduler);
+    applyPlaybackTransportAction(PlaybackTransportAction::TogglePlayPause,
+                                 transport,
+                                 audioScheduler,
+                                 sanitizedSettings,
+                                 sourceBpm);
   }
 
   ImGui::SameLine();
   if (ImGui::Button("Stop")) {
-    applyTransportAction(
-      PlaybackTransportAction::Stop, transport, sanitizedSettings, sourceBpm, audioScheduler);
+    applyPlaybackTransportAction(
+      PlaybackTransportAction::Stop, transport, audioScheduler, sanitizedSettings, sourceBpm);
   }
 
   ImGui::SameLine();
   if (ImGui::Button(seekForwardLabel.c_str())) {
-    applyTransportAction(PlaybackTransportAction::SeekForward,
-                         transport,
-                         sanitizedSettings,
-                         sourceBpm,
-                         audioScheduler);
+    applyPlaybackTransportAction(PlaybackTransportAction::SeekForward,
+                                 transport,
+                                 audioScheduler,
+                                 sanitizedSettings,
+                                 sourceBpm);
   }
 
   ImGui::SameLine();
@@ -150,15 +117,4 @@ void renderTransportControls(PlaybackTransport& transport,
   }
 
   ImGui::End();
-}
-
-} // namespace
-
-void TransportControls::render(PlaybackTransport& transport,
-                               const double durationSeconds,
-                               TimelineAudioScheduler& audioScheduler,
-                               const PlaybackControlSettings& settings,
-                               const double sourceBpm)
-{
-  renderTransportControls(transport, durationSeconds, settings, sourceBpm, audioScheduler);
 }

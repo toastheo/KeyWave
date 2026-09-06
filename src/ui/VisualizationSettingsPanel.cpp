@@ -29,47 +29,24 @@ double clampRange(const double value, const double minimum, const double maximum
   return std::clamp(finiteOr(value, minimum), minimum, maximum);
 }
 
-bool editDoubleSlider(const char* label, double& value, const double minimum, const double maximum)
+void editDoubleSlider(const char* label, double& value, const double minimum, const double maximum)
 {
   auto editableValue = static_cast<float>(clampRange(value, minimum, maximum));
-  const auto changed = ImGui::SliderFloat(
+  ImGui::SliderFloat(
     label, &editableValue, static_cast<float>(minimum), static_cast<float>(maximum));
   value = clampRange(editableValue, minimum, maximum);
-  return changed;
 }
 
-bool editDoubleSlider(const char* label, double& value, const DoubleSettingRange range)
+void editDoubleSlider(const char* label, double& value, const DoubleSettingRange range)
 {
-  return editDoubleSlider(label, value, range.minimum, range.maximum);
+  editDoubleSlider(label, value, range.minimum, range.maximum);
 }
 
-bool editSeparatorWidth(double& value, const DoubleSettingRange range)
-{
-  auto editableValue = static_cast<float>(clampRange(value, range.minimum, range.maximum));
-  const auto changed = ImGui::SliderFloat("Separator Width",
-                                          &editableValue,
-                                          static_cast<float>(range.minimum),
-                                          static_cast<float>(range.maximum));
-  value = clampRange(editableValue, range.minimum, range.maximum);
-  return changed;
-}
-
-bool editOutlineThickness(double& value, const DoubleSettingRange range)
-{
-  auto editableValue = static_cast<float>(clampRange(value, range.minimum, range.maximum));
-  const auto changed = ImGui::SliderFloat("Outline Thickness",
-                                          &editableValue,
-                                          static_cast<float>(range.minimum),
-                                          static_cast<float>(range.maximum));
-  value = clampRange(editableValue, range.minimum, range.maximum);
-  return changed;
-}
-
-bool editColor(const char* label, Color& color)
+void editColor(const char* label, Color& color)
 {
   std::array values{color.r, color.g, color.b, color.a};
   if (!ImGui::ColorEdit4(label, values.data())) {
-    return false;
+    return;
   }
 
   color = Color{
@@ -78,7 +55,6 @@ bool editColor(const char* label, Color& color)
     .b = values[2],
     .a = values[3],
   };
-  return true;
 }
 
 template <typename Body> void disabledIf(const bool disabled, Body body)
@@ -221,7 +197,9 @@ void renderFallingNotesSettings(FallingNotesSettings& settings)
 
   ImGui::SeparatorText("Outline");
   ImGui::Checkbox("Show Outline", &settings.includeOutline);
-  editOutlineThickness(settings.outlineThicknessPixels, constraints.outlineThicknessPixels);
+  editDoubleSlider("Outline Thickness",
+                   settings.outlineThicknessPixels,
+                   constraints.outlineThicknessPixels);
   editColor("Outline Color", settings.outlineColor);
 }
 
@@ -244,15 +222,6 @@ void renderKeyboardSettings(KeyboardSettings& settings)
   editDoubleSlider("White Key Width", settings.whiteKeyWidth, constraints.whiteKeyWidth);
   editDoubleSlider("Keyboard Height", settings.whiteKeyHeight, constraints.whiteKeyHeight);
 
-  // Clamp parent dimensions before editing dependent black-key dimensions, since their maxima
-  // are dynamic.
-  settings.whiteKeyWidth =
-    std::max(constraints.whiteKeyWidth.minimum,
-             finiteOr(settings.whiteKeyWidth, KeyboardSettings{}.whiteKeyWidth));
-  settings.whiteKeyHeight =
-    std::max(constraints.whiteKeyHeight.minimum,
-             finiteOr(settings.whiteKeyHeight, KeyboardSettings{}.whiteKeyHeight));
-
   editDoubleSlider("Black Key Width",
                    settings.blackKeyWidth,
                    constraints.blackKeyWidth.minimum,
@@ -261,19 +230,8 @@ void renderKeyboardSettings(KeyboardSettings& settings)
                    settings.blackKeyHeight,
                    constraints.blackKeyHeight.minimum,
                    settings.whiteKeyHeight);
-  editSeparatorWidth(settings.separatorWidth, constraints.separatorWidth);
+  editDoubleSlider("Separator Width", settings.separatorWidth, constraints.separatorWidth);
   editDoubleSlider("Hit Line Height", settings.hitLineHeight, constraints.hitLineHeight);
-
-  settings.blackKeyWidth =
-    clampRange(settings.blackKeyWidth, constraints.blackKeyWidth.minimum, settings.whiteKeyWidth);
-  settings.blackKeyHeight = clampRange(settings.blackKeyHeight,
-                                       constraints.blackKeyHeight.minimum,
-                                       settings.whiteKeyHeight);
-  settings.separatorWidth =
-    std::max(constraints.separatorWidth.minimum, finiteOr(settings.separatorWidth, 0.0));
-  settings.hitLineHeight =
-    std::max(constraints.hitLineHeight.minimum,
-             finiteOr(settings.hitLineHeight, KeyboardSettings{}.hitLineHeight));
 }
 
 void renderRendererSettings(RendererSettings& settings)
