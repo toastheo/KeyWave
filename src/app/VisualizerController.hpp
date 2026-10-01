@@ -8,6 +8,7 @@
 #include "audio/PianoSynth.hpp"
 #include "audio/TimelineAudioScheduler.hpp"
 #include "diagnostics/Diagnostics.hpp"
+#include "export/ExportSnapshot.hpp"
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "playback/PlaybackTransport.hpp"
@@ -39,6 +40,7 @@ public:
   void update(double elapsedSeconds);
   void suppressNextPlaybackUpdate();
   [[nodiscard]] RenderScene buildScene() const;
+  [[nodiscard]] ExportSnapshot exportSnapshot() const;
 
 private:
   void configurePlaybackTimeline();

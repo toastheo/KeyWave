@@ -169,6 +169,18 @@ target_link_libraries(keywave_fallingnotes
         keywave_render
 )
 
+add_library(keywave_export STATIC
+        export/VideoExportSettings.hpp
+        export/VideoExportSettings.cpp
+        export/ExportSnapshot.hpp
+        export/ExportSnapshot.cpp
+        export/ExportTiming.hpp
+        export/ExportTiming.cpp
+)
+
+target_include_directories(keywave_export PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(keywave_export PUBLIC keywave_core keywave_midi keywave_fallingnotes)
+
 add_library(keywave_playback STATIC
         playback/PlaybackTransport.hpp
         playback/PlaybackTransport.cpp
@@ -251,6 +263,7 @@ target_link_libraries(keywave_app_core
         PUBLIC
         keywave_app_settings
         keywave_audio
+        keywave_export
         keywave_diagnostics
         keywave_fallingnotes
         keywave_keyboard

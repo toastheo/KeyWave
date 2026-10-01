@@ -26,6 +26,7 @@ public:
   [[nodiscard]] PlaybackState state() const;
 
   void setEffectiveBpm(double sourceBpm, double targetBpm);
+  [[nodiscard]] double playbackRate() const;
   [[nodiscard]] double effectiveBpm(double sourceBpm) const;
 
 private:
