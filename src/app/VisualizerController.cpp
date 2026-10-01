@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <optional>
 #include <span>
+#include <stdexcept>
 #include <utility>
 
 #include "app/AppSettings.hpp"
@@ -188,6 +189,18 @@ RenderScene VisualizerController::buildScene() const
                                       pianoRollSceneConfigFromSettings(m_settings.fallingNotes,
                                                                        m_settings.keyboard),
                                       m_diagnostics);
+}
+
+ExportSnapshot VisualizerController::exportSnapshot() const
+{
+  if (!m_timeline.has_value()) {
+    throw std::invalid_argument("Cannot export without a MIDI timeline.");
+  }
+  return {*m_timeline,
+          pianoRollSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard),
+          m_settings.renderer.clearColor,
+          m_timelineOffsetSeconds,
+          m_playbackTransport.playbackRate()};
 }
 
 void VisualizerController::configurePlaybackTimeline()

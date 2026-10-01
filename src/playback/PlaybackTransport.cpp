@@ -70,6 +70,11 @@ void PlaybackTransport::setEffectiveBpm(const double sourceBpm, const double tar
   m_playbackRate = targetBpm / sourceBpm;
 }
 
+double PlaybackTransport::playbackRate() const
+{
+  return m_playbackRate;
+}
+
 double PlaybackTransport::effectiveBpm(const double sourceBpm) const
 {
   if (!std::isfinite(sourceBpm) || sourceBpm <= 0.0) {
