@@ -4,6 +4,7 @@
 #include <glad/gl.h>
 #include <span>
 #include <sstream>
+#include <stdexcept>
 #include <variant>
 
 #include "core/CoreTypes.hpp"
@@ -229,4 +230,73 @@ void OpenGLRendererBackend::endFrame()
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
   glUseProgram(0);
+}
+
+OffscreenPixelBuffer OpenGLRendererBackend::renderOffscreen(OffscreenRenderTarget& target,
+                                                            const RenderScene& scene,
+                                                            const Color clearColor)
+{
+  if (!m_initialized) {
+    throw std::logic_error("Offscreen rendering requires an initialized OpenGL renderer.");
+  }
+  if (!isValid(scene.view.visibleWorldRect)) {
+    throw std::invalid_argument("Offscreen scene has an invalid visible world rectangle.");
+  }
+
+  struct RestoreState
+  {
+    FramebufferSize& size;
+    RendererView& view;
+    Color& color;
+    FramebufferSize oldSize;
+    RendererView oldView;
+    Color oldColor;
+    GLint drawFramebuffer = 0;
+    GLint readFramebuffer = 0;
+    GLint viewport[4]{};
+    GLfloat clear[4]{};
+    GLboolean scissor = GL_FALSE;
+
+    RestoreState(FramebufferSize& size, RendererView& view, Color& color)
+        : size(size)
+        , view(view)
+        , color(color)
+        , oldSize(size)
+        , oldView(view)
+        , oldColor(color)
+    {
+      glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFramebuffer);
+      glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &readFramebuffer);
+      glGetIntegerv(GL_VIEWPORT, viewport);
+      glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
+      scissor = glIsEnabled(GL_SCISSOR_TEST);
+    }
+
+    ~RestoreState()
+    {
+      size = oldSize;
+      view = oldView;
+      color = oldColor;
+      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<GLuint>(drawFramebuffer));
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<GLuint>(readFramebuffer));
+      glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+      glClearColor(clear[0], clear[1], clear[2], clear[3]);
+      if (scissor == GL_TRUE) {
+        glEnable(GL_SCISSOR_TEST);
+      }
+    }
+  };
+
+  const RestoreState state(m_framebufferSize, m_view, m_clearColor);
+  glBindFramebuffer(GL_FRAMEBUFFER, target.framebuffer());
+  const auto size = target.size();
+  glViewport(0, 0, size.width, size.height);
+  glDisable(GL_SCISSOR_TEST);
+  m_framebufferSize = size;
+  m_view = scene.view;
+  m_clearColor = clearColor;
+  beginFrame();
+  submit(scene.commands);
+  endFrame();
+  return target.readPixels();
 }

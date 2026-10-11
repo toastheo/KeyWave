@@ -26,7 +26,7 @@ On Linux, install the development packages needed. The CI build
 uses:
 
 ```sh
-apt-get install -y libgl1-mesa-dev libwayland-dev libxkbcommon-dev libgtk-3-dev xorg-dev libfluidsynth-dev
+apt-get install -y ninja-build pkg-config libgl1-mesa-dev libgl1-mesa-dri libwayland-dev libxkbcommon-dev libgtk-3-dev xorg-dev libfluidsynth-dev xvfb xauth mesa-utils
 ```
 
 On Windows with MSYS2 UCRT64, install the UCRT64 toolchain and FluidSynth:
@@ -51,16 +51,16 @@ cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D KEYWAVE_ENABLE_AUDIO=OFF
 cmake --build build --config Release --parallel
 ```
 
-For an MSYS2 UCRT64 debug build:
+For an MSYS2 UCRT64 build:
 
 ```sh
-cmake -S . -B build/msys2-ucrt-debug -G Ninja -D CMAKE_BUILD_TYPE=Debug -D KEYWAVE_ENABLE_AUDIO=ON
-cmake --build build/msys2-ucrt-debug --parallel
+cmake -S . -B build/msys2-ucrt-release -G Ninja -D CMAKE_BUILD_TYPE=Release
+cmake --build build/msys2-ucrt-release --parallel
 ```
 
 ### Audio SoundFont
 
-Audio playback uses a bring-your-own SoundFont file. Place your local piano
+Audio playback currently uses a bring-your-own SoundFont file. Place your local piano
 SoundFont at:
 
 ```
@@ -120,6 +120,13 @@ ctest --test-dir build/msys2-ucrt-debug --output-on-failure
 ```
 
 The main test executable is `KeyWaveMidiTests`. Tests are discovered by Catch2.
+
+Offscreen rendering has separate GPU integration tests, disabled by default.
+Enable them with
+
+```sh
+cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D KEYWAVE_ENABLE_GPU_TESTS=ON
+```
 
 ## Dependencies
 

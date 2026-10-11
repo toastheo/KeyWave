@@ -301,6 +301,8 @@ target_link_libraries(keywave_ui
 )
 
 add_library(keywave_render_opengl STATIC
+        render_opengl/OffscreenRenderTarget.hpp
+        render_opengl/OffscreenRenderTarget.cpp
         render_opengl/OpenGLRendererBackend.hpp
         render_opengl/OpenGLRendererBackend.cpp
         render_opengl/OpenGLRectRenderer.hpp

@@ -98,3 +98,10 @@ if (WIN32)
 endif ()
 
 catch_discover_tests(KeyWaveMidiTests ${KEYWAVE_CATCH_DISCOVERY_ARGS})
+
+if (KEYWAVE_ENABLE_GPU_TESTS)
+    add_executable(KeyWaveGpuTests render/OffscreenRenderTargetIntegrationTests.cpp)
+    set_target_properties(KeyWaveGpuTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+    target_link_libraries(KeyWaveGpuTests PRIVATE Catch2::Catch2WithMain keywave_render_opengl glfw glad)
+    catch_discover_tests(KeyWaveGpuTests ${KEYWAVE_CATCH_DISCOVERY_ARGS} PROPERTIES LABELS "gpu")
+endif ()

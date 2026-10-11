@@ -9,6 +9,8 @@
 #include "render/RenderTypes.hpp"
 #include "render/RendererBackend.hpp"
 #include "render/RendererView.hpp"
+#include "render/RenderScene.hpp"
+#include "render_opengl/OffscreenRenderTarget.hpp"
 #include "render_opengl/OpenGLRectRenderer.hpp"
 #include "render_opengl/OpenGLStyledRectRenderer.hpp"
 
@@ -31,6 +33,12 @@ public:
   void beginFrame() override;
   void submit(std::span<const RenderCommand> commands) override;
   void endFrame() override;
+
+  // Call between live frames on the current context thread. Restores live
+  // framebuffer size, view, background, framebuffer bindings and viewport.
+  [[nodiscard]] OffscreenPixelBuffer renderOffscreen(OffscreenRenderTarget& target,
+                                                     const RenderScene& scene,
+                                                     Color clearColor);
 
 private:
   enum class VertexBatchKind : std::uint8_t
