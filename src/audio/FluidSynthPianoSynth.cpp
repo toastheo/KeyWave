@@ -1,6 +1,7 @@
 #include "audio/FluidSynthPianoSynth.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <filesystem>
 #include <fluidsynth.h>
 #include <memory>
@@ -46,9 +47,9 @@ void configureFluidSynthSettings(fluid_settings_t& settings, DiagnosticSink& dia
 int processFluidSynth(void* const synth,
                       const int frameCount,
                       const int effectBufferCount,
-                      float* effectBuffers[],
+                      float** effectBuffers,
                       const int outputBufferCount,
-                      float* outputBuffers[])
+                      float** outputBuffers)
 {
   return fluid_synth_process(static_cast<fluid_synth_t*>(synth),
                              frameCount,

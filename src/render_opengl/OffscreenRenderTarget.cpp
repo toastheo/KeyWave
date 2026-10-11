@@ -1,11 +1,17 @@
 #include "render_opengl/OffscreenRenderTarget.hpp"
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <glad/gl.h>
+#include <ios>
 #include <limits>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 
+#include "core/CoreTypes.hpp"
 #include "render/RendererView.hpp"
 
 namespace {
@@ -76,10 +82,10 @@ OffscreenRenderTarget::OffscreenRenderTarget(const FramebufferSize size)
   }
   GLint maxTexture = 0;
   GLint maxRenderbuffer = 0;
-  GLint maxViewport[2]{};
+  std::array<GLint, 2> maxViewport{};
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexture);
   glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxRenderbuffer);
-  glGetIntegerv(GL_MAX_VIEWPORT_DIMS, maxViewport);
+  glGetIntegerv(GL_MAX_VIEWPORT_DIMS, maxViewport.data());
   const auto maxWidth = std::min({maxTexture, maxRenderbuffer, maxViewport[0]});
   const auto maxHeight = std::min({maxTexture, maxRenderbuffer, maxViewport[1]});
   if (size.width > maxWidth || size.height > maxHeight) {
@@ -160,11 +166,12 @@ OffscreenPixelBuffer OffscreenRenderTarget::readPixels() const
             << ": OpenGL error 0x" << std::hex << error << '.';
     throw std::runtime_error(message.str());
   }
-  for (int y = 0; y < m_size.height / 2; ++y) {
-    const auto top = result.pixels.begin() + static_cast<std::ptrdiff_t>(y) * result.strideBytes;
-    const auto bottom = result.pixels.begin() +
-                        static_cast<std::ptrdiff_t>(m_size.height - 1 - y) * result.strideBytes;
-    std::swap_ranges(top, top + static_cast<std::ptrdiff_t>(result.strideBytes), bottom);
+  const std::span<std::uint8_t> pixels{result.pixels};
+  const auto height = static_cast<std::size_t>(m_size.height);
+  for (std::size_t y = 0; y < height / 2; ++y) {
+    const auto top = pixels.subspan(y * result.strideBytes, result.strideBytes);
+    const auto bottom = pixels.subspan((height - 1 - y) * result.strideBytes, result.strideBytes);
+    std::ranges::swap_ranges(top, bottom);
   }
   return result;
 }

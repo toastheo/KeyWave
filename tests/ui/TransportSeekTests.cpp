@@ -79,8 +79,8 @@ TEST_CASE("Transport seek after natural completion pauses restored notes", "[ui]
   previewTransportSeek(transport, 1.0, scheduler);
   commitTransportSeek(transport, scheduler);
 
-  CHECK(synth.commands == std::vector<std::string>{
-                            "all-off", "playback:paused", "all-off", "on:60:90"});
+  CHECK(synth.commands ==
+        std::vector<std::string>{"all-off", "playback:paused", "all-off", "on:60:90"});
 }
 
 } // namespace

@@ -1,5 +1,6 @@
 #include "render_opengl/OpenGLRendererBackend.hpp"
 
+#include <array>
 #include <cstddef>
 #include <glad/gl.h>
 #include <span>
@@ -10,8 +11,10 @@
 #include "core/CoreTypes.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "render/RenderCommand.hpp"
+#include "render/RenderScene.hpp"
 #include "render/RenderTypes.hpp"
 #include "render/RendererView.hpp"
+#include "render_opengl/OffscreenRenderTarget.hpp"
 
 namespace {
 
@@ -253,8 +256,8 @@ OffscreenPixelBuffer OpenGLRendererBackend::renderOffscreen(OffscreenRenderTarge
     Color oldColor;
     GLint drawFramebuffer = 0;
     GLint readFramebuffer = 0;
-    GLint viewport[4]{};
-    GLfloat clear[4]{};
+    std::array<GLint, 4> viewport{};
+    std::array<GLfloat, 4> clear{};
     GLboolean scissor = GL_FALSE;
 
     RestoreState(FramebufferSize& size, RendererView& view, Color& color)
@@ -267,8 +270,8 @@ OffscreenPixelBuffer OpenGLRendererBackend::renderOffscreen(OffscreenRenderTarge
     {
       glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFramebuffer);
       glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &readFramebuffer);
-      glGetIntegerv(GL_VIEWPORT, viewport);
-      glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
+      glGetIntegerv(GL_VIEWPORT, viewport.data());
+      glGetFloatv(GL_COLOR_CLEAR_VALUE, clear.data());
       scissor = glIsEnabled(GL_SCISSOR_TEST);
     }
 

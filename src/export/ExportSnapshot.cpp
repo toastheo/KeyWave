@@ -4,6 +4,10 @@
 #include <stdexcept>
 #include <utility>
 
+#include "core/CoreTypes.hpp"
+#include "fallingnotes/PianoRollSceneBuilder.hpp"
+#include "midi/MidiTimeline.hpp"
+
 namespace {
 void requireFiniteNonnegative(double value)
 {
@@ -19,13 +23,13 @@ ExportSnapshot::ExportSnapshot(MidiTimeline sourceTimeline,
                                double offset,
                                double rate)
     : timeline(std::move(sourceTimeline))
-    , sceneConfig(std::move(config))
+    , sceneConfig(config)
     , background(sourceBackground)
     , timelineOffsetSeconds(offset)
     , playbackRate(rate)
 {
   if (timeline.empty() || !std::isfinite(offset) || !std::isfinite(rate) || rate <= 0.0 ||
-      !std::isfinite(playbackDurationSeconds()) ||playbackDurationSeconds() <= 0.0) {
+      !std::isfinite(playbackDurationSeconds()) || playbackDurationSeconds() <= 0.0) {
     throw std::invalid_argument(
       "Export requires a nonempty timeline, finite offset and positive rate/duration.");
   }
@@ -89,4 +93,3 @@ double ExportSnapshot::playbackDurationSeconds() const
 {
   return timeline.lengthSeconds() - timelineOffsetSeconds;
 }
-

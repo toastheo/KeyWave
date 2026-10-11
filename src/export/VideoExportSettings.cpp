@@ -3,6 +3,8 @@
 #include <cmath>
 #include <stdexcept>
 
+#include "core/CoreTypes.hpp"
+
 void validateVideoExportSettings(const VideoExportSettings& settings)
 {
   if (settings.fps != 30 && settings.fps != 60) {
@@ -39,7 +41,10 @@ FramebufferSize exportFramebufferSize(const VideoExportSettings& settings)
                                                                        : 2160;
   const auto width = height * 16 / 9;
   if (settings.aspectRatio == ExportAspectRatio::Portrait) {
-    return {height, width};
+    return {.width = height, .height = width};
   }
-  return {settings.aspectRatio == ExportAspectRatio::Square ? height : width, height};
+  return {
+    .width = settings.aspectRatio == ExportAspectRatio::Square ? height : width,
+    .height = height,
+  };
 }

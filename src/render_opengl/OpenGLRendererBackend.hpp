@@ -6,10 +6,10 @@
 #include <vector>
 
 #include "diagnostics/Diagnostics.hpp"
+#include "render/RenderScene.hpp"
 #include "render/RenderTypes.hpp"
 #include "render/RendererBackend.hpp"
 #include "render/RendererView.hpp"
-#include "render/RenderScene.hpp"
 #include "render_opengl/OffscreenRenderTarget.hpp"
 #include "render_opengl/OpenGLRectRenderer.hpp"
 #include "render_opengl/OpenGLStyledRectRenderer.hpp"
