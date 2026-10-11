@@ -21,6 +21,7 @@ target_include_directories(keywave_test_support
 add_executable(KeyWaveMidiTests
         export/ExportTimingTests.cpp
         export/VideoExportSettingsTests.cpp
+        export/FfmpegVideoEncoderIntegrationTests.cpp
         architecture/LayeringTests.cpp
         architecture/SpanApiTests.cpp
         audio/NullPianoSynthTests.cpp
@@ -70,6 +71,7 @@ target_link_libraries(KeyWaveMidiTests
         keywave_audio
         keywave_app_core
         keywave_export
+        keywave_export_ffmpeg
         keywave_fallingnotes
         keywave_midi
         keywave_playback
