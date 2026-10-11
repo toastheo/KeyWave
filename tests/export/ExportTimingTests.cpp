@@ -191,3 +191,31 @@ TEST_CASE("Export rejects degenerate or nonfinite scene geometry", "[export]")
   }
   CHECK_THROWS_AS((ExportSnapshot{timeline, config, {}, 0.0, 1.0}), std::invalid_argument);
 }
+
+TEST_CASE("Export snapshot accepts normalized colors and rejects out of range channels", "[export]")
+{
+  MidiTimeline timeline;
+  timeline.addNote({.pitch = 60, .durationSeconds = 10.0});
+  for (const auto channel : {0.0f, 0.5f, 1.0f}) {
+    CHECK_NOTHROW((ExportSnapshot{timeline, {}, {channel, channel, channel, channel}, 0.0, 1.0}));
+  }
+  // Use otherwise-valid all-white styles so rejection specifically exercises
+  // the supplied channel, rather than another default color.
+  PianoRollSceneConfig config;
+  config.fallingNotesStyle.noteColor = {1, 1, 1, 1};
+  config.fallingNotesStyle.activeNoteColor = {1, 1, 1, 1};
+  config.fallingNotesStyle.outlineColor = {1, 1, 1, 1};
+  config.keyboardStyle.whiteKeyColor = {1, 1, 1, 1};
+  config.keyboardStyle.blackKeyColor = {1, 1, 1, 1};
+  config.keyboardStyle.activeWhiteKeyColor = {1, 1, 1, 1};
+  config.keyboardStyle.activeBlackKeyColor = {1, 1, 1, 1};
+  config.keyboardStyle.whiteKeySeparatorColor = {1, 1, 1, 1};
+  config.keyboardStyle.hitLineColor = {1, 1, 1, 1};
+  for (const auto channel : {-0.1f,
+                             1.1f,
+                             std::numeric_limits<float>::infinity(),
+                             std::numeric_limits<float>::quiet_NaN()}) {
+    CHECK_THROWS_AS((ExportSnapshot{timeline, config, {channel, 1, 1, 1}, 0.0, 1.0}),
+                    std::invalid_argument);
+  }
+}
