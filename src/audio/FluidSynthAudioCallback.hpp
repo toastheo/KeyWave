@@ -5,9 +5,9 @@
 using FluidSynthProcessCallback = int (*)(void* synth,
                                           int frameCount,
                                           int effectBufferCount,
-                                          float* effectBuffers[],
+                                          float** effectBuffers,
                                           int outputBufferCount,
-                                          float* outputBuffers[]);
+                                          float** outputBuffers);
 
 struct FluidSynthAudioRenderState
 {
@@ -20,6 +20,6 @@ struct FluidSynthAudioRenderState
 int renderFluidSynthAudio(void* data,
                           int frameCount,
                           int effectBufferCount,
-                          float* effectBuffers[],
+                          float** effectBuffers,
                           int outputBufferCount,
-                          float* outputBuffers[]);
+                          float** outputBuffers);

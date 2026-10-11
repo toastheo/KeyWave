@@ -43,7 +43,7 @@ public:
   [[nodiscard]] ExportSnapshot exportSnapshot() const;
 
 private:
-  void configurePlaybackTimeline();
+  void configurePlaybackTimeline(const MidiTimeline& timeline);
   [[nodiscard]] double timelineTimeSeconds(double playbackTimeSeconds) const;
 
   DiagnosticSink& m_diagnostics;

@@ -2,8 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <stdexcept>
+
+#include "export/ExportSnapshot.hpp"
+#include "export/VideoExportSettings.hpp"
 
 ExportTiming::ExportTiming(const VideoExportSettings& settings, const ExportSnapshot& snapshot)
     : m_fps(settings.fps)

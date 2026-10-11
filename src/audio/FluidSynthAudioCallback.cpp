@@ -1,13 +1,21 @@
 #include "audio/FluidSynthAudioCallback.hpp"
 
+#include <array>
+#include <atomic>
+#include <cstddef>
 #include <fluidsynth.h>
+#include <span>
+#include <type_traits>
+
+// FluidSynth requires its C callback type; adapt buffers to C++ views inside.
+static_assert(std::is_same_v<decltype(&renderFluidSynthAudio), fluid_audio_func_t>);
 
 int renderFluidSynthAudio(void* const data,
                           const int frameCount,
                           const int effectBufferCount,
-                          float* effectBuffers[],
+                          float** effectBuffers,
                           const int outputBufferCount,
-                          float* outputBuffers[])
+                          float** outputBuffers)
 {
   if (data == nullptr) {
     return FLUID_FAILED;
@@ -32,19 +40,19 @@ int renderFluidSynthAudio(void* const data,
       return FLUID_FAILED;
     }
 
-    constexpr int mixedEffectBufferCount = 4;
-    float* mixedEffectBuffers[mixedEffectBufferCount]{
-      outputBuffers[0],
-      outputBuffers[1],
-      outputBuffers[0],
-      outputBuffers[1],
+    const std::span<float*> outputs{outputBuffers, static_cast<std::size_t>(outputBufferCount)};
+    std::array<float*, 4> mixedEffectBuffers{
+      outputs[0],
+      outputs[1],
+      outputs[0],
+      outputs[1],
     };
     return state.process(state.synth,
                          frameCount,
-                         mixedEffectBufferCount,
-                         mixedEffectBuffers,
+                         static_cast<int>(mixedEffectBuffers.size()),
+                         mixedEffectBuffers.data(),
                          outputBufferCount,
-                         outputBuffers);
+                         outputs.data());
   }
 
   return state.process(

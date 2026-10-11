@@ -13,6 +13,7 @@
 #include "audio/PianoSynth.hpp"
 #include "audio/TimelineAudioScheduler.hpp"
 #include "diagnostics/Diagnostics.hpp"
+#include "export/ExportSnapshot.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
@@ -65,7 +66,7 @@ void VisualizerController::setTimeline(std::optional<MidiTimeline> timeline)
   m_timeline = std::move(timeline);
 
   if (m_timeline.has_value()) {
-    configurePlaybackTimeline();
+    configurePlaybackTimeline(*m_timeline);
     return;
   }
 
@@ -148,7 +149,7 @@ void VisualizerController::update(const double elapsedSeconds)
   if (m_timeline.has_value() && m_playbackTransport.state() == PlaybackState::Playing &&
       m_playbackTransport.currentTimeSeconds() == 0.0 &&
       m_timelineLookAheadSeconds != m_settings.fallingNotes.lookAheadSeconds) {
-    configurePlaybackTimeline();
+    configurePlaybackTimeline(*m_timeline);
   }
 
   if (m_skipNextPlaybackUpdate) {
@@ -203,12 +204,12 @@ ExportSnapshot VisualizerController::exportSnapshot() const
           m_playbackTransport.playbackRate()};
 }
 
-void VisualizerController::configurePlaybackTimeline()
+void VisualizerController::configurePlaybackTimeline(const MidiTimeline& timeline)
 {
   m_timelineLookAheadSeconds = m_settings.fallingNotes.lookAheadSeconds;
   m_timelineOffsetSeconds =
-    m_timeline->empty() ? 0.0 : m_timeline->firstNoteStartSeconds() - m_timelineLookAheadSeconds;
-  m_audioScheduler.setTimeline(*m_timeline, m_timelineOffsetSeconds);
+    timeline.empty() ? 0.0 : timeline.firstNoteStartSeconds() - m_timelineLookAheadSeconds;
+  m_audioScheduler.setTimeline(timeline, m_timelineOffsetSeconds);
 }
 
 double VisualizerController::timelineTimeSeconds(const double playbackTimeSeconds) const
