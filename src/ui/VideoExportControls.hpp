@@ -4,7 +4,12 @@
 
 #include "app/VideoExportController.hpp"
 
-enum class VideoExportAction : std::uint8_t { None, Start, Cancel };
+enum class VideoExportAction : std::uint8_t
+{
+  None,
+  Start,
+  Cancel
+};
 
 class VideoExportControls
 {

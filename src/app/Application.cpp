@@ -20,9 +20,9 @@
 #include "audio/NullPianoSynth.hpp"
 #include "audio/PianoSynth.hpp"
 #include "diagnostics/Diagnostics.hpp"
-#include "midi/MidiFileLoader.hpp"
 #include "export_ffmpeg/FfmpegVideoEncoder.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
+#include "midi/MidiFileLoader.hpp"
 #include "platform/MidiFileDialog.hpp"
 #include "platform/VideoSaveDialog.hpp"
 #include "platform/Window.hpp"
@@ -138,12 +138,15 @@ bool Application::initialize()
   m_videoExportController = std::make_unique<VideoExportController>(
     std::make_unique<FfmpegVideoEncoder>(),
     [this](const ExportSnapshot& snapshot, double sourceSeconds, FramebufferSize size) {
-      if (!m_exportTarget) { m_exportTarget = std::make_unique<OffscreenRenderTarget>(size); }
-      const auto scene = PianoRollSceneBuilder::build(snapshot.timeline, sourceSeconds,
-                                                      snapshot.sceneConfig, m_diagnostics);
-      return static_cast<OpenGLRendererBackend&>(*m_renderer).renderOffscreen(
-        *m_exportTarget, scene, snapshot.background).pixels;
-  });
+      if (!m_exportTarget) {
+        m_exportTarget = std::make_unique<OffscreenRenderTarget>(size);
+      }
+      const auto scene = PianoRollSceneBuilder::build(
+        snapshot.timeline, sourceSeconds, snapshot.sceneConfig, m_diagnostics);
+      return static_cast<OpenGLRendererBackend&>(*m_renderer)
+        .renderOffscreen(*m_exportTarget, scene, snapshot.background)
+        .pixels;
+    });
 
   if (!m_imguiLayer.initialize(m_window.nativeHandle(), m_diagnostics)) {
     reportError(m_diagnostics,
@@ -388,19 +391,24 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
     handleVisualizationSettingsPanelAction(settingsAction);
   }
   m_imguiLayer.endDisabled();
-  const auto exportAction = VideoExportControls::render(*m_videoExportController,
-                                                        m_visualizerController.hasTimeline());
+  const auto exportAction =
+    VideoExportControls::render(*m_videoExportController, m_visualizerController.hasTimeline());
   if (exportAction == VideoExportAction::Start) {
     m_visualizerController.suppressNextPlaybackUpdate();
     if (const auto destination = VideoSaveDialog::save(m_diagnostics)) {
       m_visualizerController.playbackTransport().pause();
       m_visualizerController.audioScheduler().pause();
-      m_videoExportController->start(m_visualizerController.exportSnapshot(), *destination);
+      m_videoExportController->start([this] { return m_visualizerController.exportSnapshot(); },
+                                     *destination);
     }
   }
-  else if (exportAction == VideoExportAction::Cancel) { m_videoExportController->cancel(); }
+  else if (exportAction == VideoExportAction::Cancel) {
+    m_videoExportController->cancel();
+  }
   m_videoExportController->tick();
-  if (!m_videoExportController->active()) { m_exportTarget.reset(); }
+  if (!m_videoExportController->active()) {
+    m_exportTarget.reset();
+  }
 
   applyWindowSettings();
   m_renderer->setClearColor(m_visualizerController.settings().renderer.clearColor);

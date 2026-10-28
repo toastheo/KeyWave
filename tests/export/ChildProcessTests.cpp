@@ -1,5 +1,5 @@
-#include <catch2/catch_test_macros.hpp>
 #include <atomic>
+#include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <thread>
 
@@ -9,7 +9,7 @@ TEST_CASE("Child process preserves argument boundaries without shell interpretat
 {
   std::atomic_bool cancelled{false};
   ChildProcess process(KEYWAVE_PROCESS_FIXTURE,
-    {"echo", "", "space and & $()", "a\"b", "trailing\\", "two\\\"quotes"});
+                       {"echo", "", "space and & $()", "a\"b", "trailing\\", "two\\\"quotes"});
   process.closeInput();
   REQUIRE(process.wait(cancelled) == 0);
   auto output = process.diagnostics();
@@ -48,7 +48,8 @@ TEST_CASE("Blocked child input times out and can be cancelled", "[process]")
   SECTION("cancel")
   {
     std::jthread cancelThread([&] {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100)); cancelled = true;
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      cancelled = true;
     });
     CHECK_THROWS(process.writeInput(frame, cancelled));
   }
