@@ -98,3 +98,12 @@ bool ImGuiLayer::wantsKeyboardCapture() const
 
   return ImGui::GetIO().WantCaptureKeyboard;
 }
+
+void ImGuiLayer::beginDisabled(bool disabled) const
+{
+  ImGui::BeginDisabled(disabled);
+}
+void ImGuiLayer::endDisabled() const
+{
+  ImGui::EndDisabled();
+}
