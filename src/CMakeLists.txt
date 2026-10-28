@@ -183,12 +183,16 @@ target_include_directories(keywave_export PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(keywave_export PUBLIC keywave_core keywave_midi keywave_fallingnotes)
 
 find_package(Threads REQUIRED)
+add_library(keywave_child_process STATIC platform/ChildProcess.hpp platform/ChildProcess.cpp)
+target_include_directories(keywave_child_process PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(keywave_child_process PRIVATE Threads::Threads)
+
 add_library(keywave_export_ffmpeg STATIC
         export_ffmpeg/FfmpegVideoEncoder.hpp
         export_ffmpeg/FfmpegVideoEncoder.cpp
 )
 target_include_directories(keywave_export_ffmpeg PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(keywave_export_ffmpeg PUBLIC keywave_export PRIVATE Threads::Threads)
+target_link_libraries(keywave_export_ffmpeg PUBLIC keywave_export PRIVATE keywave_child_process Threads::Threads)
 
 add_library(keywave_playback STATIC
         playback/PlaybackTransport.hpp
@@ -254,6 +258,8 @@ add_library(keywave_app_core STATIC
         app/StartupDataLoader.cpp
         app/VisualizerController.hpp
         app/VisualizerController.cpp
+        app/VideoExportController.hpp
+        app/VideoExportController.cpp
 )
 
 target_include_directories(keywave_app_core

@@ -58,3 +58,75 @@ TEST_CASE("Encoder refuses invalid profiles and existing destinations", "[encode
   CHECK_THROWS(encoder.start({{16, 16}, 30, 0}, temp.path / "out.mp4"));
   CHECK(std::filesystem::file_size(output) == 7);
 }
+
+TEST_CASE("Encoder detects missing codec and child crashes without publishing", "[encoder]")
+{
+  TempDirectory temp;
+  for (const auto name : {"no-codec.exe", "crash.exe"}) {
+    const auto executable = temp.path / name;
+    std::filesystem::copy_file(KEYWAVE_PROCESS_FIXTURE, executable);
+    FfmpegVideoEncoder encoder(executable);
+    encoder.start({{256, 256}, 30, 3}, temp.path / "output.mp4");
+    auto status = waitFor(encoder, true);
+    if (status.state == VideoEncoderState::Running) {
+      for (int i = 0; i < 3; ++i) { encoder.trySubmit(std::vector<std::uint8_t>(256 * 256 * 4)); }
+      encoder.finish();
+      status = waitFor(encoder);
+    }
+    CHECK(status.state == VideoEncoderState::Failed);
+    CHECK_FALSE(status.error.empty());
+    CHECK(status.error.size() < 66000);
+    CHECK_FALSE(std::filesystem::exists(temp.path / "output.mp4"));
+    CHECK(std::distance(std::filesystem::directory_iterator(temp.path),
+                        std::filesystem::directory_iterator{}) == 1);
+    std::filesystem::remove(executable);
+  }
+}
+
+TEST_CASE("Blocked consumer bounds frame queue and cancels promptly", "[encoder]")
+{
+  TempDirectory temp;
+  const auto executable = temp.path / "block.exe";
+  std::filesystem::copy_file(KEYWAVE_PROCESS_FIXTURE, executable);
+  FfmpegVideoEncoder encoder(executable);
+  encoder.start({{256, 256}, 30, 1000000}, temp.path / "output.mp4");
+  REQUIRE(waitFor(encoder, true).state == VideoEncoderState::Running);
+  CHECK_THROWS(encoder.finish());
+  CHECK_THROWS(encoder.trySubmit(std::vector<std::uint8_t>(1)));
+  int accepted = 0;
+  while (encoder.trySubmit(std::vector<std::uint8_t>(256 * 256 * 4))) { ++accepted; }
+  CHECK(accepted <= static_cast<int>(FfmpegVideoEncoder::queueCapacity + 1));
+  std::vector<std::uint8_t> rejected(256 * 256 * 4);
+  CHECK_FALSE(encoder.trySubmit(std::move(rejected)));
+  CHECK_FALSE(rejected.empty());
+  const auto before = std::chrono::steady_clock::now();
+  encoder.cancel();
+  CHECK(waitFor(encoder).state == VideoEncoderState::Cancelled);
+  CHECK(std::chrono::steady_clock::now() - before < std::chrono::seconds(2));
+  CHECK(std::distance(std::filesystem::directory_iterator(temp.path),
+                      std::filesystem::directory_iterator{}) == 1);
+}
+
+TEST_CASE("Successful encoder publishes only on completion and protects destination races", "[encoder]")
+{
+  TempDirectory temp;
+  const auto executable = temp.path / "success.exe";
+  std::filesystem::copy_file(KEYWAVE_PROCESS_FIXTURE, executable);
+  FfmpegVideoEncoder encoder(executable);
+  const auto output = temp.path / "output.mp4";
+  for (int attempt = 0; attempt < 2; ++attempt) {
+    encoder.start({{16, 16}, 30, 1}, output);
+    REQUIRE(waitFor(encoder, true).state == VideoEncoderState::Running);
+    CHECK_FALSE(std::filesystem::exists(output));
+    REQUIRE(encoder.trySubmit(std::vector<std::uint8_t>(16 * 16 * 4)));
+    CHECK_FALSE(encoder.trySubmit(std::vector<std::uint8_t>(16 * 16 * 4)));
+    if (attempt == 1) { std::ofstream file(output); file << "keep me"; }
+    encoder.finish();
+    const auto status = waitFor(encoder);
+    CHECK(status.state == (attempt == 0 ? VideoEncoderState::Completed : VideoEncoderState::Failed));
+    CHECK(std::filesystem::file_size(output) == (attempt == 0 ? 5 : 7));
+    CHECK(std::distance(std::filesystem::directory_iterator(temp.path),
+                        std::filesystem::directory_iterator{}) == 2);
+    std::filesystem::remove(output);
+  }
+}

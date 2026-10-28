@@ -19,6 +19,8 @@ target_include_directories(keywave_test_support
 )
 
 add_executable(KeyWaveMidiTests
+        export/ChildProcessTests.cpp
+        export/VideoExportControllerTests.cpp
         export/ExportTimingTests.cpp
         export/VideoExportSettingsTests.cpp
         export/FfmpegVideoEncoderIntegrationTests.cpp
@@ -72,6 +74,7 @@ target_link_libraries(KeyWaveMidiTests
         keywave_app_core
         keywave_export
         keywave_export_ffmpeg
+        keywave_child_process
         keywave_fallingnotes
         keywave_midi
         keywave_playback
@@ -88,7 +91,12 @@ target_include_directories(KeyWaveMidiTests
 target_compile_definitions(KeyWaveMidiTests
         PRIVATE
         KEYWAVE_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+        KEYWAVE_PROCESS_FIXTURE="$<TARGET_FILE:KeyWaveProcessFixture>"
 )
+
+add_executable(KeyWaveProcessFixture export/ChildProcessFixture.cpp)
+set_target_properties(KeyWaveProcessFixture PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+add_dependencies(KeyWaveMidiTests KeyWaveProcessFixture)
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
