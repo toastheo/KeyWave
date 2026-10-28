@@ -21,6 +21,8 @@ public:
 
   void beginFrame() const;
   void endFrame() const;
+  void beginDisabled(bool disabled) const;
+  void endDisabled() const;
 
   [[nodiscard]] bool wantsKeyboardCapture() const;
 

@@ -21,11 +21,15 @@
 #include "audio/PianoSynth.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "midi/MidiFileLoader.hpp"
+#include "export_ffmpeg/FfmpegVideoEncoder.hpp"
+#include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "platform/MidiFileDialog.hpp"
+#include "platform/VideoSaveDialog.hpp"
 #include "platform/Window.hpp"
 #include "render/RenderScene.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 #include "ui/TransportControls.hpp"
+#include "ui/VideoExportControls.hpp"
 #include "ui/VisualizationSettingsPanel.hpp"
 
 #if defined(KEYWAVE_ENABLE_AUDIO)
@@ -130,6 +134,16 @@ bool Application::initialize()
     return false;
   }
   m_renderer->setFramebufferSize(m_window.framebufferSize());
+
+  m_videoExportController = std::make_unique<VideoExportController>(
+    std::make_unique<FfmpegVideoEncoder>(),
+    [this](const ExportSnapshot& snapshot, double sourceSeconds, FramebufferSize size) {
+      if (!m_exportTarget) { m_exportTarget = std::make_unique<OffscreenRenderTarget>(size); }
+      const auto scene = PianoRollSceneBuilder::build(snapshot.timeline, sourceSeconds,
+                                                      snapshot.sceneConfig, m_diagnostics);
+      return static_cast<OpenGLRendererBackend&>(*m_renderer).renderOffscreen(
+        *m_exportTarget, scene, snapshot.background).pixels;
+  });
 
   if (!m_imguiLayer.initialize(m_window.nativeHandle(), m_diagnostics)) {
     reportError(m_diagnostics,
@@ -345,12 +359,18 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
 
   const auto pressedKeys = m_window.consumePressedKeys();
   const auto imguiWantsKeyboardCapture = m_imguiLayer.wantsKeyboardCapture();
-  m_visualizerController.handleInput(pressedKeys, imguiWantsKeyboardCapture);
+  const bool exporting = m_videoExportController->active();
+  if (!exporting) {
+    m_visualizerController.handleInput(pressedKeys, imguiWantsKeyboardCapture);
+  }
 
   m_renderer->setFramebufferSize(m_window.framebufferSize());
   m_visualizerController.update(elapsed.count());
 
   m_imguiLayer.beginFrame();
+  // Keep playback and source edits frozen while exporting; export status and
+  // cancellation remain interactive outside this disabled block.
+  m_imguiLayer.beginDisabled(exporting);
   TransportControls::render(m_visualizerController.playbackTransport(),
                             m_visualizerController.durationSeconds(),
                             m_visualizerController.audioScheduler(),
@@ -367,6 +387,21 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
     m_visualizerController.setSettings(std::move(editedSettings));
     handleVisualizationSettingsPanelAction(settingsAction);
   }
+  m_imguiLayer.endDisabled();
+  const auto exportAction = VideoExportControls::render(*m_videoExportController,
+                                                        m_visualizerController.hasTimeline());
+  if (exportAction == VideoExportAction::Start) {
+    m_visualizerController.suppressNextPlaybackUpdate();
+    if (const auto destination = VideoSaveDialog::save(m_diagnostics)) {
+      m_visualizerController.playbackTransport().pause();
+      m_visualizerController.audioScheduler().pause();
+      m_videoExportController->start(m_visualizerController.exportSnapshot(), *destination);
+    }
+  }
+  else if (exportAction == VideoExportAction::Cancel) { m_videoExportController->cancel(); }
+  m_videoExportController->tick();
+  if (!m_videoExportController->active()) { m_exportTarget.reset(); }
+
   applyWindowSettings();
   m_renderer->setClearColor(m_visualizerController.settings().renderer.clearColor);
 
@@ -403,6 +438,9 @@ void Application::shutdown()
 {
   // Stop interactive frames and remove the native hook while its ImGui predecessor is still alive.
   m_window.setInteractiveFrameCallback({});
+  // Join/cancel the writer first, then release GL resources while the context lives.
+  m_videoExportController.reset();
+  m_exportTarget.reset();
   if (!m_settingsSaved) {
     if (m_settingsStorage.save(m_visualizerController.settings(), m_diagnostics)) {
       reportInfo(m_diagnostics, "Settings saved: " + m_settingsStorage.path().string());

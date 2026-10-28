@@ -11,12 +11,14 @@
 #include "app/MidiLibraryStore.hpp"
 #include "app/SettingsStorage.hpp"
 #include "app/VisualizerController.hpp"
+#include "app/VideoExportController.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "platform/Window.hpp"
 #include "render/RendererBackend.hpp"
 #include "ui/ImGuiLayer.hpp"
 
 class PianoSynth;
+class OffscreenRenderTarget;
 struct VisualizationSettingsPanelResult;
 
 class Application
@@ -54,6 +56,8 @@ private:
   VisualizerController m_visualizerController;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
+  std::unique_ptr<OffscreenRenderTarget> m_exportTarget;
+  std::unique_ptr<VideoExportController> m_videoExportController;
   ImGuiLayer m_imguiLayer;
   WindowSettings m_appliedWindowSettings;
   std::chrono::steady_clock::time_point m_previousFrameTime;

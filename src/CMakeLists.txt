@@ -213,6 +213,8 @@ add_library(keywave_platform STATIC
         input/Key.hpp
         platform/MidiFileDialog.hpp
         platform/MidiFileDialog.cpp
+        platform/VideoSaveDialog.hpp
+        platform/VideoSaveDialog.cpp
         platform/Window.hpp
         platform/Window.cpp
 )
@@ -291,6 +293,8 @@ add_library(keywave_ui STATIC
         ui/ImGuiLayer.cpp
         ui/TransportControls.hpp
         ui/TransportControls.cpp
+        ui/VideoExportControls.hpp
+        ui/VideoExportControls.cpp
         ui/TransportSeek.hpp
         ui/TransportSeek.cpp
         ui/TransportTime.hpp
@@ -366,6 +370,7 @@ target_link_libraries(keywave_app
         keywave_app_core
         keywave_diagnostics
         keywave_fallingnotes
+        keywave_export_ffmpeg
         keywave_midi
         keywave_platform
         keywave_playback
