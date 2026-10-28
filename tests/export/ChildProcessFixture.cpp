@@ -23,7 +23,9 @@ int main(int argc, char** argv)
     return 0;
   }
   if (argc > 1 && std::string(argv[1]) == "flood") {
-    for (int i = 0; i < 100000; ++i) { std::fputc('x', stderr); }
+    for (int i = 0; i < 100000; ++i) {
+      std::fputc('x', stderr);
+    }
     std::fputs("diagnostic-end", stderr);
     return 7;
   }
@@ -39,12 +41,15 @@ int main(int argc, char** argv)
     return 0;
   }
   if (argc > 2 && std::string(argv[2]) == "-h") {
-    std::fputs(executable.find("no-codec") == std::string::npos ?
-                 "Encoder libx264 [fixture]\n" : "Unknown encoder\n", stdout);
+    std::fputs(executable.find("no-codec") == std::string::npos ? "Encoder libx264 [fixture]\n"
+                                                                : "Unknown encoder\n",
+               stdout);
     return 0;
   }
   if (executable.find("crash") != std::string::npos) {
-    for (int i = 0; i < 100000; ++i) { std::fputc('x', stderr); }
+    for (int i = 0; i < 100000; ++i) {
+      std::fputc('x', stderr);
+    }
     std::fputs("encoder-crash", stderr);
     return 7;
   }
@@ -54,7 +59,12 @@ int main(int argc, char** argv)
   }
   // The fixture's successful variant consumes frames then creates a tiny file.
   // Actual video validity is exercised by the separate real-FFmpeg tests.
-  while (std::fgetc(stdin) != EOF) {}
-  if (argc > 1) { std::ofstream output(std::filesystem::u8path(argv[argc - 1])); output << "video"; }
+  while (std::fgetc(stdin) != EOF) {
+  }
+  if (argc > 1) {
+    std::ofstream output(
+      std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(argv[argc - 1]))));
+    output << "video";
+  }
   return 0;
 }

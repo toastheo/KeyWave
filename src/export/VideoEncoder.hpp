@@ -9,7 +9,13 @@
 
 enum class VideoEncoderState : std::uint8_t
 {
-  Idle, Starting, Running, Finalizing, Completed, Failed, Cancelled
+  Idle,
+  Starting,
+  Running,
+  Finalizing,
+  Completed,
+  Failed,
+  Cancelled
 };
 
 struct VideoEncoderConfig

@@ -1,5 +1,5 @@
-#include <catch2/catch_test_macros.hpp>
 #include <atomic>
+#include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <filesystem>
 #include <thread>
@@ -11,6 +11,7 @@
 #include <glad/gl.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
 #include "app/VideoExportController.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
@@ -19,10 +20,18 @@
 namespace {
 struct Directory
 {
-  std::filesystem::path path = std::filesystem::temp_directory_path() /
+  std::filesystem::path path =
+    std::filesystem::temp_directory_path() /
     ("keywave-real-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-  Directory() { std::filesystem::create_directory(path); }
-  ~Directory() { std::error_code error; std::filesystem::remove_all(path, error); }
+  Directory()
+  {
+    std::filesystem::create_directory(path);
+  }
+  ~Directory()
+  {
+    std::error_code error;
+    std::filesystem::remove_all(path, error);
+  }
 };
 std::string utf8(const std::filesystem::path& path)
 {
@@ -32,8 +41,18 @@ std::string utf8(const std::filesystem::path& path)
 void assertVideo(const std::filesystem::path& file, int frames, const std::string& duration)
 {
   std::atomic_bool cancelled{false};
-  ChildProcess decode(ChildProcess::findExecutable("ffmpeg"), {"-hide_banner", "-nostdin",
-    "-i", utf8(file), "-map", "0", "-progress", "pipe:1", "-f", "null", "-"});
+  ChildProcess decode(ChildProcess::findExecutable("ffmpeg"),
+                      {"-hide_banner",
+                       "-nostdin",
+                       "-i",
+                       utf8(file),
+                       "-map",
+                       "0",
+                       "-progress",
+                       "pipe:1",
+                       "-f",
+                       "null",
+                       "-"});
   decode.closeInput();
   REQUIRE(decode.wait(cancelled) == 0); // Fully decode all streams, detecting corrupt MP4s.
   const auto output = decode.diagnostics();
@@ -47,7 +66,7 @@ void assertVideo(const std::filesystem::path& file, int frames, const std::strin
          output.find("frame=" + std::to_string(frames) + "\r\n") != std::string::npos));
   CHECK(output.find("progress=end") != std::string::npos);
 }
-}
+} // namespace
 
 TEST_CASE("Real FFmpeg streams a silent Unicode-path 1080p MP4 with exact frame count", "[ffmpeg]")
 {
@@ -61,7 +80,9 @@ TEST_CASE("Real FFmpeg streams a silent Unicode-path 1080p MP4 with exact frame 
     auto status = encoder.status();
     INFO(status.error);
     REQUIRE(status.state != VideoEncoderState::Failed);
-    if (status.state == VideoEncoderState::Completed) { break; }
+    if (status.state == VideoEncoderState::Completed) {
+      break;
+    }
     if (encoder.canAcceptFrame()) {
       std::vector<std::uint8_t> frame(1920 * 1080 * 4);
       for (std::size_t p = 0; p < frame.size(); p += 4) {
@@ -69,12 +90,35 @@ TEST_CASE("Real FFmpeg streams a silent Unicode-path 1080p MP4 with exact frame 
         frame[p + 3] = 255;
       }
       REQUIRE(encoder.trySubmit(std::move(frame)));
-      if (++submitted == 3) { encoder.finish(); }
+      if (++submitted == 3) {
+        encoder.finish();
+      }
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
   }
   REQUIRE(encoder.status().state == VideoEncoderState::Completed);
   assertVideo(output, 3, "00:00:00.10");
+  std::atomic_bool cancelled{false};
+  ChildProcess colors(ChildProcess::findExecutable("ffmpeg"),
+                      {"-v",
+                       "error",
+                       "-i",
+                       utf8(output),
+                       "-vf",
+                       "scale=1:1",
+                       "-pix_fmt",
+                       "rgba",
+                       "-f",
+                       "rawvideo",
+                       "pipe:1"});
+  colors.closeInput();
+  REQUIRE(colors.wait(cancelled) == 0);
+  const auto pixels = colors.diagnostics();
+  REQUIRE(pixels.size() == 12);
+  for (std::size_t i = 0; i < 3; ++i) {
+    CHECK(std::abs(static_cast<int>(static_cast<unsigned char>(pixels[i * 4])) -
+                   static_cast<int>(i * 80)) <= 4);
+  }
 }
 
 #if defined(KEYWAVE_TEST_GPU_EXPORT)
@@ -87,17 +131,26 @@ TEST_CASE("Full test song exports from snapshot through GPU and FFmpeg", "[ffmpe
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   auto* window = glfwCreateWindow(160, 90, "KeyWave export acceptance", nullptr, nullptr);
   REQUIRE(window != nullptr);
-  struct ContextGuard { GLFWwindow* window; ~ContextGuard() {
-    glfwDestroyWindow(window); glfwTerminate(); } } guard{window};
+  struct ContextGuard
+  {
+    GLFWwindow* window;
+    ~ContextGuard()
+    {
+      glfwDestroyWindow(window);
+      glfwTerminate();
+    }
+  } guard{window};
   glfwMakeContextCurrent(window);
   REQUIRE(gladLoadGL(glfwGetProcAddress) != 0);
   OpenGLRendererBackend renderer(glfwGetProcAddress, {0, 0, 0, 1});
   renderer.setFramebufferSize({160, 90});
   REQUIRE(renderer.initialize());
   OffscreenRenderTarget target({1920, 1080});
-  VideoExportController controller(std::make_unique<FfmpegVideoEncoder>(),
+  VideoExportController controller(
+    std::make_unique<FfmpegVideoEncoder>(),
     [&](const ExportSnapshot& snapshot, double time, FramebufferSize) {
-      const auto scene = PianoRollSceneBuilder::build(snapshot.timeline, time, snapshot.sceneConfig);
+      const auto scene =
+        PianoRollSceneBuilder::build(snapshot.timeline, time, snapshot.sceneConfig);
       return renderer.renderOffscreen(target, scene, snapshot.background).pixels;
     });
   MidiTimeline timeline;
