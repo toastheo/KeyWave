@@ -1,7 +1,12 @@
 #include "platform/VideoSaveDialog.hpp"
 
+#include <filesystem>
 #include <memory>
 #include <nfd.h>
+#include <optional>
+#include <string>
+
+#include "diagnostics/Diagnostics.hpp"
 
 std::optional<std::filesystem::path> VideoSaveDialog::save(DiagnosticSink& diagnostics)
 {
@@ -20,7 +25,7 @@ std::optional<std::filesystem::path> VideoSaveDialog::save(DiagnosticSink& diagn
   const nfdu8filteritem_t filter{"MP4 video", "mp4"};
   nfdu8char_t* selected = nullptr;
   const auto result = NFD_SaveDialogU8(&selected, &filter, 1, nullptr, "KeyWave.mp4");
-  std::unique_ptr<nfdu8char_t, decltype(&NFD_FreePathU8)> guard(selected, NFD_FreePathU8);
+  std::unique_ptr<nfdu8char_t, decltype(&NFD_FreePathU8)> const guard(selected, NFD_FreePathU8);
   if (result == NFD_CANCEL) {
     return std::nullopt;
   }

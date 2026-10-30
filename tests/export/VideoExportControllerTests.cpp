@@ -1,9 +1,18 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <cstdint>
+#include <filesystem>
+#include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 #include "app/VideoExportController.hpp"
 #include "app/VisualizerController.hpp"
+#include "core/CoreTypes.hpp"
+#include "export/ExportSnapshot.hpp"
+#include "export/VideoEncoder.hpp"
+#include "midi/MidiTimeline.hpp"
 
 namespace {
 class FakeVideoEncoder final : public VideoEncoder
@@ -16,14 +25,14 @@ public:
   void start(VideoEncoderConfig value, const std::filesystem::path&) override
   {
     config = value;
-    current = {VideoEncoderState::Running, 0, {}};
+    current = {.state = VideoEncoderState::Running, .framesWritten = 0, .error = {}};
     cancelRequested = false;
   }
-  VideoEncoderStatus status() const override
+  [[nodiscard]] VideoEncoderStatus status() const override
   {
     return current;
   }
-  bool canAcceptFrame() const override
+  [[nodiscard]] bool canAcceptFrame() const override
   {
     return !blocked;
   }
@@ -42,13 +51,23 @@ public:
     current.state = VideoEncoderState::Cancelled;
   }
 };
-ExportSnapshot song(double length = 0.1, double offset = -0.2, double rate = 2.0)
+struct SongOptions
 {
+  double length = 0.1;
+  double offset = -0.2;
+  double rate = 2.0;
+};
+
+ExportSnapshot song(SongOptions options = {})
+{
+  const auto [length, offset, rate] = options;
   MidiTimeline timeline;
   timeline.addNote({.pitch = 60, .velocity = 64, .durationSeconds = length});
-  return {std::move(timeline), {}, {0.2f, 0.3f, 0.4f, 1.0f}, offset, rate};
+  return {std::move(timeline), {}, {.r = 0.2f, .g = 0.3f, .b = 0.4f, .a = 1.0f}, offset, rate};
 }
 } // namespace
+
+namespace {
 
 TEST_CASE("Video controller uses frozen full song timing and fixed MVP profile",
           "[export-controller]")
@@ -105,7 +124,7 @@ TEST_CASE("Video controller cancels a blocked export and permits another job",
     ++renders;
     return std::vector<std::uint8_t>{};
   });
-  REQUIRE(controller.start(song(100000), "test.mp4"));
+  REQUIRE(controller.start(song({.length = 100000}), "test.mp4"));
   fake->blocked = true;
   controller.tick();
   controller.cancel();
@@ -145,7 +164,9 @@ TEST_CASE("Video controller propagates asynchronous encoder errors without more 
     return std::vector<std::uint8_t>{};
   });
   REQUIRE(controller.start(song(), "test.mp4"));
-  fake->current = {VideoEncoderState::Failed, 0, "encoder crashed"};
+  fake->current = {.state = VideoEncoderState::Failed,
+                   .framesWritten = 0,
+                   .error = "encoder crashed"};
   controller.tick();
   CHECK(controller.status().error == "encoder crashed");
   CHECK_FALSE(controller.active());
@@ -172,3 +193,4 @@ TEST_CASE("Exporting an empty loaded MIDI reports failure and allows retry", "[e
   controller.tick();
   CHECK(controller.framesGenerated() == 1);
 }
+} // namespace

@@ -5,7 +5,9 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 
+#include "diagnostics/Diagnostics.hpp"
 #include "diagnostics/RecordingDiagnosticSink.hpp"
 #include "midi/MidiFileLoader.hpp"
 #include "midi/MidiFixtures.hpp"
@@ -28,15 +30,15 @@ TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]")
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
 
   REQUIRE(timeline.has_value());
-  CHECK(timeline->sourceBpmAt(0.0) == Catch::Approx(120.0));
-  CHECK(timeline->sourceBpmAt(0.249) == Catch::Approx(120.0));
-  CHECK(timeline->sourceBpmAt(0.25) == Catch::Approx(60.0));
-  CHECK(timeline->sourceBpmAt(12.0) == Catch::Approx(60.0));
-  REQUIRE(timeline->notes().size() == 2);
-  CHECK(timeline->lengthSeconds() == Catch::Approx(1.25).margin(kTimeTolerance));
+  CHECK(timeline.value().sourceBpmAt(0.0) == Catch::Approx(120.0));
+  CHECK(timeline.value().sourceBpmAt(0.249) == Catch::Approx(120.0));
+  CHECK(timeline.value().sourceBpmAt(0.25) == Catch::Approx(60.0));
+  CHECK(timeline.value().sourceBpmAt(12.0) == Catch::Approx(60.0));
+  REQUIRE(timeline.value().notes().size() == 2);
+  CHECK(timeline.value().lengthSeconds() == Catch::Approx(1.25).margin(kTimeTolerance));
 
   const auto& [pitch, velocity, channel, track, startSeconds, durationSeconds] =
-    timeline->notes()[0];
+    timeline.value().notes()[0];
   CHECK(pitch == 60);
   CHECK(velocity == 64);
   CHECK(channel == 0);
@@ -44,7 +46,7 @@ TEST_CASE("MidiFileLoader loads notes and applies tempo changes", "[midi]")
   CHECK(startSeconds == Catch::Approx(0.0).margin(kTimeTolerance));
   CHECK(durationSeconds == Catch::Approx(0.25).margin(kTimeTolerance));
 
-  const auto& second = timeline->notes()[1];
+  const auto& second = timeline.value().notes()[1];
   CHECK(second.pitch == 64);
   CHECK(second.velocity == 80);
   CHECK(second.channel == 0);
@@ -60,9 +62,9 @@ TEST_CASE("MidiFileLoader treats note-on velocity zero as note-off", "[midi]")
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
 
   REQUIRE(timeline.has_value());
-  REQUIRE(timeline->notes().size() == 2);
-  CHECK(timeline->notes()[1].pitch == 64);
-  CHECK(timeline->notes()[1].durationSeconds == Catch::Approx(1.0).margin(kTimeTolerance));
+  REQUIRE(timeline.value().notes().size() == 2);
+  CHECK(timeline.value().notes()[1].pitch == 64);
+  CHECK(timeline.value().notes()[1].durationSeconds == Catch::Approx(1.0).margin(kTimeTolerance));
 }
 
 TEST_CASE("MidiFileLoader pairs overlapping notes using FIFO order", "[midi]")
@@ -72,17 +74,17 @@ TEST_CASE("MidiFileLoader pairs overlapping notes using FIFO order", "[midi]")
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
 
   REQUIRE(timeline.has_value());
-  CHECK(timeline->sourceBpmAt(0.0) == Catch::Approx(120.0));
-  CHECK(timeline->sourceBpmAt(2.0) == Catch::Approx(120.0));
-  REQUIRE(timeline->notes().size() == 2);
+  CHECK(timeline.value().sourceBpmAt(0.0) == Catch::Approx(120.0));
+  CHECK(timeline.value().sourceBpmAt(2.0) == Catch::Approx(120.0));
+  REQUIRE(timeline.value().notes().size() == 2);
 
-  const auto& first = timeline->notes()[0];
+  const auto& first = timeline.value().notes()[0];
   CHECK(first.pitch == 60);
   CHECK(first.velocity == 40);
   CHECK(first.startSeconds == Catch::Approx(0.0).margin(kTimeTolerance));
   CHECK(first.durationSeconds == Catch::Approx(0.25).margin(kTimeTolerance));
 
-  const auto& second = timeline->notes()[1];
+  const auto& second = timeline.value().notes()[1];
   CHECK(second.pitch == 60);
   CHECK(second.velocity == 50);
   CHECK(second.startSeconds == Catch::Approx(0.125).margin(kTimeTolerance));
@@ -96,20 +98,20 @@ TEST_CASE("MidiFileLoader loads sustain pedal events", "[midi]")
   const auto timeline = MidiFileLoader::loadFromFile(fixture.path());
 
   REQUIRE(timeline.has_value());
-  REQUIRE(timeline->sustainPedalEvents().size() == 2);
+  REQUIRE(timeline.value().sustainPedalEvents().size() == 2);
 
-  const auto& pedalDown = timeline->sustainPedalEvents()[0];
+  const auto& pedalDown = timeline.value().sustainPedalEvents()[0];
   CHECK(pedalDown.timeSeconds == Catch::Approx(0.0).margin(kTimeTolerance));
   CHECK(pedalDown.pressed);
   CHECK(pedalDown.channel == 0);
   CHECK(pedalDown.track == 0);
 
-  const auto& pedalUp = timeline->sustainPedalEvents()[1];
+  const auto& pedalUp = timeline.value().sustainPedalEvents()[1];
   CHECK(pedalUp.timeSeconds == Catch::Approx(0.5).margin(kTimeTolerance));
   CHECK_FALSE(pedalUp.pressed);
   CHECK(pedalUp.channel == 0);
   CHECK(pedalUp.track == 0);
-  CHECK(timeline->lengthSeconds() == Catch::Approx(0.5).margin(kTimeTolerance));
+  CHECK(timeline.value().lengthSeconds() == Catch::Approx(0.5).margin(kTimeTolerance));
 }
 
 TEST_CASE("MidiFileLoader returns nullopt for missing files", "[midi]")
@@ -131,7 +133,8 @@ TEST_CASE("MidiFileLoader returns nullopt and reports an error for unsupported f
   }
 
   RecordingDiagnosticSink diagnostics;
-  std::ostringstream capturedStderr;
+  // std::cerr writes indirectly through this stream's buffer.
+  std::ostringstream capturedStderr; // NOLINT(misc-const-correctness)
   auto* const originalStderr = std::cerr.rdbuf(capturedStderr.rdbuf());
   const auto timeline = MidiFileLoader::loadFromFile(unsupportedPath, diagnostics);
   std::cerr.rdbuf(originalStderr);

@@ -1,10 +1,15 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <cstddef>
 #include <variant>
 #include <vector>
 
+#include "core/CoreTypes.hpp"
+#include "keyboard/KeyboardGeometry.hpp"
 #include "keyboard/KeyboardLayout.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
+#include "keyboard/KeyboardTypes.hpp"
+#include "render/RenderCommand.hpp"
 
 namespace {
 

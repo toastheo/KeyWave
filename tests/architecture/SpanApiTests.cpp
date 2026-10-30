@@ -1,11 +1,17 @@
 #include <array>
 #include <catch2/catch_test_macros.hpp>
+#include <cstddef>
 #include <span>
 
+#include "core/CoreTypes.hpp"
 #include "fallingnotes/FallingNotesLayout.hpp"
+#include "fallingnotes/FallingNotesTypes.hpp"
 #include "keyboard/KeyboardGeometry.hpp"
 #include "keyboard/KeyboardState.hpp"
+#include "midi/MidiTypes.hpp"
+#include "render/RenderCommand.hpp"
 #include "render/RendererBackend.hpp"
+#include "render/RendererView.hpp"
 
 namespace {
 

@@ -1,7 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "core/CoreTypes.hpp"
 #include "midi/MidiTimeline.hpp"
 #include "midi/MidiTimelineQuery.hpp"
+#include "midi/MidiTypes.hpp"
 
 namespace {
 

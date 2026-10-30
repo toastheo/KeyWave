@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 
+#include "app/AppSettings.hpp"
 #include "app/SettingsStorage.hpp"
 
 namespace {
@@ -42,14 +43,14 @@ TEST_CASE("SettingsStorage saves settings and creates parent directories", "[app
 
   const auto loaded = SettingsStorage::load(path);
   REQUIRE(loaded.has_value());
-  CHECK(loaded->renderer.clearColor.r == Catch::Approx(0.7f));
-  CHECK(loaded->renderer.clearColor.g == Catch::Approx(0.6f));
-  CHECK(loaded->renderer.clearColor.b == Catch::Approx(0.5f));
-  CHECK(loaded->window.displayMode == WindowDisplayMode::BorderlessFullscreen);
-  CHECK(loaded->window.width == 1920);
-  CHECK(loaded->window.height == 1080);
-  CHECK_FALSE(loaded->window.vsyncEnabled);
-  CHECK(loaded->window.fpsLimit == 144);
+  CHECK(loaded.value().renderer.clearColor.r == Catch::Approx(0.7f));
+  CHECK(loaded.value().renderer.clearColor.g == Catch::Approx(0.6f));
+  CHECK(loaded.value().renderer.clearColor.b == Catch::Approx(0.5f));
+  CHECK(loaded.value().window.displayMode == WindowDisplayMode::BorderlessFullscreen);
+  CHECK(loaded.value().window.width == 1920);
+  CHECK(loaded.value().window.height == 1080);
+  CHECK_FALSE(loaded.value().window.vsyncEnabled);
+  CHECK(loaded.value().window.fpsLimit == 144);
 }
 
 TEST_CASE("SettingsStorage saves over existing settings", "[app][settings]")
@@ -67,9 +68,9 @@ TEST_CASE("SettingsStorage saves over existing settings", "[app][settings]")
 
   const auto loaded = SettingsStorage::load(path);
   REQUIRE(loaded.has_value());
-  CHECK(loaded->renderer.clearColor.r == Catch::Approx(0.8f));
-  CHECK(loaded->renderer.clearColor.g == Catch::Approx(0.7f));
-  CHECK(loaded->renderer.clearColor.b == Catch::Approx(0.6f));
+  CHECK(loaded.value().renderer.clearColor.r == Catch::Approx(0.8f));
+  CHECK(loaded.value().renderer.clearColor.g == Catch::Approx(0.7f));
+  CHECK(loaded.value().renderer.clearColor.b == Catch::Approx(0.6f));
 }
 
 TEST_CASE("SettingsStorage returns nullopt for malformed JSON", "[app][settings]")

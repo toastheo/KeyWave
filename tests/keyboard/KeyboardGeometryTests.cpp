@@ -1,7 +1,9 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include "core/CoreTypes.hpp"
 #include "keyboard/KeyboardGeometry.hpp"
+#include "keyboard/KeyboardTypes.hpp"
 
 namespace {
 

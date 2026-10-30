@@ -20,7 +20,7 @@ enum class VideoEncoderState : std::uint8_t
 
 struct VideoEncoderConfig
 {
-  FramebufferSize size{1920, 1080};
+  FramebufferSize size{.width = 1920, .height = 1080};
   int fps = 30;
   std::uint64_t frameCount = 0;
 };

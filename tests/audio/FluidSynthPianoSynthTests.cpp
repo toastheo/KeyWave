@@ -2,6 +2,8 @@
 #include <filesystem>
 
 #include "audio/FluidSynthPianoSynth.hpp"
+#include "audio/PianoSynth.hpp"
+#include "diagnostics/Diagnostics.hpp"
 #include "diagnostics/RecordingDiagnosticSink.hpp"
 
 namespace {

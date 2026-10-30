@@ -1,8 +1,14 @@
 #include "midi/MidiFixtures.hpp"
 
 #include <chrono>
+#include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <ios>
+#include <string>
+#include <system_error>
 #include <utility>
+#include <vector>
 
 namespace midi_fixtures {
 namespace {
@@ -32,7 +38,8 @@ TemporaryMidiFile::TemporaryMidiFile(const std::vector<std::uint8_t>& bytes)
 TemporaryMidiFile::~TemporaryMidiFile()
 {
   if (!m_path.empty()) {
-    std::filesystem::remove(m_path);
+    std::error_code error;
+    std::filesystem::remove(m_path, error);
   }
 }
 
@@ -44,7 +51,8 @@ TemporaryMidiFile& TemporaryMidiFile::operator=(TemporaryMidiFile&& other) noexc
 {
   if (this != &other) {
     if (!m_path.empty()) {
-      std::filesystem::remove(m_path);
+      std::error_code error;
+      std::filesystem::remove(m_path, error);
     }
 
     m_path = std::exchange(other.m_path, {});

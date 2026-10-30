@@ -15,7 +15,7 @@ TEST_CASE("parseAppConfig accepts no MIDI file argument", "[app][config]")
   const auto config = parseAppConfig(argv.size(), argv.data());
 
   REQUIRE(config.has_value());
-  CHECK_FALSE(config->midiFilePath.has_value());
+  CHECK_FALSE(config.value().midiFilePath.has_value());
 }
 
 TEST_CASE("parseAppConfig stores a single MIDI file argument", "[app][config]")
@@ -27,8 +27,8 @@ TEST_CASE("parseAppConfig stores a single MIDI file argument", "[app][config]")
   const auto config = parseAppConfig(argv.size(), argv.data());
 
   REQUIRE(config.has_value());
-  REQUIRE(config->midiFilePath.has_value());
-  CHECK(*config->midiFilePath == std::filesystem::path{"songs/example.mid"});
+  REQUIRE(config.value().midiFilePath.has_value());
+  CHECK(config.value().midiFilePath.value() == std::filesystem::path{"songs/example.mid"});
 }
 
 TEST_CASE("parseAppConfig rejects extra arguments", "[app][config]")

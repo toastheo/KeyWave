@@ -2,6 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
 
+#include "app/AppSettings.hpp"
 #include "app/AppSettingsSerializer.hpp"
 
 namespace {

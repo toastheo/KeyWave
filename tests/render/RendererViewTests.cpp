@@ -1,6 +1,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include "core/CoreTypes.hpp"
 #include "render/RenderCommand.hpp"
 #include "render/RendererView.hpp"
 

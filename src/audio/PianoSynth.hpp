@@ -1,12 +1,14 @@
 #pragma once
 
+#include <cstdint>
+
 struct PianoNote
 {
   int pitch = 0;
   int velocity = 0;
 };
 
-enum class SustainPedalState
+enum class SustainPedalState : std::uint8_t
 {
   Up,
   Down,

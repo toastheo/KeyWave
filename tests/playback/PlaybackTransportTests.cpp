@@ -4,6 +4,7 @@
 #include <limits>
 #include <sstream>
 
+#include "diagnostics/Diagnostics.hpp"
 #include "diagnostics/RecordingDiagnosticSink.hpp"
 #include "playback/PlaybackTransport.hpp"
 
@@ -80,7 +81,8 @@ TEST_CASE("PlaybackTransport ignores invalid timing input safely", "[playback]")
 TEST_CASE("PlaybackTransport does not print diagnostics directly", "[playback][diagnostics]")
 {
   PlaybackTransport transport;
-  std::ostringstream const capturedError;
+  // std::cerr writes indirectly through this stream's buffer.
+  std::ostringstream capturedError; // NOLINT(misc-const-correctness)
   auto* const originalErrorBuffer = std::cerr.rdbuf(capturedError.rdbuf());
 
   transport.seek(std::numeric_limits<double>::infinity());

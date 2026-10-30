@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "audio/PianoSynth.hpp"
@@ -9,7 +10,7 @@
 class TimelineAudioScheduler
 {
 public:
-  enum class SeekMode
+  enum class SeekMode : std::uint8_t
   {
     RestoreState,
     PositionOnly,
@@ -26,13 +27,13 @@ public:
   void stop();
 
 private:
-  enum class CursorBoundary
+  enum class CursorBoundary : std::uint8_t
   {
     IncludeEventsAtTime,
     SkipEventsAtTime,
   };
 
-  enum class EventType
+  enum class EventType : std::uint8_t
   {
     SustainPedal,
     NoteOff,

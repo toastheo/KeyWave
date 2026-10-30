@@ -1,13 +1,18 @@
 #include <atomic>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <thread>
+#include <vector>
 
 #include "platform/ChildProcess.hpp"
 
+namespace {
+
 TEST_CASE("Child process preserves argument boundaries without shell interpretation", "[process]")
 {
-  std::atomic_bool cancelled{false};
+  std::atomic_bool const cancelled{false};
   ChildProcess process(KEYWAVE_PROCESS_FIXTURE,
                        {"echo", "", "space and & $()", "a\"b", "trailing\\", "two\\\"quotes"});
   process.closeInput();
@@ -19,7 +24,7 @@ TEST_CASE("Child process preserves argument boundaries without shell interpretat
 
 TEST_CASE("Child process drains excessive diagnostics and retains the failure tail", "[process]")
 {
-  std::atomic_bool cancelled{false};
+  std::atomic_bool const cancelled{false};
   ChildProcess process(KEYWAVE_PROCESS_FIXTURE, {"flood"});
   process.closeInput();
   CHECK(process.wait(cancelled) == 7);
@@ -29,7 +34,7 @@ TEST_CASE("Child process drains excessive diagnostics and retains the failure ta
 
 TEST_CASE("Windows child process does not open a console", "[process]")
 {
-  std::atomic_bool cancelled{false};
+  std::atomic_bool const cancelled{false};
   ChildProcess process(KEYWAVE_PROCESS_FIXTURE, {"console"});
   process.closeInput();
   CHECK(process.wait(cancelled) == 0);
@@ -39,7 +44,7 @@ TEST_CASE("Blocked child input times out and can be cancelled", "[process]")
 {
   std::atomic_bool cancelled{false};
   ChildProcess process(KEYWAVE_PROCESS_FIXTURE, {"block"});
-  std::vector<std::uint8_t> frame(1024 * 1024);
+  std::vector<std::uint8_t> frame(std::size_t{1024} * 1024);
   const auto before = std::chrono::steady_clock::now();
   SECTION("timeout")
   {
@@ -47,7 +52,7 @@ TEST_CASE("Blocked child input times out and can be cancelled", "[process]")
   }
   SECTION("cancel")
   {
-    std::jthread cancelThread([&] {
+    std::jthread const cancelThread([&] {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       cancelled = true;
     });
@@ -55,3 +60,5 @@ TEST_CASE("Blocked child input times out and can be cancelled", "[process]")
   }
   CHECK(std::chrono::steady_clock::now() - before < std::chrono::seconds(2));
 }
+
+} // namespace

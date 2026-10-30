@@ -6,6 +6,7 @@
 #include "audio/PianoSynth.hpp"
 #include "audio/TimelineAudioScheduler.hpp"
 #include "midi/MidiTimeline.hpp"
+#include "midi/MidiTypes.hpp"
 #include "playback/PlaybackTransport.hpp"
 #include "ui/TransportSeek.hpp"
 
@@ -26,12 +27,12 @@ public:
 
   void setSustainPedal(const SustainPedalState state) override
   {
-    commands.push_back(state == SustainPedalState::Down ? "sustain:down" : "sustain:up");
+    commands.emplace_back(state == SustainPedalState::Down ? "sustain:down" : "sustain:up");
   }
 
   void setPlaybackPaused(const bool paused) override
   {
-    commands.push_back(paused ? "playback:paused" : "playback:resumed");
+    commands.emplace_back(paused ? "playback:paused" : "playback:resumed");
   }
 
   void allNotesOff() override
