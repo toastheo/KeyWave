@@ -3,7 +3,9 @@
 #include <array>
 #include <atomic>
 #include <cstddef>
-#include <fluidsynth.h>
+#include <fluidsynth.h> // IWYU pragma: keep -- defines the public API/export macros
+#include <fluidsynth/audio.h>
+#include <fluidsynth/misc.h>
 #include <span>
 #include <type_traits>
 

@@ -1,7 +1,17 @@
 #include "app/VideoExportController.hpp"
 
+#include <cstdint>
+#include <exception>
+#include <filesystem>
+#include <functional>
+#include <memory>
 #include <stdexcept>
 #include <utility>
+
+#include "export/ExportSnapshot.hpp"
+#include "export/ExportTiming.hpp"
+#include "export/VideoEncoder.hpp"
+#include "export/VideoExportSettings.hpp"
 
 namespace {
 bool isActive(VideoEncoderState state)
@@ -35,7 +45,7 @@ VideoExportController::~VideoExportController()
 
 bool VideoExportController::start(ExportSnapshot snapshot, const std::filesystem::path& destination)
 {
-  return start([&snapshot] { return std::move(snapshot); }, destination);
+  return start([&snapshot] { return snapshot; }, destination);
 }
 
 bool VideoExportController::start(const std::function<ExportSnapshot()>& snapshotFactory,
@@ -58,7 +68,9 @@ bool VideoExportController::start(const std::function<ExportSnapshot()>& snapsho
     m_timing = std::make_unique<ExportTiming>(settings, *m_snapshot);
     m_frameCount = m_timing->frameCount();
     m_duration = m_timing->outputDurationSeconds();
-    m_encoder->start({exportFramebufferSize(settings), settings.fps, m_frameCount}, destination);
+    m_encoder->start(
+      {.size = exportFramebufferSize(settings), .fps = settings.fps, .frameCount = m_frameCount},
+      destination);
     return true;
   }
   catch (const std::exception& error) {

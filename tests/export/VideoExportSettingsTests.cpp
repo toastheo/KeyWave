@@ -3,6 +3,8 @@
 
 #include "export/VideoExportSettings.hpp"
 
+namespace {
+
 TEST_CASE("Export settings map all format presets independently of quality and FPS", "[export]")
 {
   struct Expected
@@ -12,16 +14,42 @@ TEST_CASE("Export settings map all format presets independently of quality and F
     int width;
     int height;
   };
-  for (const auto& row :
-       {Expected{ExportResolution::P720, ExportAspectRatio::Landscape, 1280, 720},
-        Expected{ExportResolution::P720, ExportAspectRatio::Portrait, 720, 1280},
-        Expected{ExportResolution::P720, ExportAspectRatio::Square, 720, 720},
-        Expected{ExportResolution::P1080, ExportAspectRatio::Landscape, 1920, 1080},
-        Expected{ExportResolution::P1080, ExportAspectRatio::Portrait, 1080, 1920},
-        Expected{ExportResolution::P1080, ExportAspectRatio::Square, 1080, 1080},
-        Expected{ExportResolution::P2160, ExportAspectRatio::Landscape, 3840, 2160},
-        Expected{ExportResolution::P2160, ExportAspectRatio::Portrait, 2160, 3840},
-        Expected{ExportResolution::P2160, ExportAspectRatio::Square, 2160, 2160}}) {
+  for (const auto& row : {Expected{.resolution = ExportResolution::P720,
+                                   .aspect = ExportAspectRatio::Landscape,
+                                   .width = 1280,
+                                   .height = 720},
+                          Expected{.resolution = ExportResolution::P720,
+                                   .aspect = ExportAspectRatio::Portrait,
+                                   .width = 720,
+                                   .height = 1280},
+                          Expected{.resolution = ExportResolution::P720,
+                                   .aspect = ExportAspectRatio::Square,
+                                   .width = 720,
+                                   .height = 720},
+                          Expected{.resolution = ExportResolution::P1080,
+                                   .aspect = ExportAspectRatio::Landscape,
+                                   .width = 1920,
+                                   .height = 1080},
+                          Expected{.resolution = ExportResolution::P1080,
+                                   .aspect = ExportAspectRatio::Portrait,
+                                   .width = 1080,
+                                   .height = 1920},
+                          Expected{.resolution = ExportResolution::P1080,
+                                   .aspect = ExportAspectRatio::Square,
+                                   .width = 1080,
+                                   .height = 1080},
+                          Expected{.resolution = ExportResolution::P2160,
+                                   .aspect = ExportAspectRatio::Landscape,
+                                   .width = 3840,
+                                   .height = 2160},
+                          Expected{.resolution = ExportResolution::P2160,
+                                   .aspect = ExportAspectRatio::Portrait,
+                                   .width = 2160,
+                                   .height = 3840},
+                          Expected{.resolution = ExportResolution::P2160,
+                                   .aspect = ExportAspectRatio::Square,
+                                   .width = 2160,
+                                   .height = 2160}}) {
     for (const auto fps : {30, 60}) {
       for (const auto quality : {ExportQuality::Medium, ExportQuality::High, ExportQuality::Best}) {
         VideoExportSettings settings;
@@ -63,3 +91,5 @@ TEST_CASE("Export settings reject unsupported options instead of silently substi
   }
   CHECK_THROWS_AS(exportFramebufferSize(settings), std::invalid_argument);
 }
+
+} // namespace

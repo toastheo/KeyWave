@@ -1,9 +1,12 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <cstddef>
 #include <variant>
 #include <vector>
 
+#include "core/CoreTypes.hpp"
 #include "fallingnotes/FallingNotesRenderAdapter.hpp"
+#include "fallingnotes/FallingNotesTypes.hpp"
 #include "render/RenderCommand.hpp"
 
 namespace {

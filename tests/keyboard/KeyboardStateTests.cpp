@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "keyboard/KeyboardState.hpp"
+#include "midi/MidiTypes.hpp"
 
 namespace {
 

@@ -2,17 +2,29 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <cstdlib>
+#include <filesystem>
+#include <memory>
 #include <mutex>
+#include <span>
 #include <stdexcept>
+#include <string>
 #include <system_error>
 #include <thread>
+#include <vector>
 
+// include-cleaner attributes Win32 declarations to internal SDK headers.
+// Keep the supported windows.h umbrella; exempt only Win32 sections.
 #ifdef _WIN32
+// NOLINTBEGIN(misc-include-cleaner)
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <windows.h>
+// NOLINTEND(misc-include-cleaner)
 #else
 #include <cerrno>
 #include <csignal>
@@ -26,6 +38,7 @@ extern char** environ;
 
 namespace {
 #ifdef _WIN32
+// NOLINTBEGIN(misc-include-cleaner)
 struct Handle
 {
   HANDLE value = INVALID_HANDLE_VALUE;
@@ -79,6 +92,7 @@ void winError(const char* context)
 {
   throw std::system_error(static_cast<int>(GetLastError()), std::system_category(), context);
 }
+// NOLINTEND(misc-include-cleaner)
 #else
 struct Descriptor
 {
@@ -104,7 +118,9 @@ struct ChildProcess::Impl
   std::string output;
   std::thread reader;
 #ifdef _WIN32
+  // NOLINTBEGIN(misc-include-cleaner)
   Handle process, input, errors;
+// NOLINTEND(misc-include-cleaner)
 #else
   pid_t pid = -1;
   Descriptor input, errors;
@@ -114,7 +130,7 @@ struct ChildProcess::Impl
 
   void append(const char* bytes, std::size_t count)
   {
-    std::lock_guard lock(mutex);
+    std::lock_guard const lock(mutex);
     output.append(bytes, count);
     if (output.size() > diagnosticLimit) {
       output.erase(0, output.size() - diagnosticLimit);
@@ -126,12 +142,14 @@ struct ChildProcess::Impl
     std::array<char, 4096> buffer{};
     for (;;) {
 #ifdef _WIN32
+      // NOLINTBEGIN(misc-include-cleaner)
       DWORD count = 0;
       if (!ReadFile(
             errors.value, buffer.data(), static_cast<DWORD>(buffer.size()), &count, nullptr) ||
           count == 0) {
         break;
       }
+// NOLINTEND(misc-include-cleaner)
 #else
       const auto count = read(errors.value, buffer.data(), buffer.size());
       if (count < 0 && errno == EINTR) {
@@ -148,11 +166,13 @@ struct ChildProcess::Impl
   void terminate()
   {
 #ifdef _WIN32
+    // NOLINTBEGIN(misc-include-cleaner)
     if (!reaped && process.value != INVALID_HANDLE_VALUE) {
       TerminateProcess(process.value, 1);
       WaitForSingleObject(process.value, INFINITE);
       reaped = true;
     }
+// NOLINTEND(misc-include-cleaner)
 #else
     if (!reaped && pid > 0) {
       kill(pid, SIGKILL);
@@ -181,6 +201,7 @@ ChildProcess::ChildProcess(const std::filesystem::path& executable,
     throw std::invalid_argument("Empty process executable");
   }
 #ifdef _WIN32
+  // NOLINTBEGIN(misc-include-cleaner)
   // Overlapped server writes allow cancellation without a blocked UI or writer.
   static std::atomic_uint64_t serial{0};
   const auto pipeName = L"\\\\.\\pipe\\KeyWave-" + std::to_wstring(GetCurrentProcessId()) + L"-" +
@@ -226,12 +247,12 @@ ChildProcess::ChildProcess(const std::filesystem::path& executable,
     {
       DeleteProcThreadAttributeList(list);
     }
-  } guard{list};
+  } const guard{list};
   std::array inherited{childInput.value, childErrors.value};
   if (!UpdateProcThreadAttribute(list,
                                  0,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
-                                 inherited.data(),
+                                 static_cast<void*>(inherited.data()),
                                  sizeof(inherited),
                                  nullptr,
                                  nullptr)) {
@@ -265,6 +286,7 @@ ChildProcess::ChildProcess(const std::filesystem::path& executable,
   CloseHandle(info.hThread);
   childInput.reset();
   childErrors.reset();
+// NOLINTEND(misc-include-cleaner)
 #else
   int inputPipe[2], outputPipe[2];
   if (pipe(inputPipe) != 0) {
@@ -350,6 +372,7 @@ void ChildProcess::writeInput(std::span<const std::uint8_t> bytes,
       throw std::runtime_error("FFmpeg input stalled (pipe write timeout)");
     }
 #ifdef _WIN32
+    // NOLINTBEGIN(misc-include-cleaner)
     Handle event;
     event.value = CreateEventW(nullptr, TRUE, FALSE, nullptr);
     if (event.value == nullptr) {
@@ -379,6 +402,7 @@ void ChildProcess::writeInput(std::span<const std::uint8_t> bytes,
         winError("Completing FFmpeg pipe write");
       }
     }
+// NOLINTEND(misc-include-cleaner)
 #else
     pollfd descriptor{m_impl->input.value, POLLOUT, 0};
     const auto ready = poll(&descriptor, 1, 50);
@@ -426,6 +450,7 @@ int ChildProcess::wait(const std::atomic_bool& cancelled, std::chrono::milliseco
       throw std::runtime_error(cancelled ? "Export cancelled" : "FFmpeg process timed out");
     }
 #ifdef _WIN32
+    // NOLINTBEGIN(misc-include-cleaner)
     const auto result = WaitForSingleObject(m_impl->process.value, 50);
     if (result == WAIT_FAILED) {
       winError("Waiting for FFmpeg");
@@ -438,6 +463,7 @@ int ChildProcess::wait(const std::atomic_bool& cancelled, std::chrono::milliseco
       m_impl->exitCode = static_cast<int>(code);
       m_impl->reaped = true;
     }
+// NOLINTEND(misc-include-cleaner)
 #else
     int status = 0;
     const auto result = waitpid(m_impl->pid, &status, WNOHANG);
@@ -461,13 +487,14 @@ int ChildProcess::wait(const std::atomic_bool& cancelled, std::chrono::milliseco
 
 std::string ChildProcess::diagnostics() const
 {
-  std::lock_guard lock(m_impl->mutex);
+  std::lock_guard const lock(m_impl->mutex);
   return m_impl->output;
 }
 
 std::filesystem::path ChildProcess::findExecutable(const std::string& name)
 {
 #ifdef _WIN32
+  // NOLINTBEGIN(misc-include-cleaner)
   std::array<wchar_t, 32768> module{};
   const DWORD size = GetModuleFileNameW(nullptr, module.data(), static_cast<DWORD>(module.size()));
   if (size > 0 && size < module.size()) {
@@ -492,8 +519,9 @@ std::filesystem::path ChildProcess::findExecutable(const std::string& name)
                                  found.data(),
                                  nullptr);
   if (count > 0 && count < found.size()) {
-    return std::filesystem::path(std::wstring(found.data(), count));
+    return {std::wstring(found.data(), count)};
   }
+// NOLINTEND(misc-include-cleaner)
 #else
   const auto* path = std::getenv("PATH");
   if (path != nullptr) {

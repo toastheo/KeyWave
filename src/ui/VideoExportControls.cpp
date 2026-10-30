@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <imgui.h>
 
+#include "app/VideoExportController.hpp"
+#include "export/VideoEncoder.hpp"
+
 VideoExportAction VideoExportControls::render(const VideoExportController& controller,
                                               bool hasTimeline)
 {

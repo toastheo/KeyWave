@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -16,13 +17,13 @@ struct MidiLibraryState
   std::optional<std::string> lastActiveMidiId;
 };
 
-enum class MetadataLoadPolicy
+enum class MetadataLoadPolicy : std::uint8_t
 {
   Tolerant,
   Strict,
 };
 
-enum class StoredFileValidation
+enum class StoredFileValidation : std::uint8_t
 {
   Require,
   Skip,

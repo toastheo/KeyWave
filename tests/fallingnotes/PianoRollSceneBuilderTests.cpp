@@ -2,11 +2,19 @@
 #include <catch2/catch_test_macros.hpp>
 #include <limits>
 #include <variant>
+#include <vector>
 
+#include "core/CoreTypes.hpp"
+#include "fallingnotes/FallingNotesRenderAdapter.hpp"
+#include "fallingnotes/FallingNotesTypes.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "keyboard/KeyboardRenderAdapter.hpp"
+#include "keyboard/KeyboardTypes.hpp"
 #include "midi/MidiTimeline.hpp"
+#include "midi/MidiTypes.hpp"
 #include "render/RenderCommand.hpp"
+#include "render/RenderScene.hpp"
+#include "render/RendererView.hpp"
 
 namespace {
 

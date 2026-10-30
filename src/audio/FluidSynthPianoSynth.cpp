@@ -3,7 +3,12 @@
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
-#include <fluidsynth.h>
+#include <fluidsynth.h> // IWYU pragma: keep -- defines the public API/export macros
+#include <fluidsynth/audio.h>
+#include <fluidsynth/misc.h>
+#include <fluidsynth/settings.h>
+#include <fluidsynth/synth.h>
+#include <fluidsynth/types.h>
 #include <memory>
 #include <string>
 #include <system_error>

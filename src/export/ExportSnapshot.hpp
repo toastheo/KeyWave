@@ -14,6 +14,10 @@ struct ExportSnapshot
                  double timelineOffsetSeconds,
                  double playbackRate);
 
+  // Const members copy even for rvalues; keep those potentially throwing copy
+  // semantics explicit rather than generating a misleading move constructor.
+  ExportSnapshot(const ExportSnapshot&) = default;
+
   const MidiTimeline timeline;
   const PianoRollSceneConfig sceneConfig;
   const Color background;

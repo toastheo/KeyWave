@@ -1,20 +1,35 @@
 #include "export_ffmpeg/FfmpegVideoEncoder.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
 #include <deque>
+#include <exception>
+#include <filesystem>
 #include <limits>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
+#include <string>
+#include <system_error>
 #include <thread>
+#include <utility>
+#include <vector>
 
+#include "export/VideoEncoder.hpp"
 #include "platform/ChildProcess.hpp"
 
+// include-cleaner attributes Win32 declarations to internal SDK headers.
+// Keep the supported windows.h umbrella; exempt only Win32 sections.
 #ifdef _WIN32
+// NOLINTBEGIN(misc-include-cleaner)
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <windows.h>
+// NOLINTEND(misc-include-cleaner)
 #else
 #include <fcntl.h>
 #include <unistd.h>
@@ -44,6 +59,7 @@ std::filesystem::path reserveTemporary(const std::filesystem::path& destination)
                  std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-" +
                  std::to_string(++serial) + ".partial.mp4";
 #ifdef _WIN32
+    // NOLINTBEGIN(misc-include-cleaner)
     const auto file = CreateFileW(
       temporary.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file != INVALID_HANDLE_VALUE) {
@@ -55,6 +71,7 @@ std::filesystem::path reserveTemporary(const std::filesystem::path& destination)
                               std::system_category(),
                               "Cannot create temporary export file");
     }
+// NOLINTEND(misc-include-cleaner)
 #else
     const auto file = open(temporary.c_str(), O_WRONLY | O_CREAT | O_EXCL, 0600);
     if (file >= 0) {
@@ -74,11 +91,13 @@ std::filesystem::path reserveTemporary(const std::filesystem::path& destination)
 void publish(const std::filesystem::path& temporary, const std::filesystem::path& destination)
 {
 #ifdef _WIN32
+  // NOLINTBEGIN(misc-include-cleaner)
   if (!MoveFileExW(temporary.c_str(), destination.c_str(), MOVEFILE_WRITE_THROUGH)) {
     throw std::system_error(static_cast<int>(GetLastError()),
                             std::system_category(),
                             "Cannot publish video (destination must not exist)");
   }
+// NOLINTEND(misc-include-cleaner)
 #else
   if (link(temporary.c_str(), destination.c_str()) != 0) {
     throw std::system_error(errno, std::generic_category(), "Cannot publish video");
@@ -165,7 +184,7 @@ struct FfmpegVideoEncoder::Impl
                                  "mp4",
                                  utf8(temporary)});
       {
-        std::lock_guard lock(mutex);
+        std::lock_guard const lock(mutex);
         status.state = VideoEncoderState::Running;
       }
       for (;;) {
@@ -183,7 +202,7 @@ struct FfmpegVideoEncoder::Impl
           queue.pop_front();
         }
         process->writeInput(frame, cancelled);
-        std::lock_guard lock(mutex);
+        std::lock_guard const lock(mutex);
         ++status.framesWritten;
       }
       process->closeInput();
@@ -200,18 +219,27 @@ struct FfmpegVideoEncoder::Impl
       // Claim publication without holding the UI's status mutex during storage
       // I/O. Once claimed, cancellation cannot retract the finalized result.
       {
-        std::lock_guard lock(mutex);
+        std::lock_guard const lock(mutex);
         if (cancelled) {
           throw std::runtime_error("Export cancelled");
         }
         publishing = true;
       }
       publisher(temporary, destination);
-      std::lock_guard lock(mutex);
+      std::lock_guard const lock(mutex);
       status.state = VideoEncoderState::Completed;
     }
-    catch (const std::exception& error) {
-      std::string message = error.what();
+    catch (...) {
+      std::string message;
+      try {
+        throw;
+      }
+      catch (const std::exception& error) {
+        message = error.what();
+      }
+      catch (...) {
+        message = "Unexpected exception during video export";
+      }
       if (process) {
         message += "\n" + process->diagnostics();
         process.reset(); // Kill/reap before removing the job's temporary file.
@@ -220,7 +248,7 @@ struct FfmpegVideoEncoder::Impl
       if (!temporary.empty()) {
         std::filesystem::remove(temporary, cleanupError);
       }
-      std::lock_guard lock(mutex);
+      std::lock_guard const lock(mutex);
       queue.clear();
       status.state = cancelled ? VideoEncoderState::Cancelled : VideoEncoderState::Failed;
       status.error = cancelled ? std::string{} : std::move(message);
@@ -267,9 +295,9 @@ void FfmpegVideoEncoder::start(VideoEncoderConfig config, const std::filesystem:
     m_impl->worker.join();
   }
   {
-    std::lock_guard lock(m_impl->mutex);
+    std::lock_guard const lock(m_impl->mutex);
     m_impl->queue.clear();
-    m_impl->status = {VideoEncoderState::Starting, 0, {}};
+    m_impl->status = {.state = VideoEncoderState::Starting, .framesWritten = 0, .error = {}};
     m_impl->config = config;
     m_impl->frameBytes = width * height * 4;
     m_impl->submitted = 0;
@@ -278,10 +306,13 @@ void FfmpegVideoEncoder::start(VideoEncoderConfig config, const std::filesystem:
     m_impl->cancelled = false;
   }
   try {
-    m_impl->worker = std::thread([this, output] { m_impl->run(output); });
+    // An init-capture drops the local path's const qualification so the thread
+    // callable can move its owned path without a potentially throwing copy.
+    m_impl->worker =
+      std::thread([this, destinationPath = output] { m_impl->run(destinationPath); });
   }
   catch (...) {
-    std::lock_guard lock(m_impl->mutex);
+    std::lock_guard const lock(m_impl->mutex);
     m_impl->status.state = VideoEncoderState::Failed;
     m_impl->status.error = "Cannot start video export worker";
     throw;
@@ -290,13 +321,13 @@ void FfmpegVideoEncoder::start(VideoEncoderConfig config, const std::filesystem:
 
 VideoEncoderStatus FfmpegVideoEncoder::status() const
 {
-  std::lock_guard lock(m_impl->mutex);
+  std::lock_guard const lock(m_impl->mutex);
   return m_impl->status;
 }
 
 bool FfmpegVideoEncoder::canAcceptFrame() const
 {
-  std::lock_guard lock(m_impl->mutex);
+  std::lock_guard const lock(m_impl->mutex);
   return m_impl->status.state == VideoEncoderState::Running && !m_impl->cancelled &&
          !m_impl->finishing && m_impl->submitted < m_impl->config.frameCount &&
          m_impl->queue.size() < queueCapacity;
@@ -304,7 +335,7 @@ bool FfmpegVideoEncoder::canAcceptFrame() const
 
 bool FfmpegVideoEncoder::trySubmit(std::vector<std::uint8_t>&& rgba)
 {
-  std::lock_guard lock(m_impl->mutex);
+  std::lock_guard const lock(m_impl->mutex);
   if (m_impl->status.state != VideoEncoderState::Running || m_impl->cancelled ||
       m_impl->finishing || m_impl->queue.size() >= queueCapacity ||
       m_impl->submitted >= m_impl->config.frameCount) {
@@ -321,7 +352,7 @@ bool FfmpegVideoEncoder::trySubmit(std::vector<std::uint8_t>&& rgba)
 
 void FfmpegVideoEncoder::finish()
 {
-  std::lock_guard lock(m_impl->mutex);
+  std::lock_guard const lock(m_impl->mutex);
   if (m_impl->status.state != VideoEncoderState::Running ||
       m_impl->submitted != m_impl->config.frameCount) {
     throw std::logic_error("Export cannot finalize before all frames have been submitted");
@@ -333,7 +364,7 @@ void FfmpegVideoEncoder::finish()
 
 void FfmpegVideoEncoder::cancel()
 {
-  std::lock_guard lock(m_impl->mutex);
+  std::lock_guard const lock(m_impl->mutex);
   if (active(m_impl->status.state) && !m_impl->publishing) {
     m_impl->cancelled = true;
     m_impl->queue.clear();

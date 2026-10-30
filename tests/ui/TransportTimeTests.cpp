@@ -2,6 +2,8 @@
 
 #include "ui/TransportTime.hpp"
 
+namespace {
+
 TEST_CASE("formatTransportTime shows minutes and fractional seconds", "[ui][transport]")
 {
   CHECK(formatTransportTime(0.0) == "00:00.00");
@@ -16,3 +18,5 @@ TEST_CASE("clampTransportPosition limits slider time to loaded duration", "[ui][
   CHECK(clampTransportPosition(130.0, 120.0) == 120.0);
   CHECK(clampTransportPosition(30.0, 0.0) == 0.0);
 }
+
+} // namespace

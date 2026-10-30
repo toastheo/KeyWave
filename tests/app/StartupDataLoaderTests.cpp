@@ -25,14 +25,14 @@ TEST_CASE("StartupDataLoader loads the last active imported MIDI when no CLI pat
   MidiLibraryStore store(root);
   const auto imported = store.importFile(fixture.path());
   REQUIRE(imported.has_value());
-  REQUIRE(store.setLastActiveMidiId(imported->file.id));
+  REQUIRE(store.setLastActiveMidiId(imported.value().file.id));
 
   const auto startupData = StartupDataLoader::load(AppConfig{}, store);
 
   REQUIRE(startupData.timeline.has_value());
-  CHECK(startupData.timeline->notes().size() == 2);
+  CHECK(startupData.timeline.value().notes().size() == 2);
   REQUIRE(startupData.importedMidiId.has_value());
-  CHECK(*startupData.importedMidiId == imported->file.id);
+  CHECK(*startupData.importedMidiId == imported.value().file.id);
 }
 
 TEST_CASE("StartupDataLoader keeps CLI MIDI path precedence over imported MIDI restore",
@@ -43,7 +43,7 @@ TEST_CASE("StartupDataLoader keeps CLI MIDI path precedence over imported MIDI r
   MidiLibraryStore store(root);
   const auto imported = store.importFile(fixture.path());
   REQUIRE(imported.has_value());
-  REQUIRE(store.setLastActiveMidiId(imported->file.id));
+  REQUIRE(store.setLastActiveMidiId(imported.value().file.id));
 
   const AppConfig config{.midiFilePath = root / "missing-cli-file.mid"};
   const auto startupData = StartupDataLoader::load(config, store);
@@ -59,8 +59,8 @@ TEST_CASE("StartupDataLoader starts empty when the last active imported copy is 
   MidiLibraryStore store(uniqueStartupLibraryRoot());
   const auto imported = store.importFile(fixture.path());
   REQUIRE(imported.has_value());
-  REQUIRE(store.setLastActiveMidiId(imported->file.id));
-  const auto importedPath = store.importedFilePath(imported->file.id);
+  REQUIRE(store.setLastActiveMidiId(imported.value().file.id));
+  const auto importedPath = store.importedFilePath(imported.value().file.id);
   REQUIRE(importedPath.has_value());
   std::filesystem::remove(*importedPath);
 

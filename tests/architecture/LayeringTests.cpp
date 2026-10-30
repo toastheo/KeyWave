@@ -6,6 +6,8 @@
 #include <string_view>
 #include <vector>
 
+#include "catch2/catch_message.hpp"
+
 namespace {
 
 std::string readTextFile(const std::filesystem::path& path)
@@ -124,7 +126,7 @@ TEST_CASE("FluidSynth stays behind the audio backend and app wiring", "[architec
   }
 
   const auto srcCmakeLists = readTextFile(sourceRoot / "src" / "CMakeLists.txt");
-  for (const auto targetName : std::vector<std::string>{
+  for (const auto& targetName : std::vector<std::string>{
          "keywave_midi", "keywave_render", "keywave_render_opengl", "keywave_ui"}) {
     CAPTURE(targetName);
     CHECK_FALSE(contains(targetLinkBlock(srcCmakeLists, targetName), "FluidSynth"));

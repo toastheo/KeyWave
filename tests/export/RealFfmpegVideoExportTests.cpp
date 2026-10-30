@@ -1,11 +1,25 @@
 #include <atomic>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <filesystem>
+#include <memory>
+#include <string>
+#include <system_error>
 #include <thread>
+#include <utility>
+#include <vector>
 
+#include "catch2/catch_message.hpp"
+#include "core/CoreTypes.hpp"
+#include "export/ExportSnapshot.hpp"
+#include "export/VideoEncoder.hpp"
 #include "export_ffmpeg/FfmpegVideoEncoder.hpp"
+#include "midi/MidiTimeline.hpp"
 #include "platform/ChildProcess.hpp"
+#include "render_opengl/OffscreenRenderTarget.hpp"
 
 #if defined(KEYWAVE_TEST_GPU_EXPORT)
 #include <glad/gl.h>
@@ -40,7 +54,7 @@ std::string utf8(const std::filesystem::path& path)
 }
 void assertVideo(const std::filesystem::path& file, int frames, const std::string& duration)
 {
-  std::atomic_bool cancelled{false};
+  std::atomic_bool const cancelled{false};
   ChildProcess decode(ChildProcess::findExecutable("ffmpeg"),
                       {"-hide_banner",
                        "-nostdin",
@@ -68,12 +82,14 @@ void assertVideo(const std::filesystem::path& file, int frames, const std::strin
 }
 } // namespace
 
+namespace {
+
 TEST_CASE("Real FFmpeg streams a silent Unicode-path 1080p MP4 with exact frame count", "[ffmpeg]")
 {
-  Directory temp;
+  Directory const temp;
   const auto output = temp.path / std::filesystem::path(u8"Klavier ä 日本 & export.mp4");
   FfmpegVideoEncoder encoder;
-  encoder.start({{1920, 1080}, 30, 3}, output);
+  encoder.start({.size = {.width = 1920, .height = 1080}, .fps = 30, .frameCount = 3}, output);
   int submitted = 0;
   const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
   while (std::chrono::steady_clock::now() < deadline) {
@@ -84,7 +100,7 @@ TEST_CASE("Real FFmpeg streams a silent Unicode-path 1080p MP4 with exact frame 
       break;
     }
     if (encoder.canAcceptFrame()) {
-      std::vector<std::uint8_t> frame(1920 * 1080 * 4);
+      std::vector<std::uint8_t> frame(std::size_t{1920} * 1080 * 4);
       for (std::size_t p = 0; p < frame.size(); p += 4) {
         frame[p] = static_cast<std::uint8_t>(submitted * 80);
         frame[p + 3] = 255;
@@ -98,7 +114,7 @@ TEST_CASE("Real FFmpeg streams a silent Unicode-path 1080p MP4 with exact frame 
   }
   REQUIRE(encoder.status().state == VideoEncoderState::Completed);
   assertVideo(output, 3, "00:00:00.10");
-  std::atomic_bool cancelled{false};
+  std::atomic_bool const cancelled{false};
   ChildProcess colors(ChildProcess::findExecutable("ffmpeg"),
                       {"-v",
                        "error",
@@ -139,13 +155,13 @@ TEST_CASE("Full test song exports from snapshot through GPU and FFmpeg", "[ffmpe
       glfwDestroyWindow(window);
       glfwTerminate();
     }
-  } guard{window};
+  } const guard{window};
   glfwMakeContextCurrent(window);
   REQUIRE(gladLoadGL(glfwGetProcAddress) != 0);
-  OpenGLRendererBackend renderer(glfwGetProcAddress, {0, 0, 0, 1});
-  renderer.setFramebufferSize({160, 90});
+  OpenGLRendererBackend renderer(glfwGetProcAddress, {.r = 0, .g = 0, .b = 0, .a = 1});
+  renderer.setFramebufferSize({.width = 160, .height = 90});
   REQUIRE(renderer.initialize());
-  OffscreenRenderTarget target({1920, 1080});
+  OffscreenRenderTarget target({.width = 1920, .height = 1080});
   VideoExportController controller(
     std::make_unique<FfmpegVideoEncoder>(),
     [&](const ExportSnapshot& snapshot, double time, FramebufferSize) {
@@ -155,7 +171,7 @@ TEST_CASE("Full test song exports from snapshot through GPU and FFmpeg", "[ffmpe
     });
   MidiTimeline timeline;
   timeline.addNote({.pitch = 60, .velocity = 80, .startSeconds = 0.1, .durationSeconds = 0.4});
-  Directory temp;
+  Directory const temp;
   const auto output = temp.path / "full-song.mp4";
   REQUIRE(controller.start(ExportSnapshot{timeline, {}, {0.1f, 0.2f, 0.3f, 1}, -0.5, 1}, output));
   CHECK(controller.frameCount() == 90); // 1s playback including lead-in + 2s ending.
@@ -172,3 +188,5 @@ TEST_CASE("Full test song exports from snapshot through GPU and FFmpeg", "[ffmpe
   CHECK(glGetError() == GL_NO_ERROR);
 }
 #endif
+
+} // namespace

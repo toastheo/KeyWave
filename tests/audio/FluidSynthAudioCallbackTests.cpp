@@ -1,3 +1,4 @@
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <vector>
 
@@ -15,12 +16,15 @@ struct ProcessCall
   std::vector<float*> outputBuffers;
 };
 
+// This test callback must match the FluidSynth C API parameter order and types.
+// NOLINTBEGIN(bugprone-easily-swappable-parameters)
 int recordProcess(void* const synth,
                   const int frameCount,
                   const int effectBufferCount,
-                  float* effectBuffers[],
+                  float** effectBuffers,
                   const int outputBufferCount,
-                  float* outputBuffers[])
+                  float** outputBuffers)
+// NOLINTEND(bugprone-easily-swappable-parameters)
 {
   auto& call = *static_cast<ProcessCall*>(synth);
   ++call.count;
@@ -40,11 +44,11 @@ TEST_CASE("FluidSynth audio callback leaves silence untouched while playback is 
   state.process = &recordProcess;
   state.playbackPaused.store(true);
 
-  float left[4]{};
-  float right[4]{};
-  float* outputs[]{left, right};
+  std::array<float, 4> left{};
+  std::array<float, 4> right{};
+  std::array outputs{left.data(), right.data()};
 
-  CHECK(renderFluidSynthAudio(&state, 4, 0, nullptr, 2, outputs) == 0);
+  CHECK(renderFluidSynthAudio(&state, 4, 0, nullptr, 2, outputs.data()) == 0);
   CHECK(call.count == 0);
 }
 
@@ -56,15 +60,16 @@ TEST_CASE("FluidSynth audio callback mixes effects into stereo output buffers",
   state.synth = &call;
   state.process = &recordProcess;
 
-  float left[4]{};
-  float right[4]{};
-  float* outputs[]{left, right};
+  std::array<float, 4> left{};
+  std::array<float, 4> right{};
+  std::array outputs{left.data(), right.data()};
 
-  CHECK(renderFluidSynthAudio(&state, 4, 0, nullptr, 2, outputs) == call.result);
+  CHECK(renderFluidSynthAudio(&state, 4, 0, nullptr, 2, outputs.data()) == call.result);
   CHECK(call.count == 1);
   CHECK(call.frameCount == 4);
-  CHECK(call.effectBuffers == std::vector<float*>{left, right, left, right});
-  CHECK(call.outputBuffers == std::vector<float*>{left, right});
+  CHECK(call.effectBuffers ==
+        std::vector<float*>{left.data(), right.data(), left.data(), right.data()});
+  CHECK(call.outputBuffers == std::vector<float*>{left.data(), right.data()});
 }
 
 TEST_CASE("FluidSynth audio callback forwards dedicated effects buffers", "[audio][fluidsynth]")
@@ -74,17 +79,17 @@ TEST_CASE("FluidSynth audio callback forwards dedicated effects buffers", "[audi
   state.synth = &call;
   state.process = &recordProcess;
 
-  float reverb[4]{};
-  float chorus[4]{};
-  float left[4]{};
-  float right[4]{};
-  float* effects[]{reverb, chorus};
-  float* outputs[]{left, right};
+  std::array<float, 4> reverb{};
+  std::array<float, 4> chorus{};
+  std::array<float, 4> left{};
+  std::array<float, 4> right{};
+  std::array effects{reverb.data(), chorus.data()};
+  std::array outputs{left.data(), right.data()};
 
-  CHECK(renderFluidSynthAudio(&state, 4, 2, effects, 2, outputs) == call.result);
+  CHECK(renderFluidSynthAudio(&state, 4, 2, effects.data(), 2, outputs.data()) == call.result);
   CHECK(call.count == 1);
-  CHECK(call.effectBuffers == std::vector<float*>{reverb, chorus});
-  CHECK(call.outputBuffers == std::vector<float*>{left, right});
+  CHECK(call.effectBuffers == std::vector<float*>{reverb.data(), chorus.data()});
+  CHECK(call.outputBuffers == std::vector<float*>{left.data(), right.data()});
 }
 
 } // namespace
