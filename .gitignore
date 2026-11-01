@@ -1,5 +1,6 @@
 .idea
 imgui.ini
+.zed
 
 assets/test-midi/**/*.mid
 assets/test-midi/**/*.midi
