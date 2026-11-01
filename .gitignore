@@ -1,15 +1,21 @@
-.idea
-imgui.ini
-.zed
+# IDE & Editor
+.idea/
+.zed/
+.clangd
 
+# Build & Compilation
+/build/
+/build-tidy/
+
+# Generated Files
+imgui.ini
+clang-tidy-findings.txt
+
+# Test Assets & Soundfonts
 assets/test-midi/**/*.mid
 assets/test-midi/**/*.midi
 assets/soundfonts/**/*.sf2
 
-build/
-build-tidy/
-
-clang-tidy-findings.txt
-
+# AI Tools & Worktrees
 .superpowers/
 .worktrees/
