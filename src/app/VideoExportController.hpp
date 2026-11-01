@@ -17,9 +17,12 @@ public:
 
   VideoExportController(std::unique_ptr<VideoEncoder> encoder, FrameProducer producer);
   ~VideoExportController();
-  bool start(ExportSnapshot snapshot, const std::filesystem::path& destination);
+  bool start(ExportSnapshot snapshot,
+             const std::filesystem::path& destination,
+             VideoOverwritePolicy overwritePolicy = VideoOverwritePolicy::RefuseExisting);
   bool start(const std::function<ExportSnapshot()>& snapshotFactory,
-             const std::filesystem::path& destination);
+             const std::filesystem::path& destination,
+             VideoOverwritePolicy overwritePolicy = VideoOverwritePolicy::RefuseExisting);
   void tick();
   void cancel();
   [[nodiscard]] bool active() const;

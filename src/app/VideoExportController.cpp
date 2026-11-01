@@ -43,13 +43,16 @@ VideoExportController::~VideoExportController()
   cancel();
 }
 
-bool VideoExportController::start(ExportSnapshot snapshot, const std::filesystem::path& destination)
+bool VideoExportController::start(ExportSnapshot snapshot,
+                                  const std::filesystem::path& destination,
+                                  VideoOverwritePolicy overwritePolicy)
 {
-  return start([&snapshot] { return snapshot; }, destination);
+  return start([&snapshot] { return snapshot; }, destination, overwritePolicy);
 }
 
 bool VideoExportController::start(const std::function<ExportSnapshot()>& snapshotFactory,
-                                  const std::filesystem::path& destination)
+                                  const std::filesystem::path& destination,
+                                  VideoOverwritePolicy overwritePolicy)
 {
   if (active()) {
     throw std::logic_error("A video export is already running");
@@ -68,9 +71,11 @@ bool VideoExportController::start(const std::function<ExportSnapshot()>& snapsho
     m_timing = std::make_unique<ExportTiming>(settings, *m_snapshot);
     m_frameCount = m_timing->frameCount();
     m_duration = m_timing->outputDurationSeconds();
-    m_encoder->start(
-      {.size = exportFramebufferSize(settings), .fps = settings.fps, .frameCount = m_frameCount},
-      destination);
+    m_encoder->start({.size = exportFramebufferSize(settings),
+                      .fps = settings.fps,
+                      .frameCount = m_frameCount,
+                      .overwritePolicy = overwritePolicy},
+                     destination);
     return true;
   }
   catch (const std::exception& error) {

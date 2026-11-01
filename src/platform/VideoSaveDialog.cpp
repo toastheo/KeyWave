@@ -5,10 +5,25 @@
 #include <nfd.h>
 #include <optional>
 #include <string>
+#include <system_error>
+#include <utility>
 
 #include "diagnostics/Diagnostics.hpp"
 
-std::optional<std::filesystem::path> VideoSaveDialog::save(DiagnosticSink& diagnostics)
+VideoSaveSelection VideoSaveDialog::selectionForConfirmedPath(const std::filesystem::path& path)
+{
+  auto output = path;
+  if (!output.has_extension()) {
+    output += ".mp4";
+  }
+  // Native dialogs confirm an existing selected path. Do not extend that consent
+  // to a different path produced by an application-side extension fallback.
+  std::error_code error;
+  const bool allowOverwrite = output == path && std::filesystem::exists(path, error) && !error;
+  return {.path = std::move(output), .allowOverwrite = allowOverwrite};
+}
+
+std::optional<VideoSaveSelection> VideoSaveDialog::save(DiagnosticSink& diagnostics)
 {
   if (NFD_Init() != NFD_OKAY) {
     reportError(diagnostics, "Video save dialog could not initialize");
@@ -36,9 +51,6 @@ std::optional<std::filesystem::path> VideoSaveDialog::save(DiagnosticSink& diagn
     NFD_ClearError();
     return std::nullopt;
   }
-  auto path = std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(guard.get())));
-  if (!path.has_extension()) {
-    path += ".mp4";
-  }
-  return path;
+  return selectionForConfirmedPath(
+    std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(guard.get()))));
 }

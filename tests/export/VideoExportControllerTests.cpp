@@ -69,6 +69,22 @@ ExportSnapshot song(SongOptions options = {})
 
 namespace {
 
+TEST_CASE("Video controller forwards explicit overwrite consent through both start overloads",
+          "[export-controller]")
+{
+  auto encoder = std::make_unique<FakeVideoEncoder>();
+  auto* fake = encoder.get();
+  VideoExportController controller(std::move(encoder), [](const auto&, double, FramebufferSize) {
+    return std::vector<std::uint8_t>{};
+  });
+  REQUIRE(
+    controller.start([] { return song(); }, "existing.mp4", VideoOverwritePolicy::ReplaceExisting));
+  CHECK(fake->config.overwritePolicy == VideoOverwritePolicy::ReplaceExisting);
+  controller.cancel();
+  REQUIRE(controller.start(song(), "existing.mp4", VideoOverwritePolicy::ReplaceExisting));
+  CHECK(fake->config.overwritePolicy == VideoOverwritePolicy::ReplaceExisting);
+}
+
 TEST_CASE("Video controller uses frozen full song timing and fixed MVP profile",
           "[export-controller]")
 {
@@ -112,6 +128,7 @@ TEST_CASE("Video controller uses frozen full song timing and fixed MVP profile",
   CHECK(controller.status().state == VideoEncoderState::Completed);
   CHECK(fake->config.fps == 30);
   CHECK(fake->config.frameCount == 65);
+  CHECK(fake->config.overwritePolicy == VideoOverwritePolicy::RefuseExisting);
 }
 
 TEST_CASE("Video controller cancels a blocked export and permits another job",

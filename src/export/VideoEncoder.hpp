@@ -18,11 +18,18 @@ enum class VideoEncoderState : std::uint8_t
   Cancelled
 };
 
+enum class VideoOverwritePolicy : std::uint8_t
+{
+  RefuseExisting,
+  ReplaceExisting
+};
+
 struct VideoEncoderConfig
 {
   FramebufferSize size{.width = 1920, .height = 1080};
   int fps = 30;
   std::uint64_t frameCount = 0;
+  VideoOverwritePolicy overwritePolicy = VideoOverwritePolicy::RefuseExisting;
 };
 
 struct VideoEncoderStatus
@@ -35,7 +42,8 @@ struct VideoEncoderStatus
 // Frames are tightly packed RGBA8, top row first. All caller methods run on
 // the UI thread. start/submit/finish/cancel never perform pipe I/O or wait for
 // a child process. Submission moves ownership only when accepted. Completion
-// means a successfully finalized MP4 was published without replacing a file.
+// means a finalized MP4 was published according to the job's overwrite policy.
+// Existing output must remain intact until successful finalization/publication.
 class VideoEncoder
 {
 public:

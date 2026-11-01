@@ -49,7 +49,8 @@ std::string utf8(const std::filesystem::path& path)
 }
 
 // Reserve a job-owned filename in the destination directory. Never remove a
-// preexisting file or publish across filesystems. The final move refuses races.
+// preexisting file or publish across filesystems. Final publication follows the
+// job's explicit overwrite policy.
 std::filesystem::path reserveTemporary(const std::filesystem::path& destination)
 {
   static std::atomic_uint64_t serial{0};
@@ -88,17 +89,28 @@ std::filesystem::path reserveTemporary(const std::filesystem::path& destination)
   throw std::runtime_error("Cannot reserve a temporary export filename");
 }
 
-void publish(const std::filesystem::path& temporary, const std::filesystem::path& destination)
+void publish(const std::filesystem::path& temporary,
+             const std::filesystem::path& destination,
+             VideoOverwritePolicy overwritePolicy)
 {
 #ifdef _WIN32
   // NOLINTBEGIN(misc-include-cleaner)
-  if (!MoveFileExW(temporary.c_str(), destination.c_str(), MOVEFILE_WRITE_THROUGH)) {
+  const DWORD flags =
+    MOVEFILE_WRITE_THROUGH |
+    (overwritePolicy == VideoOverwritePolicy::ReplaceExisting ? MOVEFILE_REPLACE_EXISTING : 0);
+  if (!MoveFileExW(temporary.c_str(), destination.c_str(), flags)) {
     throw std::system_error(static_cast<int>(GetLastError()),
                             std::system_category(),
-                            "Cannot publish video (destination must not exist)");
+                            "Cannot publish video");
   }
 // NOLINTEND(misc-include-cleaner)
 #else
+  if (overwritePolicy == VideoOverwritePolicy::ReplaceExisting) {
+    // The temporary lives in the same directory, so rename replaces the output
+    // without deleting the previous file before the completed video is ready.
+    std::filesystem::rename(temporary, destination);
+    return;
+  }
   if (link(temporary.c_str(), destination.c_str()) != 0) {
     throw std::system_error(errno, std::generic_category(), "Cannot publish video");
   }
@@ -132,9 +144,17 @@ struct FfmpegVideoEncoder::Impl
     std::filesystem::path temporary;
     std::unique_ptr<ChildProcess> process;
     try {
-      if (!std::filesystem::is_directory(destination.parent_path()) ||
-          std::filesystem::exists(destination)) {
-        throw std::invalid_argument("Select a new video file in an existing directory");
+      if (!std::filesystem::is_directory(destination.parent_path())) {
+        throw std::invalid_argument("Select a video file in an existing directory");
+      }
+      if (std::filesystem::exists(destination)) {
+        if (config.overwritePolicy != VideoOverwritePolicy::ReplaceExisting) {
+          throw std::invalid_argument(
+            "Video already exists. Confirm replacement in the save dialog.");
+        }
+        if (!std::filesystem::is_regular_file(destination)) {
+          throw std::invalid_argument("The video destination is not a regular file");
+        }
       }
       const auto path = executable.empty() ? ChildProcess::findExecutable("ffmpeg")
                                            : std::filesystem::absolute(executable);
@@ -225,7 +245,7 @@ struct FfmpegVideoEncoder::Impl
         }
         publishing = true;
       }
-      publisher(temporary, destination);
+      publisher(temporary, destination, config.overwritePolicy);
       std::lock_guard const lock(mutex);
       status.state = VideoEncoderState::Completed;
     }
@@ -279,7 +299,9 @@ void FfmpegVideoEncoder::start(VideoEncoderConfig config, const std::filesystem:
   }
   if (config.size.width <= 0 || config.size.height <= 0 || config.size.width % 2 != 0 ||
       config.size.height % 2 != 0 || (config.fps != 30 && config.fps != 60) ||
-      config.frameCount == 0) {
+      config.frameCount == 0 ||
+      (config.overwritePolicy != VideoOverwritePolicy::RefuseExisting &&
+       config.overwritePolicy != VideoOverwritePolicy::ReplaceExisting)) {
     throw std::invalid_argument("Invalid video encoder profile");
   }
   const auto width = static_cast<std::size_t>(config.size.width);

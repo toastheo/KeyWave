@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <system_error>
@@ -88,8 +89,16 @@ TEST_CASE("Real FFmpeg streams a silent Unicode-path 1080p MP4 with exact frame 
 {
   Directory const temp;
   const auto output = temp.path / std::filesystem::path(u8"Klavier ä 日本 & export.mp4");
+  {
+    std::ofstream previous(output);
+    previous << "old video";
+  }
   FfmpegVideoEncoder encoder;
-  encoder.start({.size = {.width = 1920, .height = 1080}, .fps = 30, .frameCount = 3}, output);
+  encoder.start({.size = {.width = 1920, .height = 1080},
+                 .fps = 30,
+                 .frameCount = 3,
+                 .overwritePolicy = VideoOverwritePolicy::ReplaceExisting},
+                output);
   int submitted = 0;
   const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
   while (std::chrono::steady_clock::now() < deadline) {
@@ -100,6 +109,9 @@ TEST_CASE("Real FFmpeg streams a silent Unicode-path 1080p MP4 with exact frame 
       break;
     }
     if (encoder.canAcceptFrame()) {
+      if (submitted == 0) {
+        CHECK(std::filesystem::file_size(output) == 9);
+      }
       std::vector<std::uint8_t> frame(std::size_t{1920} * 1080 * 4);
       for (std::size_t p = 0; p < frame.size(); p += 4) {
         frame[p] = static_cast<std::uint8_t>(submitted * 80);

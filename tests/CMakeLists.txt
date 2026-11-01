@@ -51,6 +51,7 @@ add_executable(KeyWaveMidiTests
         fallingnotes/PianoRollSceneBuilderTests.cpp
         playback/PlaybackTransportTests.cpp
         platform/WindowStateTests.cpp
+        platform/VideoSaveDialogTests.cpp
         render/RendererViewTests.cpp
 )
 
@@ -78,6 +79,7 @@ target_link_libraries(KeyWaveMidiTests
         keywave_fallingnotes
         keywave_midi
         keywave_playback
+        keywave_platform
         keywave_render
         keywave_test_support
         keywave_ui

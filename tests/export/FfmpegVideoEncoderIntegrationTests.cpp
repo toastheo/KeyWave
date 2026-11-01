@@ -1,3 +1,4 @@
+#include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <cstddef>
@@ -5,8 +6,11 @@
 #include <filesystem>
 #include <fstream>
 #include <future>
+#include <ios>
 #include <iterator>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <thread>
 #include <utility>
@@ -53,6 +57,110 @@ struct TempDirectory
 
 namespace {
 
+std::string readFile(const std::filesystem::path& path)
+{
+  std::ifstream input(path, std::ios::binary);
+  return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+}
+
+TEST_CASE("Confirmed replacement preserves the old video until successful publication", "[encoder]")
+{
+  TempDirectory const temp;
+  const auto executable = temp.path / "success.exe";
+  std::filesystem::copy_file(KEYWAVE_PROCESS_FIXTURE, executable);
+  const auto output = temp.path / "output video.mp4";
+  {
+    std::ofstream file(output);
+    file << "old video";
+  }
+  FfmpegVideoEncoder encoder(executable);
+  encoder.start({.size = {.width = 16, .height = 16},
+                 .fps = 30,
+                 .frameCount = 1,
+                 .overwritePolicy = VideoOverwritePolicy::ReplaceExisting},
+                output);
+  const auto ready = waitFor(encoder, true);
+  INFO(ready.error);
+  REQUIRE(ready.state == VideoEncoderState::Running);
+  CHECK(readFile(output) == "old video");
+  REQUIRE(encoder.trySubmit(std::vector<std::uint8_t>(std::size_t{16} * 16 * 4)));
+  encoder.finish();
+  const auto status = waitFor(encoder);
+  INFO(status.error);
+  REQUIRE(status.state == VideoEncoderState::Completed);
+  CHECK(readFile(output) == "video");
+  CHECK(std::distance(std::filesystem::directory_iterator(temp.path),
+                      std::filesystem::directory_iterator{}) == 2);
+}
+
+TEST_CASE("Replacement errors and cancellation preserve the old video", "[encoder]")
+{
+  TempDirectory const temp;
+  const auto output = temp.path / "output.mp4";
+  {
+    std::ofstream file(output);
+    file << "old video";
+  }
+  for (const auto name : {"crash.exe", "block.exe", "no-codec.exe"}) {
+    const auto executable = temp.path / name;
+    std::filesystem::copy_file(KEYWAVE_PROCESS_FIXTURE, executable);
+    FfmpegVideoEncoder encoder(executable);
+    encoder.start({.size = {.width = 256, .height = 256},
+                   .fps = 30,
+                   .frameCount = 1,
+                   .overwritePolicy = VideoOverwritePolicy::ReplaceExisting},
+                  output);
+    auto status = waitFor(encoder, true);
+    if (status.state == VideoEncoderState::Running) {
+      CHECK(readFile(output) == "old video");
+      encoder.trySubmit(std::vector<std::uint8_t>(std::size_t{256} * 256 * 4));
+      if (std::string_view(name) == "block.exe") {
+        encoder.cancel();
+      }
+      status = waitFor(encoder);
+    }
+    CHECK(status.state == (std::string_view(name) == "block.exe" ? VideoEncoderState::Cancelled
+                                                                 : VideoEncoderState::Failed));
+    CHECK(readFile(output) == "old video");
+    CHECK(std::distance(std::filesystem::directory_iterator(temp.path),
+                        std::filesystem::directory_iterator{}) == 2);
+    std::filesystem::remove(executable);
+  }
+}
+
+TEST_CASE("Confirmed replacement keeps the old video when publication fails", "[encoder]")
+{
+  TempDirectory const temp;
+  const auto executable = temp.path / "success.exe";
+  std::filesystem::copy_file(KEYWAVE_PROCESS_FIXTURE, executable);
+  const auto output = temp.path / "output.mp4";
+  {
+    std::ofstream file(output);
+    file << "old video";
+  }
+  FfmpegVideoEncoder encoder(executable, [](const auto&, const auto&, VideoOverwritePolicy) {
+    throw std::runtime_error("publication failed");
+  });
+  encoder.start({.size = {.width = 16, .height = 16},
+                 .fps = 30,
+                 .frameCount = 1,
+                 .overwritePolicy = VideoOverwritePolicy::ReplaceExisting},
+                output);
+  REQUIRE(waitFor(encoder, true).state == VideoEncoderState::Running);
+  REQUIRE(encoder.trySubmit(std::vector<std::uint8_t>(std::size_t{16} * 16 * 4)));
+  encoder.finish();
+  const auto status = waitFor(encoder);
+  CHECK(status.state == VideoEncoderState::Failed);
+  CHECK(status.error.find("publication failed") != std::string::npos);
+  CHECK(readFile(output) == "old video");
+  CHECK(std::distance(std::filesystem::directory_iterator(temp.path),
+                      std::filesystem::directory_iterator{}) == 2);
+}
+
+} // namespace
+
+namespace {
+
 TEST_CASE("Missing FFmpeg fails asynchronously without publishing a video", "[encoder]")
 {
   TempDirectory const temp;
@@ -70,7 +178,8 @@ TEST_CASE("Nonstandard publication exceptions become controlled export failures"
   TempDirectory const temp;
   const auto executable = temp.path / "success.exe";
   std::filesystem::copy_file(KEYWAVE_PROCESS_FIXTURE, executable);
-  FfmpegVideoEncoder encoder(executable, [](const auto&, const auto&) { throw 42; });
+  FfmpegVideoEncoder encoder(executable,
+                             [](const auto&, const auto&, VideoOverwritePolicy) { throw 42; });
   encoder.start({.size = {.width = 16, .height = 16}, .fps = 30, .frameCount = 1},
                 temp.path / "output.mp4");
   REQUIRE(waitFor(encoder, true).state == VideoEncoderState::Running);
@@ -111,11 +220,12 @@ TEST_CASE("Slow output publication leaves status and cancellation responsive", "
   auto entered = publishing.get_future();
   std::promise<void> release;
   auto released = release.get_future().share();
-  FfmpegVideoEncoder encoder(executable, [&](const auto& temporary, const auto& destination) {
-    publishing.set_value();
-    released.wait(); // Controlled slow storage boundary, never delay the UI.
-    std::filesystem::rename(temporary, destination);
-  });
+  FfmpegVideoEncoder encoder(
+    executable, [&](const auto& temporary, const auto& destination, VideoOverwritePolicy) {
+      publishing.set_value();
+      released.wait(); // Controlled slow storage boundary, never delay the UI.
+      std::filesystem::rename(temporary, destination);
+    });
   encoder.start({.size = {.width = 16, .height = 16}, .fps = 30, .frameCount = 1},
                 temp.path / "output.mp4");
   REQUIRE(waitFor(encoder, true).state == VideoEncoderState::Running);

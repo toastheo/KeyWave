@@ -23,6 +23,7 @@
 #include "core/CoreTypes.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "export/ExportSnapshot.hpp"
+#include "export/VideoEncoder.hpp"
 #include "export_ffmpeg/FfmpegVideoEncoder.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "midi/MidiFileLoader.hpp"
@@ -402,7 +403,10 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
       m_visualizerController.playbackTransport().pause();
       m_visualizerController.audioScheduler().pause();
       m_videoExportController->start([this] { return m_visualizerController.exportSnapshot(); },
-                                     *destination);
+                                     destination->path,
+                                     destination->allowOverwrite
+                                       ? VideoOverwritePolicy::ReplaceExisting
+                                       : VideoOverwritePolicy::RefuseExisting);
     }
   }
   else if (exportAction == VideoExportAction::Cancel) {

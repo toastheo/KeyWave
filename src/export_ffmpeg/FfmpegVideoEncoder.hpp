@@ -13,9 +13,10 @@ class FfmpegVideoEncoder final : public VideoEncoder
 {
 public:
   // Empty path discovers ffmpeg beside the application, then on PATH.
-  // Publication runs on the worker and must refuse an existing destination.
+  // Publication runs on the worker and must honor the job's overwrite policy.
   using PublishVideo = std::function<void(const std::filesystem::path& temporary,
-                                          const std::filesystem::path& destination)>;
+                                          const std::filesystem::path& destination,
+                                          VideoOverwritePolicy overwritePolicy)>;
   explicit FfmpegVideoEncoder(std::filesystem::path executable = {}, PublishVideo publisher = {});
   ~FfmpegVideoEncoder() override;
   void start(VideoEncoderConfig config, const std::filesystem::path& destination) override;
