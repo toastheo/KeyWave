@@ -149,8 +149,7 @@ struct FfmpegVideoEncoder::Impl
       }
       if (std::filesystem::exists(destination)) {
         if (config.overwritePolicy != VideoOverwritePolicy::ReplaceExisting) {
-          throw std::invalid_argument(
-            "Video already exists. Confirm replacement in the save dialog.");
+          throw std::invalid_argument("Video already exists.");
         }
         if (!std::filesystem::is_regular_file(destination)) {
           throw std::invalid_argument("The video destination is not a regular file");
