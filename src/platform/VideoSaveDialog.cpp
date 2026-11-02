@@ -37,7 +37,7 @@ std::optional<VideoSaveSelection> VideoSaveDialog::save(DiagnosticSink& diagnost
       NFD_Quit();
     }
   } const session;
-  const nfdu8filteritem_t filter{"MP4 video", "mp4"};
+  const nfdu8filteritem_t filter{.name = "MP4 video", .spec = "mp4"};
   nfdu8char_t* selected = nullptr;
   const auto result = NFD_SaveDialogU8(&selected, &filter, 1, nullptr, "KeyWave.mp4");
   std::unique_ptr<nfdu8char_t, decltype(&NFD_FreePathU8)> const guard(selected, NFD_FreePathU8);
