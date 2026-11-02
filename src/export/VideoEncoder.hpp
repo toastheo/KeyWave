@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "core/CoreTypes.hpp"
+#include "export/VideoExportSettings.hpp"
 
 enum class VideoEncoderState : std::uint8_t
 {
@@ -29,6 +30,7 @@ struct VideoEncoderConfig
   FramebufferSize size{.width = 1920, .height = 1080};
   int fps = 30;
   std::uint64_t frameCount = 0;
+  ExportQuality quality = ExportQuality::High;
   VideoOverwritePolicy overwritePolicy = VideoOverwritePolicy::RefuseExisting;
 };
 

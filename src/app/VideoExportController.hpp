@@ -1,11 +1,17 @@
 #pragma once
 
+#include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <memory>
+#include <string>
+#include <vector>
 
+#include "core/CoreTypes.hpp"
 #include "export/ExportSnapshot.hpp"
 #include "export/ExportTiming.hpp"
 #include "export/VideoEncoder.hpp"
+#include "export/VideoExportSettings.hpp"
 
 // tick() runs on the owning GL/UI thread and renders at most one frame. The
 // encoder owns worker/process resources; this controller owns the frozen input.
@@ -19,10 +25,12 @@ public:
   ~VideoExportController();
   bool start(ExportSnapshot snapshot,
              const std::filesystem::path& destination,
-             VideoOverwritePolicy overwritePolicy = VideoOverwritePolicy::RefuseExisting);
+             VideoOverwritePolicy overwritePolicy = VideoOverwritePolicy::RefuseExisting,
+             VideoExportSettings settings = {});
   bool start(const std::function<ExportSnapshot()>& snapshotFactory,
              const std::filesystem::path& destination,
-             VideoOverwritePolicy overwritePolicy = VideoOverwritePolicy::RefuseExisting);
+             VideoOverwritePolicy overwritePolicy = VideoOverwritePolicy::RefuseExisting,
+             VideoExportSettings settings = {});
   void tick();
   void cancel();
   [[nodiscard]] bool active() const;
@@ -33,6 +41,7 @@ public:
   [[nodiscard]] const std::filesystem::path& destination() const;
 
 private:
+  VideoExportSettings m_settings;
   std::unique_ptr<VideoEncoder> m_encoder;
   FrameProducer m_producer;
   std::unique_ptr<ExportSnapshot> m_snapshot;

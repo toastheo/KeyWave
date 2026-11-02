@@ -21,6 +21,8 @@ struct KeyboardLayoutConfig
   double blackKeyHeight = 1.55;
 
   double whiteKeyGap = 0.015;
+  // Export composition retain black keys at the selected range boundaries.
+  bool includeEdgeBlackKeys = false;
 };
 
 struct KeyboardLayoutResult

@@ -13,6 +13,7 @@
 #include "app/VideoExportController.hpp"
 #include "app/VisualizerController.hpp"
 #include "diagnostics/Diagnostics.hpp"
+#include "export/VideoExportSettings.hpp"
 #include "platform/Window.hpp"
 #include "render/RendererBackend.hpp"
 #include "ui/ImGuiLayer.hpp"
@@ -56,7 +57,9 @@ private:
   VisualizerController m_visualizerController;
   Window m_window;
   std::unique_ptr<RendererBackend> m_renderer;
+  VideoExportSettings m_exportSettings;
   std::unique_ptr<OffscreenRenderTarget> m_exportTarget;
+  std::unique_ptr<OffscreenRenderTarget> m_exportPreviewTarget;
   std::unique_ptr<VideoExportController> m_videoExportController;
   ImGuiLayer m_imguiLayer;
   WindowSettings m_appliedWindowSettings;

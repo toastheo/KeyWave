@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
@@ -17,9 +18,58 @@
 #include <vector>
 
 #include "export/VideoEncoder.hpp"
+#include "export/VideoExportSettings.hpp"
 #include "export_ffmpeg/FfmpegVideoEncoder.hpp"
 
 namespace {
+
+TEST_CASE("FFmpeg arguments cover all 54 profiles with explicit BT709 limited range", "[encoder]")
+{
+  for (const auto fps : {30, 60}) {
+    for (const auto quality : {ExportQuality::Medium, ExportQuality::High, ExportQuality::Best}) {
+      for (const auto resolution :
+           {ExportResolution::P720, ExportResolution::P1080, ExportResolution::P2160}) {
+        for (const auto aspect : {ExportAspectRatio::Landscape,
+                                  ExportAspectRatio::Portrait,
+                                  ExportAspectRatio::Square}) {
+          const VideoExportSettings settings{
+            .fps = fps, .quality = quality, .resolution = resolution, .aspectRatio = aspect};
+          const auto args = ffmpegVideoArguments({.size = exportFramebufferSize(settings),
+                                                  .fps = fps,
+                                                  .frameCount = 1,
+                                                  .quality = quality},
+                                                 "out.mp4");
+          const auto value = [&](const std::string& option) {
+            const auto it = std::ranges::find(args, option);
+            REQUIRE(it != args.end());
+            REQUIRE(std::next(it) != args.end());
+            return *std::next(it);
+          };
+          const int side = resolution == ExportResolution::P720    ? 720
+                           : resolution == ExportResolution::P1080 ? 1080
+                                                                   : 2160;
+          const std::string width =
+            std::to_string(aspect == ExportAspectRatio::Landscape ? side * 16 / 9 : side);
+          const std::string height =
+            std::to_string(aspect == ExportAspectRatio::Portrait ? side * 16 / 9 : side);
+          auto expectedSize = width;
+          expectedSize += "x";
+          expectedSize += height;
+          CHECK(value("-video_size") == expectedSize);
+          CHECK(value("-framerate") == std::to_string(fps));
+          CHECK(value("-crf") == (quality == ExportQuality::Medium ? "23"
+                                  : quality == ExportQuality::High ? "18"
+                                                                   : "15"));
+          CHECK(value("-preset") == "medium");
+          CHECK(value("-pix_fmt") == "yuv420p");
+          CHECK(value("-vf") == "scale=in_range=full:out_range=limited:out_color_matrix=bt709");
+          CHECK(value("-colorspace") == "bt709");
+          CHECK(value("-color_range") == "tv");
+        }
+      }
+    }
+  }
+}
 bool terminal(VideoEncoderState state)
 {
   return state == VideoEncoderState::Completed || state == VideoEncoderState::Failed ||

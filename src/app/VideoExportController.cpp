@@ -14,18 +14,13 @@
 #include "export/VideoExportSettings.hpp"
 
 namespace {
+
 bool isActive(VideoEncoderState state)
 {
   return state == VideoEncoderState::Starting || state == VideoEncoderState::Running ||
          state == VideoEncoderState::Finalizing;
 }
 
-VideoExportSettings mvpSettings()
-{
-  VideoExportSettings settings;
-  settings.fps = 30;
-  return settings;
-}
 } // namespace
 
 VideoExportController::VideoExportController(std::unique_ptr<VideoEncoder> encoder,
@@ -45,14 +40,16 @@ VideoExportController::~VideoExportController()
 
 bool VideoExportController::start(ExportSnapshot snapshot,
                                   const std::filesystem::path& destination,
-                                  VideoOverwritePolicy overwritePolicy)
+                                  VideoOverwritePolicy overwritePolicy,
+                                  VideoExportSettings settings)
 {
-  return start([&snapshot] { return snapshot; }, destination, overwritePolicy);
+  return start([&snapshot] { return snapshot; }, destination, overwritePolicy, settings);
 }
 
 bool VideoExportController::start(const std::function<ExportSnapshot()>& snapshotFactory,
                                   const std::filesystem::path& destination,
-                                  VideoOverwritePolicy overwritePolicy)
+                                  VideoOverwritePolicy overwritePolicy,
+                                  VideoExportSettings settings)
 {
   if (active()) {
     throw std::logic_error("A video export is already running");
@@ -67,13 +64,17 @@ bool VideoExportController::start(const std::function<ExportSnapshot()>& snapsho
   m_destination = destination;
   try {
     m_snapshot = std::make_unique<ExportSnapshot>(snapshotFactory());
-    const auto settings = mvpSettings();
+    if (settings.includeAudio) {
+      throw std::invalid_argument("Offline audio export is not implemented yet.");
+    }
+    m_settings = settings;
     m_timing = std::make_unique<ExportTiming>(settings, *m_snapshot);
     m_frameCount = m_timing->frameCount();
     m_duration = m_timing->outputDurationSeconds();
     m_encoder->start({.size = exportFramebufferSize(settings),
                       .fps = settings.fps,
                       .frameCount = m_frameCount,
+                      .quality = settings.quality,
                       .overwritePolicy = overwritePolicy},
                      destination);
     return true;
@@ -101,7 +102,7 @@ void VideoExportController::tick()
   try {
     auto pixels = m_producer(*m_snapshot,
                              m_timing->frameSourceTimeSeconds(m_generated),
-                             exportFramebufferSize(mvpSettings()));
+                             exportFramebufferSize(m_settings));
     if (m_encoder->trySubmit(std::move(pixels))) {
       ++m_generated;
       if (m_generated == m_frameCount) {

@@ -239,6 +239,15 @@ OffscreenPixelBuffer OpenGLRendererBackend::renderOffscreen(OffscreenRenderTarge
                                                             const RenderScene& scene,
                                                             const Color clearColor)
 {
+  renderOffscreenToTexture(target, scene, clearColor);
+  return target.readPixels();
+}
+
+void OpenGLRendererBackend::renderOffscreenToTexture(OffscreenRenderTarget& target,
+                                                     const RenderScene& scene,
+                                                     Color clearColor,
+                                                     OffscreenRenderOptions options)
+{
   if (!m_initialized) {
     throw std::logic_error("Offscreen rendering requires an initialized OpenGL renderer.");
   }
@@ -259,6 +268,7 @@ OffscreenPixelBuffer OpenGLRendererBackend::renderOffscreen(OffscreenRenderTarge
     std::array<GLint, 4> viewport{};
     std::array<GLfloat, 4> clear{};
     GLboolean scissor = GL_FALSE;
+    std::array<GLboolean, 4> colorMask{};
 
     RestoreState(FramebufferSize& size, RendererView& view, Color& color)
         : size(size)
@@ -273,6 +283,7 @@ OffscreenPixelBuffer OpenGLRendererBackend::renderOffscreen(OffscreenRenderTarge
       glGetIntegerv(GL_VIEWPORT, viewport.data());
       glGetFloatv(GL_COLOR_CLEAR_VALUE, clear.data());
       scissor = glIsEnabled(GL_SCISSOR_TEST);
+      glGetBooleanv(GL_COLOR_WRITEMASK, colorMask.data());
     }
 
     ~RestoreState()
@@ -284,6 +295,7 @@ OffscreenPixelBuffer OpenGLRendererBackend::renderOffscreen(OffscreenRenderTarge
       glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<GLuint>(readFramebuffer));
       glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
       glClearColor(clear[0], clear[1], clear[2], clear[3]);
+      glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
       if (scissor == GL_TRUE) {
         glEnable(GL_SCISSOR_TEST);
       }
@@ -295,11 +307,23 @@ OffscreenPixelBuffer OpenGLRendererBackend::renderOffscreen(OffscreenRenderTarge
   const auto size = target.size();
   glViewport(0, 0, size.width, size.height);
   glDisable(GL_SCISSOR_TEST);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   m_framebufferSize = size;
   m_view = scene.view;
   m_clearColor = clearColor;
   beginFrame();
   submit(scene.commands);
   endFrame();
-  return target.readPixels();
+
+  if (options.opaqueAlpha) {
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
+  if (const auto error = glGetError(); error != GL_NO_ERROR) {
+    std::ostringstream message;
+    message << "Offscreen rendering failed for " << size.width << 'x' << size.height
+            << ": OpenGL error 0x" << std::hex << error << '.';
+    throw std::runtime_error(message.str());
+  }
 }

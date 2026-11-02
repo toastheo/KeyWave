@@ -92,6 +92,39 @@ TEST_CASE("Offscreen rendering returns tightly packed top-first RGBA at export s
   CHECK(glGetError() == GL_NO_ERROR);
 }
 
+TEST_CASE("Texture previews preserve composed RGB with opaque alpha and restore GL state",
+          "[gpu][offscreen]")
+{
+  Context const context;
+  OpenGLRendererBackend renderer(glfwGetProcAddress, {.r = 0, .g = 0, .b = 0, .a = 1});
+  REQUIRE(renderer.initialize());
+  OffscreenRenderTarget target({.width = 16, .height = 16});
+  auto scene = asymmetricScene();
+  scene.commands.clear();
+  scene.commands.emplace_back(DrawRectCommand{.rect = {.x = 0, .y = 0, .width = 2, .height = 4},
+                                              .color = {.r = 0, .g = 1, .b = 0, .a = 0.5f}});
+  const auto exported = renderer.renderOffscreen(target, scene, {.r = 1, .g = 0, .b = 0, .a = 0});
+  glClearColor(0.2f, 0.3f, 0.4f, 0.5f);
+  glColorMask(GL_TRUE, GL_FALSE, GL_TRUE, GL_FALSE);
+  renderer.renderOffscreenToTexture(
+    target, scene, {.r = 1, .g = 0, .b = 0, .a = 0}, {.opaqueAlpha = true});
+  std::array<GLboolean, 4> mask{};
+  glGetBooleanv(GL_COLOR_WRITEMASK, mask.data());
+  CHECK(mask == std::array<GLboolean, 4>{GL_TRUE, GL_FALSE, GL_TRUE, GL_FALSE});
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  const auto preview = target.readPixels();
+  CHECK(glIsTexture(target.colorTexture()) == GL_TRUE);
+  for (const auto point : {std::array{2, 2}, std::array{12, 2}}) {
+    const auto actual = pixel(preview, point[0], point[1]);
+    const auto expected = pixel(exported, point[0], point[1]);
+    CHECK(actual[0] == expected[0]);
+    CHECK(actual[1] == expected[1]);
+    CHECK(actual[2] == expected[2]);
+    CHECK(actual[3] == 255);
+  }
+  CHECK(glGetError() == GL_NO_ERROR);
+}
+
 TEST_CASE("Offscreen operations restore framebuffer viewport packing and live renderer",
           "[gpu][offscreen]")
 {
@@ -227,6 +260,20 @@ TEST_CASE("Offscreen readback reports GPU errors and restores caller state", "[g
   CHECK(value == 0);
   glGetIntegerv(GL_PACK_ALIGNMENT, &value);
   CHECK(value == 8);
+  CHECK(glGetError() == GL_NO_ERROR);
+}
+
+TEST_CASE("Texture preview rendering reports incomplete framebuffers", "[gpu][offscreen]")
+{
+  Context const context;
+  OpenGLRendererBackend renderer(glfwGetProcAddress, {.r = 0, .g = 0, .b = 0, .a = 1});
+  REQUIRE(renderer.initialize());
+  OffscreenRenderTarget target({.width = 16, .height = 16});
+  glBindFramebuffer(GL_FRAMEBUFFER, target.framebuffer());
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  CHECK_THROWS_AS(renderer.renderOffscreenToTexture(target, asymmetricScene(), {0, 0, 0, 1}),
+                  std::runtime_error);
   CHECK(glGetError() == GL_NO_ERROR);
 }
 

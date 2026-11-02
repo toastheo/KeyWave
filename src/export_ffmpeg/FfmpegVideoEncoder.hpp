@@ -5,9 +5,14 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "export/VideoEncoder.hpp"
+
+// Build the process arguments from an already validated encoder configuration.
+[[nodiscard]] std::vector<std::string> ffmpegVideoArguments(const VideoEncoderConfig& config,
+                                                            const std::filesystem::path& output);
 
 class FfmpegVideoEncoder final : public VideoEncoder
 {

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -22,15 +23,16 @@
 #include "audio/PianoSynth.hpp"
 #include "core/CoreTypes.hpp"
 #include "diagnostics/Diagnostics.hpp"
+#include "export/ExportComposition.hpp"
 #include "export/ExportSnapshot.hpp"
 #include "export/VideoEncoder.hpp"
 #include "export_ffmpeg/FfmpegVideoEncoder.hpp"
-#include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "midi/MidiFileLoader.hpp"
 #include "platform/MidiFileDialog.hpp"
 #include "platform/VideoSaveDialog.hpp"
 #include "platform/Window.hpp"
 #include "render/RenderScene.hpp"
+#include "render_opengl/OffscreenRenderTarget.hpp"
 #include "render_opengl/OpenGLRendererBackend.hpp"
 #include "ui/TransportControls.hpp"
 #include "ui/VideoExportControls.hpp"
@@ -145,8 +147,8 @@ bool Application::initialize()
       if (!m_exportTarget) {
         m_exportTarget = std::make_unique<OffscreenRenderTarget>(size);
       }
-      const auto scene = PianoRollSceneBuilder::build(
-        snapshot.timeline, sourceSeconds, snapshot.sceneConfig, m_diagnostics);
+      const auto scene = buildExportScene(
+        snapshot.timeline, sourceSeconds, snapshot.sceneConfig, size, m_diagnostics);
       return static_cast<OpenGLRendererBackend&>(*m_renderer)
         .renderOffscreen(*m_exportTarget, scene, snapshot.background)
         .pixels;
@@ -395,8 +397,27 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
     handleVisualizationSettingsPanelAction(settingsAction);
   }
   m_imguiLayer.endDisabled();
-  const auto exportAction =
-    VideoExportControls::render(*m_videoExportController, m_visualizerController.hasTimeline());
+
+  const auto exportAction = VideoExportControls::render(
+    *m_videoExportController,
+    m_visualizerController.hasTimeline(),
+    m_exportSettings,
+    [this, exporting](FramebufferSize size) -> std::uint64_t {
+      if (!exporting) {
+        if (!m_exportPreviewTarget || m_exportPreviewTarget->size().width != size.width ||
+            m_exportPreviewTarget->size().height != size.height) {
+          m_exportPreviewTarget = std::make_unique<OffscreenRenderTarget>(size);
+        }
+        const auto scene = m_visualizerController.buildExportPreview(size);
+        static_cast<OpenGLRendererBackend&>(*m_renderer)
+          .renderOffscreenToTexture(*m_exportPreviewTarget,
+                                    scene,
+                                    m_visualizerController.settings().renderer.clearColor,
+                                    {.opaqueAlpha = true});
+      }
+      return m_exportPreviewTarget ? m_exportPreviewTarget->colorTexture() : 0;
+    });
+
   if (exportAction == VideoExportAction::Start) {
     m_visualizerController.suppressNextPlaybackUpdate();
     if (const auto destination = VideoSaveDialog::save(m_diagnostics)) {
@@ -406,7 +427,8 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
                                      destination->path,
                                      destination->allowOverwrite
                                        ? VideoOverwritePolicy::ReplaceExisting
-                                       : VideoOverwritePolicy::RefuseExisting);
+                                       : VideoOverwritePolicy::RefuseExisting,
+                                     m_exportSettings);
     }
   }
   else if (exportAction == VideoExportAction::Cancel) {
@@ -456,6 +478,7 @@ void Application::shutdown()
   // Join/cancel the writer first, then release GL resources while the context lives.
   m_videoExportController.reset();
   m_exportTarget.reset();
+  m_exportPreviewTarget.reset();
   if (!m_settingsSaved) {
     if (m_settingsStorage.save(m_visualizerController.settings(), m_diagnostics)) {
       reportInfo(m_diagnostics, "Settings saved: " + m_settingsStorage.path().string());

@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "export/VideoEncoder.hpp"
+#include "export/VideoExportSettings.hpp"
 #include "platform/ChildProcess.hpp"
 
 // include-cleaner attributes Win32 declarations to internal SDK headers.
@@ -119,6 +120,44 @@ void publish(const std::filesystem::path& temporary,
 }
 } // namespace
 
+std::vector<std::string> ffmpegVideoArguments(const VideoEncoderConfig& config,
+                                              const std::filesystem::path& output)
+{
+  const auto crf = config.quality == ExportQuality::Medium ? "23"
+                   : config.quality == ExportQuality::High ? "18"
+                                                           : "15";
+  return std::vector<std::string>{"-hide_banner",
+                                  "-loglevel",
+                                  "error",
+                                  "-nostdin",
+                                  "-y",
+                                  "-f",
+                                  "rawvideo",
+                                  "-pixel_format",
+                                  "rgba",
+                                  "-video_size",
+                                  std::to_string(config.size.width) + "x" +
+                                    std::to_string(config.size.height),
+                                  "-framerate",
+                                  std::to_string(config.fps),
+                                  "-i",
+                                  "pipe:0",
+                                  "-an",
+                                  "-c:v",
+                                  "libx264",
+                                  "-preset",
+                                  "medium",
+                                  "-crf",
+                                  "18",
+                                  "-pix_fmt",
+                                  "yuv420p",
+                                  "-movflags",
+                                  "+faststart",
+                                  "-f",
+                                  "mp4",
+                                  utf8(output)};
+}
+
 struct FfmpegVideoEncoder::Impl
 {
   explicit Impl(std::filesystem::path path, PublishVideo publishVideo)
@@ -170,38 +209,7 @@ struct FfmpegVideoEncoder::Impl
         throw std::runtime_error("Export cancelled");
       }
       temporary = reserveTemporary(destination);
-      process = std::make_unique<ChildProcess>(
-        path,
-        std::vector<std::string>{"-hide_banner",
-                                 "-loglevel",
-                                 "error",
-                                 "-nostdin",
-                                 "-y",
-                                 "-f",
-                                 "rawvideo",
-                                 "-pixel_format",
-                                 "rgba",
-                                 "-video_size",
-                                 std::to_string(config.size.width) + "x" +
-                                   std::to_string(config.size.height),
-                                 "-framerate",
-                                 std::to_string(config.fps),
-                                 "-i",
-                                 "pipe:0",
-                                 "-an",
-                                 "-c:v",
-                                 "libx264",
-                                 "-preset",
-                                 "medium",
-                                 "-crf",
-                                 "18",
-                                 "-pix_fmt",
-                                 "yuv420p",
-                                 "-movflags",
-                                 "+faststart",
-                                 "-f",
-                                 "mp4",
-                                 utf8(temporary)});
+      process = std::make_unique<ChildProcess>(path, ffmpegVideoArguments(config, temporary));
       {
         std::lock_guard const lock(mutex);
         status.state = VideoEncoderState::Running;
@@ -299,6 +307,8 @@ void FfmpegVideoEncoder::start(VideoEncoderConfig config, const std::filesystem:
   if (config.size.width <= 0 || config.size.height <= 0 || config.size.width % 2 != 0 ||
       config.size.height % 2 != 0 || (config.fps != 30 && config.fps != 60) ||
       config.frameCount == 0 ||
+      (config.quality != ExportQuality::Medium && config.quality != ExportQuality::High &&
+       config.quality != ExportQuality::Best) ||
       (config.overwritePolicy != VideoOverwritePolicy::RefuseExisting &&
        config.overwritePolicy != VideoOverwritePolicy::ReplaceExisting)) {
     throw std::invalid_argument("Invalid video encoder profile");

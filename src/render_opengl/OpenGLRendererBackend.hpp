@@ -14,6 +14,11 @@
 #include "render_opengl/OpenGLRectRenderer.hpp"
 #include "render_opengl/OpenGLStyledRectRenderer.hpp"
 
+struct OffscreenRenderOptions
+{
+  bool opaqueAlpha = false;
+};
+
 class OpenGLRendererBackend final : public RendererBackend
 {
 public:
@@ -39,6 +44,12 @@ public:
   [[nodiscard]] OffscreenPixelBuffer renderOffscreen(OffscreenRenderTarget& target,
                                                      const RenderScene& scene,
                                                      Color clearColor);
+  // Render without a CPU readback. Opaque alpha displays already-composited RGB
+  // like a video encoder that discards alpha, avoiding another blend in the UI.
+  void renderOffscreenToTexture(OffscreenRenderTarget& target,
+                                const RenderScene& scene,
+                                Color clearColor,
+                                OffscreenRenderOptions options = {});
 
 private:
   enum class VertexBatchKind : std::uint8_t

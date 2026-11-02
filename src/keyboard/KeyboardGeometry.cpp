@@ -92,8 +92,8 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
 
   m_width = static_cast<double>(whiteKeyCount) * m_config.whiteKeyWidth;
 
-  // Black keys are positioned from the surrounding white keys, so a black key at a clipped
-  // pitch-range edge is omitted unless both neighboring white-key anchors exist.
+  // Black keys use neighboring white-key anchors. The live layout omits unanchored edge keys;
+  // export compositions can extrapolate those anchors and retain every selected key.
   for (auto pitch = m_config.pitchRange.minPitch; pitch <= m_config.pitchRange.maxPitch; ++pitch) {
     if (!isBlackKey(pitch)) {
       continue;
@@ -102,12 +102,15 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
     const auto previousWhite = pitch - 1;
     const auto nextWhite = pitch + 1;
     const auto previousWhiteIt = whiteKeyXByPitch.find(previousWhite);
-    if (previousWhiteIt == whiteKeyXByPitch.end() || !whiteKeyXByPitch.contains(nextWhite)) {
+    if (!m_config.includeEdgeBlackKeys &&
+        (previousWhiteIt == whiteKeyXByPitch.end() || !whiteKeyXByPitch.contains(nextWhite))) {
       continue;
     }
 
-    const auto x =
-      previousWhiteIt->second + m_config.whiteKeyWidth - (m_config.blackKeyWidth * 0.5);
+    const auto x = (previousWhiteIt == whiteKeyXByPitch.end()
+                      ? 0.0
+                      : previousWhiteIt->second + m_config.whiteKeyWidth) -
+                   (m_config.blackKeyWidth * 0.5);
     const Rect keyRect{
       .x = x,
       .y = -m_config.blackKeyHeight,
@@ -123,6 +126,24 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
 
     m_keyRects.emplace(pitch, keyRect);
     m_noteRects.emplace(pitch, noteRect);
+  }
+
+  if (m_config.includeEdgeBlackKeys) {
+    double left = 0.0;
+    double right = m_width;
+
+    for (const auto& [pitch, rect] : m_keyRects) {
+      left = std::min(left, rect.x + rect.width);
+      right = std::max(right, rect.x + rect.width);
+    }
+    for (auto& [pitch, rect] : m_keyRects) {
+      rect.x -= left;
+    }
+    for (auto& [pitch, rect] : m_noteRects) {
+      rect.x -= left;
+    }
+
+    m_width = right - left;
   }
 }
 
@@ -161,6 +182,14 @@ double KeyboardGeometry::width() const
 
 double KeyboardGeometry::height() const
 {
+  if (m_config.includeEdgeBlackKeys) {
+    double height = 0.0;
+    for (const auto& [pitch, rect] : m_keyRects) {
+      height = std::max(height, rect.height);
+    }
+    return height;
+  }
+
   return m_config.whiteKeyHeight;
 }
 

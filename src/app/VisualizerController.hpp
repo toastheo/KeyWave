@@ -7,6 +7,7 @@
 #include "audio/NullPianoSynth.hpp"
 #include "audio/PianoSynth.hpp"
 #include "audio/TimelineAudioScheduler.hpp"
+#include "core/CoreTypes.hpp"
 #include "diagnostics/Diagnostics.hpp"
 #include "export/ExportSnapshot.hpp"
 #include "input/Key.hpp"
@@ -40,6 +41,7 @@ public:
   void update(double elapsedSeconds);
   void suppressNextPlaybackUpdate();
   [[nodiscard]] RenderScene buildScene() const;
+  [[nodiscard]] RenderScene buildExportPreview(FramebufferSize size) const;
   [[nodiscard]] ExportSnapshot exportSnapshot() const;
 
 private:

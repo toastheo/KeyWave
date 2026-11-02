@@ -145,6 +145,11 @@ unsigned int OffscreenRenderTarget::framebuffer() const
   return m_framebuffer;
 }
 
+unsigned int OffscreenRenderTarget::colorTexture() const
+{
+  return m_colorTexture;
+}
+
 OffscreenPixelBuffer OffscreenRenderTarget::readPixels() const
 {
   OffscreenPixelBuffer result;

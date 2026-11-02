@@ -32,6 +32,8 @@ public:
 
   [[nodiscard]] FramebufferSize size() const;
   [[nodiscard]] unsigned int framebuffer() const;
+  // Borrowed GL texture; valid until this target is destroyed. Bottom row at v=0.
+  [[nodiscard]] unsigned int colorTexture() const;
   [[nodiscard]] OffscreenPixelBuffer readPixels() const;
 
 private:

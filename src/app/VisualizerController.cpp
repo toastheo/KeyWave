@@ -12,7 +12,9 @@
 #include "app/VisualizationSettingsPanelControls.hpp"
 #include "audio/PianoSynth.hpp"
 #include "audio/TimelineAudioScheduler.hpp"
+#include "core/CoreTypes.hpp"
 #include "diagnostics/Diagnostics.hpp"
+#include "export/ExportComposition.hpp"
 #include "export/ExportSnapshot.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "input/Key.hpp"
@@ -190,6 +192,20 @@ RenderScene VisualizerController::buildScene() const
                                       pianoRollSceneConfigFromSettings(m_settings.fallingNotes,
                                                                        m_settings.keyboard),
                                       m_diagnostics);
+}
+
+RenderScene VisualizerController::buildExportPreview(FramebufferSize size) const
+{
+  if (!m_timeline.has_value()) {
+    return {};
+  }
+
+  return buildExportScene(*m_timeline,
+                          timelineTimeSeconds(m_playbackTransport.currentTimeSeconds()),
+                          pianoRollSceneConfigFromSettings(m_settings.fallingNotes,
+                                                           m_settings.keyboard),
+                          size,
+                          m_diagnostics);
 }
 
 ExportSnapshot VisualizerController::exportSnapshot() const

@@ -2,6 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <filesystem>
+#include <imgui/imgui.h>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -12,9 +13,12 @@
 #include "core/CoreTypes.hpp"
 #include "export/ExportSnapshot.hpp"
 #include "export/VideoEncoder.hpp"
+#include "export/VideoExportSettings.hpp"
 #include "midi/MidiTimeline.hpp"
+#include "ui/VideoExportControls.hpp"
 
 namespace {
+
 class FakeVideoEncoder final : public VideoEncoder
 {
 public:
@@ -69,6 +73,48 @@ ExportSnapshot song(SongOptions options = {})
 
 namespace {
 
+TEST_CASE("Video controller freezes all 54 visual export profiles", "[export-controller]")
+{
+  for (const auto fps : {30, 60}) {
+    for (const auto quality : {ExportQuality::Medium, ExportQuality::High, ExportQuality::Best}) {
+      for (const auto resolution :
+           {ExportResolution::P720, ExportResolution::P1080, ExportResolution::P2160}) {
+        for (const auto aspect : {ExportAspectRatio::Landscape,
+                                  ExportAspectRatio::Portrait,
+                                  ExportAspectRatio::Square}) {
+          auto encoder = std::make_unique<FakeVideoEncoder>();
+          auto* fake = encoder.get();
+          VideoExportSettings settings{
+            .fps = fps, .quality = quality, .resolution = resolution, .aspectRatio = aspect};
+          const int shortSide = resolution == ExportResolution::P720    ? 720
+                                : resolution == ExportResolution::P1080 ? 1080
+                                                                        : 2160;
+          const int width = aspect == ExportAspectRatio::Landscape ? shortSide * 16 / 9 : shortSide;
+          const int height = aspect == ExportAspectRatio::Portrait ? shortSide * 16 / 9 : shortSide;
+          VideoExportController controller(std::move(encoder),
+                                           [&](const auto&, double, FramebufferSize size) {
+                                             CHECK(size.width == width);
+                                             CHECK(size.height == height);
+                                             return std::vector<std::uint8_t>{};
+                                           });
+          REQUIRE(controller.start(song({.length = 1, .offset = 0, .rate = 1}),
+                                   "profile.mp4",
+                                   VideoOverwritePolicy::RefuseExisting,
+                                   settings));
+          settings.fps = 1; // Changes to the caller's settings cannot affect the active job.
+          CHECK(controller.frameCount() == static_cast<std::uint64_t>(3 * fps));
+          CHECK(fake->config.fps == fps);
+          CHECK(fake->config.quality == quality);
+          CHECK(fake->config.size.width == width);
+          CHECK(fake->config.size.height == height);
+          controller.tick();
+          CHECK(controller.framesGenerated() == 1);
+        }
+      }
+    }
+  }
+}
+
 TEST_CASE("Video controller forwards explicit overwrite consent through both start overloads",
           "[export-controller]")
 {
@@ -85,7 +131,44 @@ TEST_CASE("Video controller forwards explicit overwrite consent through both sta
   CHECK(fake->config.overwritePolicy == VideoOverwritePolicy::ReplaceExisting);
 }
 
-TEST_CASE("Video controller uses frozen full song timing and fixed MVP profile",
+TEST_CASE("Export controls request previews at export resolution before display downsampling",
+          "[export-controller][ui]")
+{
+  ImGui::CreateContext();
+  struct ContextGuard
+  {
+    ~ContextGuard()
+    {
+      ImGui::DestroyContext();
+    }
+  } const guard;
+  auto& io = ImGui::GetIO();
+  io.IniFilename = nullptr;
+  io.DisplaySize = {1000, 1000};
+  REQUIRE(io.Fonts->Build());
+  const VideoExportController controller(std::make_unique<FakeVideoEncoder>(),
+                                         [](const auto&, double, FramebufferSize) {
+                                           return std::vector<std::uint8_t>{};
+                                         });
+  for (const auto aspect :
+       {ExportAspectRatio::Landscape, ExportAspectRatio::Portrait, ExportAspectRatio::Square}) {
+    VideoExportSettings settings{.resolution = ExportResolution::P2160, .aspectRatio = aspect};
+    int calls = 0;
+    for (int frame = 0; frame < 2; ++frame) {
+      ImGui::NewFrame();
+      VideoExportControls::render(controller, true, settings, [&](FramebufferSize size) {
+        ++calls;
+        CHECK(size.width == (aspect == ExportAspectRatio::Landscape ? 3840 : 2160));
+        CHECK(size.height == (aspect == ExportAspectRatio::Portrait ? 3840 : 2160));
+        return std::uint64_t{0};
+      });
+      ImGui::EndFrame();
+    }
+    CHECK(calls > 0);
+  }
+}
+
+TEST_CASE("Video controller uses frozen full song timing with a selected 30 FPS profile",
           "[export-controller]")
 {
   auto encoder = std::make_unique<FakeVideoEncoder>();
@@ -99,7 +182,7 @@ TEST_CASE("Video controller uses frozen full song timing and fixed MVP profile",
       times.push_back(time);
       return std::vector<std::uint8_t>{};
     });
-  REQUIRE(controller.start(song(), "test.mp4"));
+  REQUIRE(controller.start(song(), "test.mp4", VideoOverwritePolicy::RefuseExisting, {.fps = 30}));
   CHECK(controller.active());
   CHECK(controller.frameCount() == 65); // (0.1 - -0.2) / 2 + 2s tail, ceil at 30 fps
   CHECK(controller.outputDurationSeconds() == Catch::Approx(65.0 / 30));

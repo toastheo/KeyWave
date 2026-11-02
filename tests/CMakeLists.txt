@@ -19,6 +19,7 @@ target_include_directories(keywave_test_support
 )
 
 add_executable(KeyWaveMidiTests
+        export/ExportCompositionTests.cpp
         export/ChildProcessTests.cpp
         export/VideoExportControllerTests.cpp
         export/ExportTimingTests.cpp

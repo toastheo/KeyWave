@@ -170,6 +170,8 @@ target_link_libraries(keywave_fallingnotes
 )
 
 add_library(keywave_export STATIC
+        export/ExportComposition.hpp
+        export/ExportComposition.cpp
         export/VideoEncoder.hpp
         export/VideoExportSettings.hpp
         export/VideoExportSettings.cpp
