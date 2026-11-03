@@ -153,9 +153,10 @@ bool Application::initialize()
                                           size,
                                           snapshot.compositionOptions,
                                           m_diagnostics);
-      return static_cast<OpenGLRendererBackend&>(*m_renderer)
-        .renderOffscreen(*m_exportTarget, scene, snapshot.background)
-        .pixels;
+      static_cast<OpenGLRendererBackend&>(*m_renderer)
+        .renderOffscreenToTexture(
+          *m_exportTarget, scene, snapshot.background, {.opaqueAlpha = true});
+      return m_exportTarget->readPixels().pixels;
     });
 
   if (!m_imguiLayer.initialize(m_window.nativeHandle(), m_diagnostics)) {
@@ -374,6 +375,8 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
   const auto imguiWantsKeyboardCapture = m_imguiLayer.wantsKeyboardCapture();
   const bool exporting = m_videoExportController->active();
   if (!exporting) {
+    // Previous ImGui draw commands have finished; releasing the old texture is safe here.
+    m_exportTarget.reset();
     m_visualizerController.handleInput(pressedKeys, imguiWantsKeyboardCapture);
   }
 
@@ -402,32 +405,21 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
   }
   m_imguiLayer.endDisabled();
 
-  const auto exportAction = VideoExportControls::render(
-    *m_videoExportController,
-    m_visualizerController.hasTimeline(),
-    m_exportSettings,
-    [this, exporting](FramebufferSize size) -> std::uint64_t {
-      if (!exporting) {
-        if (!m_exportPreviewTarget || m_exportPreviewTarget->size().width != size.width ||
-            m_exportPreviewTarget->size().height != size.height) {
-          m_exportPreviewTarget = std::make_unique<OffscreenRenderTarget>(size);
-        }
-        const auto scene = m_visualizerController.buildExportPreview(
-          size, {.sourceFramebufferSize = m_window.framebufferSize()});
-        static_cast<OpenGLRendererBackend&>(*m_renderer)
-          .renderOffscreenToTexture(*m_exportPreviewTarget,
-                                    scene,
-                                    m_visualizerController.settings().renderer.clearColor,
-                                    {.opaqueAlpha = true});
-      }
-      return m_exportPreviewTarget ? m_exportPreviewTarget->colorTexture() : 0;
-    });
+  m_videoExportController->tick();
+  const auto exportAction =
+    VideoExportControls::render(*m_videoExportController,
+                                m_visualizerController.hasTimeline(),
+                                m_exportSettings,
+                                [this](FramebufferSize) -> std::uint64_t {
+                                  return m_exportTarget ? m_exportTarget->colorTexture() : 0;
+                                });
 
   if (exportAction == VideoExportAction::Start) {
     m_visualizerController.suppressNextPlaybackUpdate();
     if (const auto destination = VideoSaveDialog::save(m_diagnostics)) {
       m_visualizerController.playbackTransport().pause();
       m_visualizerController.audioScheduler().pause();
+      m_exportTarget.reset();
       m_videoExportController->start(
         [this] {
           return m_visualizerController.exportSnapshot(
@@ -441,10 +433,6 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
   }
   else if (exportAction == VideoExportAction::Cancel) {
     m_videoExportController->cancel();
-  }
-  m_videoExportController->tick();
-  if (!m_videoExportController->active()) {
-    m_exportTarget.reset();
   }
 
   applyWindowSettings();
@@ -486,7 +474,6 @@ void Application::shutdown()
   // Join/cancel the writer first, then release GL resources while the context lives.
   m_videoExportController.reset();
   m_exportTarget.reset();
-  m_exportPreviewTarget.reset();
   if (!m_settingsSaved) {
     if (m_settingsStorage.save(m_visualizerController.settings(), m_diagnostics)) {
       reportInfo(m_diagnostics, "Settings saved: " + m_settingsStorage.path().string());

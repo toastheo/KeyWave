@@ -131,7 +131,7 @@ TEST_CASE("Video controller forwards explicit overwrite consent through both sta
   CHECK(fake->config.overwritePolicy == VideoOverwritePolicy::ReplaceExisting);
 }
 
-TEST_CASE("Export controls request previews at export resolution before display downsampling",
+TEST_CASE("Export controls display generated frames only while exporting",
           "[export-controller][ui]")
 {
   ImGui::CreateContext();
@@ -146,13 +146,25 @@ TEST_CASE("Export controls request previews at export resolution before display 
   io.IniFilename = nullptr;
   io.DisplaySize = {1000, 1000};
   REQUIRE(io.Fonts->Build());
-  const VideoExportController controller(std::make_unique<FakeVideoEncoder>(),
-                                         [](const auto&, double, FramebufferSize) {
-                                           return std::vector<std::uint8_t>{};
-                                         });
+  VideoExportController controller(std::make_unique<FakeVideoEncoder>(),
+                                   [](const auto&, double, FramebufferSize) {
+                                     return std::vector<std::uint8_t>{};
+                                   });
   for (const auto aspect :
        {ExportAspectRatio::Landscape, ExportAspectRatio::Portrait, ExportAspectRatio::Square}) {
     VideoExportSettings settings{.resolution = ExportResolution::P2160, .aspectRatio = aspect};
+    int idleCalls = 0;
+    ImGui::NewFrame();
+    VideoExportControls::render(controller, true, settings, [&](FramebufferSize) {
+      ++idleCalls;
+      return std::uint64_t{0};
+    });
+    ImGui::EndFrame();
+    CHECK(idleCalls == 0);
+    REQUIRE(
+      controller.start(song(), "preview.mp4", VideoOverwritePolicy::RefuseExisting, settings));
+    controller.tick();
+    REQUIRE(controller.framesGenerated() == 1);
     int calls = 0;
     for (int frame = 0; frame < 2; ++frame) {
       ImGui::NewFrame();
@@ -165,6 +177,7 @@ TEST_CASE("Export controls request previews at export resolution before display 
       ImGui::EndFrame();
     }
     CHECK(calls > 0);
+    controller.cancel();
   }
 }
 

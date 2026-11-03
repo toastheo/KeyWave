@@ -59,7 +59,6 @@ private:
   std::unique_ptr<RendererBackend> m_renderer;
   VideoExportSettings m_exportSettings;
   std::unique_ptr<OffscreenRenderTarget> m_exportTarget;
-  std::unique_ptr<OffscreenRenderTarget> m_exportPreviewTarget;
   std::unique_ptr<VideoExportController> m_videoExportController;
   ImGuiLayer m_imguiLayer;
   WindowSettings m_appliedWindowSettings;

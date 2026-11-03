@@ -12,7 +12,7 @@
 VideoExportAction VideoExportControls::render(const VideoExportController& controller,
                                               bool hasTimeline,
                                               VideoExportSettings& settings,
-                                              const PreviewRenderer& previewRenderer)
+                                              const FrameTextureProvider& frameTexture)
 {
   ImGui::SetNextWindowPos({16, 16}, ImGuiCond_FirstUseEver);
   ImGui::SetNextWindowSize({340, 0}, ImGuiCond_FirstUseEver);
@@ -55,27 +55,36 @@ VideoExportAction VideoExportControls::render(const VideoExportController& contr
     ImGui::EndDisabled();
     const auto size = exportFramebufferSize(settings);
     ImGui::Text("%d x %d pixels", size.width, size.height);
-    if (hasTimeline &&
-        ImGui::CollapsingHeader("Composition preview", ImGuiTreeNodeFlags_DefaultOpen)) {
-      const FramebufferSize previewSize =
-        size.width > size.height   ? FramebufferSize{.width = 288, .height = 162}
-        : size.width < size.height ? FramebufferSize{.width = 162, .height = 288}
-                                   : FramebufferSize{.width = 288, .height = 288};
-
-      try {
-        // Render at output resolution so pixel-aligned details survive resizing.
-        // ImGui uses linear filtering when displaying this texture at previewSize.
-        const auto texture = previewRenderer(size);
-        if (texture != 0) {
-          ImGui::Image(static_cast<ImTextureID>(texture),
-                       {static_cast<float>(previewSize.width),
-                        static_cast<float>(previewSize.height)},
-                       {0, 1},
-                       {1, 0});
-        }
+    if (hasTimeline && ImGui::CollapsingHeader("Export frame", ImGuiTreeNodeFlags_DefaultOpen)) {
+      if (!running) {
+        ImGui::TextUnformatted("Generated frames appear here while exporting.");
       }
-      catch (const std::exception& error) {
-        ImGui::TextWrapped("Preview unavailable: %s", error.what());
+      else {
+        const FramebufferSize previewSize =
+          size.width > size.height   ? FramebufferSize{.width = 288, .height = 162}
+          : size.width < size.height ? FramebufferSize{.width = 162, .height = 288}
+                                     : FramebufferSize{.width = 288, .height = 288};
+
+        try {
+          // Borrow the exact texture used for the latest generated encoder frame.
+          const auto texture = frameTexture(size);
+          if (texture != 0) {
+            ImGui::Image(static_cast<ImTextureID>(texture),
+                         {static_cast<float>(previewSize.width),
+                          static_cast<float>(previewSize.height)},
+                         {0, 1},
+                         {1, 0});
+          }
+          else {
+            ImGui::TextUnformatted("Waiting for the first export frame...");
+          }
+        }
+        catch (const std::exception& error) {
+          ImGui::TextWrapped("Preview unavailable: %s", error.what());
+        }
+        ImGui::Text("Generated frame %llu of %llu",
+                    static_cast<unsigned long long>(controller.framesGenerated()),
+                    static_cast<unsigned long long>(controller.frameCount()));
       }
     }
 

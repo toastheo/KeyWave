@@ -17,10 +17,10 @@ enum class VideoExportAction : std::uint8_t
 class VideoExportControls
 {
 public:
-  // Receives the full output size; ImGui downsamples the returned texture for display.
-  using PreviewRenderer = std::function<std::uint64_t(FramebufferSize)>;
+  // Borrows the latest generated export texture; ImGui downsamples it for display.
+  using FrameTextureProvider = std::function<std::uint64_t(FramebufferSize)>;
   static VideoExportAction render(const VideoExportController& controller,
                                   bool hasTimeline,
                                   VideoExportSettings& settings,
-                                  const PreviewRenderer& previewRenderer);
+                                  const FrameTextureProvider& frameTexture);
 };

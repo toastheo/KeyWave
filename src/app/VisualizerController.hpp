@@ -42,8 +42,6 @@ public:
   void update(double elapsedSeconds);
   void suppressNextPlaybackUpdate();
   [[nodiscard]] RenderScene buildScene() const;
-  [[nodiscard]] RenderScene buildExportPreview(FramebufferSize size,
-                                               ExportCompositionOptions options = {}) const;
   [[nodiscard]] ExportSnapshot exportSnapshot(ExportCompositionOptions options = {}) const;
 
 private:

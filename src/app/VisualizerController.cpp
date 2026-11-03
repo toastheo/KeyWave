@@ -194,21 +194,6 @@ RenderScene VisualizerController::buildScene() const
                                       m_diagnostics);
 }
 
-RenderScene VisualizerController::buildExportPreview(FramebufferSize size,
-                                                     ExportCompositionOptions options) const
-{
-  if (!m_timeline.has_value()) {
-    return {};
-  }
-  return buildExportScene(*m_timeline,
-                          timelineTimeSeconds(m_playbackTransport.currentTimeSeconds()),
-                          pianoRollSceneConfigFromSettings(m_settings.fallingNotes,
-                                                           m_settings.keyboard),
-                          size,
-                          options,
-                          m_diagnostics);
-}
-
 ExportSnapshot VisualizerController::exportSnapshot(ExportCompositionOptions options) const
 {
   if (!m_timeline.has_value()) {
