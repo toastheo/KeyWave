@@ -266,9 +266,26 @@ TEST_CASE("Visual profiles export real GPU frames at 720p30 portrait1080p60 and 
     VideoExportController controller(
       std::make_unique<FfmpegVideoEncoder>(),
       [&](const ExportSnapshot& snapshot, double time, FramebufferSize frameSize) {
-        const auto scene =
-          buildExportScene(snapshot.timeline, time, snapshot.sceneConfig, frameSize);
-        return renderer.renderOffscreen(target, scene, snapshot.background).pixels;
+        const auto scene = buildExportScene(
+          snapshot.timeline, time, snapshot.sceneConfig, frameSize, snapshot.compositionOptions);
+        auto pixels = renderer.renderOffscreen(target, scene, snapshot.background).pixels;
+        // The live 16:9 view has 216px-tall white keys at 1920px width.
+        // Changing output aspect must retain that displayed height-to-width ratio.
+        const auto x = static_cast<std::size_t>(frameSize.width / 104);
+        const int keyHeight = frameSize.width * 9 / 80;
+        const auto whiteOffset = (static_cast<std::size_t>(frameSize.height - keyHeight / 2) *
+                                    static_cast<std::size_t>(frameSize.width) +
+                                  x) *
+                                 4;
+        const auto aboveOffset = (static_cast<std::size_t>(frameSize.height - keyHeight - 10) *
+                                    static_cast<std::size_t>(frameSize.width) +
+                                  x) *
+                                 4;
+        CHECK(pixels[whiteOffset] == 235);
+        CHECK(pixels[whiteOffset + 1] == 235);
+        CHECK(std::abs(int(pixels[whiteOffset + 2]) - 230) <= 1);
+        CHECK(pixels[aboveOffset] <= 27);
+        return pixels;
       });
     MidiTimeline timeline;
     timeline.addNote({.pitch = 60, .velocity = 80, .durationSeconds = 0.2});
@@ -318,8 +335,8 @@ TEST_CASE("Full test song exports from snapshot through GPU and FFmpeg", "[ffmpe
   VideoExportController controller(
     std::make_unique<FfmpegVideoEncoder>(),
     [&](const ExportSnapshot& snapshot, double time, FramebufferSize) {
-      const auto scene =
-        buildExportScene(snapshot.timeline, time, snapshot.sceneConfig, target.size());
+      const auto scene = buildExportScene(
+        snapshot.timeline, time, snapshot.sceneConfig, target.size(), snapshot.compositionOptions);
       return renderer.renderOffscreen(target, scene, snapshot.background).pixels;
     });
   MidiTimeline timeline;

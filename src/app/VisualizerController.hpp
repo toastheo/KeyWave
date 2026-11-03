@@ -9,6 +9,7 @@
 #include "audio/TimelineAudioScheduler.hpp"
 #include "core/CoreTypes.hpp"
 #include "diagnostics/Diagnostics.hpp"
+#include "export/ExportComposition.hpp"
 #include "export/ExportSnapshot.hpp"
 #include "input/Key.hpp"
 #include "midi/MidiTimeline.hpp"
@@ -41,8 +42,9 @@ public:
   void update(double elapsedSeconds);
   void suppressNextPlaybackUpdate();
   [[nodiscard]] RenderScene buildScene() const;
-  [[nodiscard]] RenderScene buildExportPreview(FramebufferSize size) const;
-  [[nodiscard]] ExportSnapshot exportSnapshot() const;
+  [[nodiscard]] RenderScene buildExportPreview(FramebufferSize size,
+                                               ExportCompositionOptions options = {}) const;
+  [[nodiscard]] ExportSnapshot exportSnapshot(ExportCompositionOptions options = {}) const;
 
 private:
   void configurePlaybackTimeline(const MidiTimeline& timeline);

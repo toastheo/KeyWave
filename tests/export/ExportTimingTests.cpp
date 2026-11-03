@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include "app/VisualizerController.hpp"
+#include "export/ExportComposition.hpp"
 #include "export/ExportSnapshot.hpp"
 #include "export/ExportTiming.hpp"
 #include "export/VideoExportSettings.hpp"
@@ -120,7 +121,12 @@ TEST_CASE("Export snapshot survives live edits and timeline replacement", "[expo
   controller.setTimeline(timeline);
   controller.playbackTransport().setEffectiveBpm(120.0, 60.0);
   controller.playbackTransport().seek(4.0);
-  const auto frozen = controller.exportSnapshot();
+  ExportCompositionOptions compositionOptions{
+    .sourceFramebufferSize = {.width = 900, .height = 1600}};
+  const auto frozen = controller.exportSnapshot(compositionOptions);
+  CHECK_THROWS_AS(controller.exportSnapshot({.sourceFramebufferSize = {.width = 0, .height = 720}}),
+                  std::invalid_argument);
+  compositionOptions.sourceFramebufferSize = {.width = 1920, .height = 1080};
   static_assert(std::is_const_v<std::remove_reference_t<decltype(frozen.timeline)>>);
   settings.fallingNotes.lookAheadSeconds = 7.0;
   settings.renderer.clearColor.r = 0.9f;
@@ -132,6 +138,8 @@ TEST_CASE("Export snapshot survives live edits and timeline replacement", "[expo
   CHECK(frozen.background.r == 0.25f);
   CHECK(frozen.timelineOffsetSeconds == 3.0);
   CHECK(frozen.playbackRate == 0.5);
+  CHECK(frozen.compositionOptions.sourceFramebufferSize.width == 900);
+  CHECK(frozen.compositionOptions.sourceFramebufferSize.height == 1600);
   const ExportTiming timing{VideoExportSettings{}, frozen};
   CHECK(timing.frameCount() == 1560);
   CHECK(timing.frameSourceTimeSeconds(0) == 3.0);

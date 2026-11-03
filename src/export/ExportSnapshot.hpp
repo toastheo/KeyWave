@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/CoreTypes.hpp"
+#include "export/ExportComposition.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "midi/MidiTimeline.hpp"
 
@@ -12,7 +13,8 @@ struct ExportSnapshot
                  PianoRollSceneConfig sceneConfig,
                  Color background,
                  double timelineOffsetSeconds,
-                 double playbackRate);
+                 double playbackRate,
+                 ExportCompositionOptions compositionOptions = {});
 
   // Const members copy even for rvalues; keep those potentially throwing copy
   // semantics explicit rather than generating a misleading move constructor.
@@ -23,6 +25,7 @@ struct ExportSnapshot
   const Color background;
   const double timelineOffsetSeconds;
   const double playbackRate;
+  const ExportCompositionOptions compositionOptions;
 
   [[nodiscard]] double playbackDurationSeconds() const;
 };

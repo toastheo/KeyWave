@@ -133,7 +133,7 @@ KeyboardGeometry::KeyboardGeometry(const KeyboardLayoutConfig& config)
     double right = m_width;
 
     for (const auto& [pitch, rect] : m_keyRects) {
-      left = std::min(left, rect.x + rect.width);
+      left = std::min(left, rect.x);
       right = std::max(right, rect.x + rect.width);
     }
     for (auto& [pitch, rect] : m_keyRects) {

@@ -194,21 +194,22 @@ RenderScene VisualizerController::buildScene() const
                                       m_diagnostics);
 }
 
-RenderScene VisualizerController::buildExportPreview(FramebufferSize size) const
+RenderScene VisualizerController::buildExportPreview(FramebufferSize size,
+                                                     ExportCompositionOptions options) const
 {
   if (!m_timeline.has_value()) {
     return {};
   }
-
   return buildExportScene(*m_timeline,
                           timelineTimeSeconds(m_playbackTransport.currentTimeSeconds()),
                           pianoRollSceneConfigFromSettings(m_settings.fallingNotes,
                                                            m_settings.keyboard),
                           size,
+                          options,
                           m_diagnostics);
 }
 
-ExportSnapshot VisualizerController::exportSnapshot() const
+ExportSnapshot VisualizerController::exportSnapshot(ExportCompositionOptions options) const
 {
   if (!m_timeline.has_value()) {
     throw std::invalid_argument("Cannot export without a MIDI timeline.");
@@ -217,7 +218,8 @@ ExportSnapshot VisualizerController::exportSnapshot() const
           pianoRollSceneConfigFromSettings(m_settings.fallingNotes, m_settings.keyboard),
           m_settings.renderer.clearColor,
           m_timelineOffsetSeconds,
-          m_playbackTransport.playbackRate()};
+          m_playbackTransport.playbackRate(),
+          options};
 }
 
 void VisualizerController::configurePlaybackTimeline(const MidiTimeline& timeline)

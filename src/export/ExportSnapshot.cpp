@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "core/CoreTypes.hpp"
+#include "export/ExportComposition.hpp"
 #include "fallingnotes/PianoRollSceneBuilder.hpp"
 #include "midi/MidiTimeline.hpp"
 
@@ -21,13 +22,19 @@ ExportSnapshot::ExportSnapshot(MidiTimeline sourceTimeline,
                                PianoRollSceneConfig config,
                                Color sourceBackground,
                                double offset,
-                               double rate)
+                               double rate,
+                               ExportCompositionOptions sourceCompositionOptions)
     : timeline(std::move(sourceTimeline))
     , sceneConfig(config)
     , background(sourceBackground)
     , timelineOffsetSeconds(offset)
     , playbackRate(rate)
+    , compositionOptions(sourceCompositionOptions)
 {
+  if (compositionOptions.sourceFramebufferSize.width <= 0 ||
+      compositionOptions.sourceFramebufferSize.height <= 0) {
+    throw std::invalid_argument("Export source framebuffer dimensions must be positive.");
+  }
   if (timeline.empty() || !std::isfinite(offset) || !std::isfinite(rate) || rate <= 0.0 ||
       !std::isfinite(playbackDurationSeconds()) || playbackDurationSeconds() <= 0.0) {
     throw std::invalid_argument(

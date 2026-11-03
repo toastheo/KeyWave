@@ -147,8 +147,12 @@ bool Application::initialize()
       if (!m_exportTarget) {
         m_exportTarget = std::make_unique<OffscreenRenderTarget>(size);
       }
-      const auto scene = buildExportScene(
-        snapshot.timeline, sourceSeconds, snapshot.sceneConfig, size, m_diagnostics);
+      const auto scene = buildExportScene(snapshot.timeline,
+                                          sourceSeconds,
+                                          snapshot.sceneConfig,
+                                          size,
+                                          snapshot.compositionOptions,
+                                          m_diagnostics);
       return static_cast<OpenGLRendererBackend&>(*m_renderer)
         .renderOffscreen(*m_exportTarget, scene, snapshot.background)
         .pixels;
@@ -408,7 +412,8 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
             m_exportPreviewTarget->size().height != size.height) {
           m_exportPreviewTarget = std::make_unique<OffscreenRenderTarget>(size);
         }
-        const auto scene = m_visualizerController.buildExportPreview(size);
+        const auto scene = m_visualizerController.buildExportPreview(
+          size, {.sourceFramebufferSize = m_window.framebufferSize()});
         static_cast<OpenGLRendererBackend&>(*m_renderer)
           .renderOffscreenToTexture(*m_exportPreviewTarget,
                                     scene,
@@ -423,12 +428,15 @@ void Application::updateAndRenderFrame(const std::chrono::steady_clock::time_poi
     if (const auto destination = VideoSaveDialog::save(m_diagnostics)) {
       m_visualizerController.playbackTransport().pause();
       m_visualizerController.audioScheduler().pause();
-      m_videoExportController->start([this] { return m_visualizerController.exportSnapshot(); },
-                                     destination->path,
-                                     destination->allowOverwrite
-                                       ? VideoOverwritePolicy::ReplaceExisting
-                                       : VideoOverwritePolicy::RefuseExisting,
-                                     m_exportSettings);
+      m_videoExportController->start(
+        [this] {
+          return m_visualizerController.exportSnapshot(
+            {.sourceFramebufferSize = m_window.framebufferSize()});
+        },
+        destination->path,
+        destination->allowOverwrite ? VideoOverwritePolicy::ReplaceExisting
+                                    : VideoOverwritePolicy::RefuseExisting,
+        m_exportSettings);
     }
   }
   else if (exportAction == VideoExportAction::Cancel) {
